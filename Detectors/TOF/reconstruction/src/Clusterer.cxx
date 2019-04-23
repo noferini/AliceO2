@@ -111,6 +111,7 @@ void Clusterer::addContributingDigit(Digit* dig)
 //_____________________________________________________________________
 void Clusterer::buildCluster(Cluster& c, MCLabelContainer const* digitMCTruth)
 {
+  static const float invSqrt12 = 1./sqrt(12.);
 
   // here we finally build the cluster from all the digits contributing to it
 
@@ -197,7 +198,20 @@ void Clusterer::buildCluster(Cluster& c, MCLabelContainer const* digitMCTruth)
   Geo::getVolumeIndices(c.getMainContributingChannel(), det);
   float pos[3];
   Geo::getPos(det, pos);
-  c.setBaseData(c.getMainContributingChannel(), pos[0], pos[1], pos[2], 0, 0, 0); // error on position set to zero
+
+  c.setXYZ(pos[0],pos[1],pos[2]);
+  c.setR(TMath::Sqrt(pos[0] * pos[0] + pos[1] * pos[1]));
+  c.setPhi(TMath::ATan2(pos[1], pos[0]));
+
+  float errX = Geo::XPAD*invSqrt12;
+  float errY = 0;
+  float errZ = Geo::ZPAD*invSqrt12;
+
+  //if(c.getNumOfContributingChannels() > 1){
+    // set errors according to a model not yet defined!
+    // TO DO
+  //}
+  c.setErrors(errX, errY, errZ);
 
   return;
 }
