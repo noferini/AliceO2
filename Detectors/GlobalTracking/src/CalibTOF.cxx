@@ -311,7 +311,7 @@ void CalibTOF::fillLHCphaseCalibInput(std::vector<o2::dataformats::CalibInfoTOFs
 
   for (auto infotof = calibinfotof->begin(); infotof != calibinfotof->end(); infotof++) {
     double dtime = infotof->getDeltaTimePi();
-    dtime -= (int(dtime * bc_inv + 5.5) - 5) * bc;
+    dtime -= (int(dtime * bc_inv + 5.5) - 5) * bc; // do truncation far (by 5 units) from zero to avoid truncation of negative numbers
 
     mHistoLHCphase->Fill(dtime, infotof->getTimestamp());
   }
@@ -356,7 +356,7 @@ void CalibTOF::fillChannelCalibInput(std::vector<o2::dataformats::CalibInfoTOFsh
 
   for (auto infotof = calibinfotof->begin(); infotof != calibinfotof->end(); infotof++) {
     double dtime = infotof->getDeltaTimePi() - offset; // removing existing offset
-    dtime -= (int(dtime * bc_inv + 5.5) - 5) * bc;
+    dtime -= (int(dtime * bc_inv + 5.5) - 5) * bc; // do truncation far (by 5 units) from zero to avoid truncation of negative numbers
 
     histo->Fill(dtime);
     if (calibTimePad)
@@ -376,7 +376,7 @@ void CalibTOF::fillChannelTimeSlewingCalib(float offset, int ipad, TH2F* histo, 
   for (auto infotof = calibTimePad->begin(); infotof != calibTimePad->end(); infotof++) {
     double dtime = infotof->getDeltaTimePi() - offset; // removing the already calculated offset; this is needed to
                                                        // fill the time slewing histogram in the correct range
-    dtime -= (int(dtime * bc_inv + 5.5) - 5) * bc;
+    dtime -= (int(dtime * bc_inv + 5.5) - 5) * bc; // do truncation far (by 5 units) from zero to avoid truncation of negative numbers
 
     histo->Fill(TMath::Min(double(infotof->getTot()), 249.9), dtime);
     mHistoChTimeSlewingAll->Fill(infotof->getTot(), dtime);
@@ -393,11 +393,12 @@ float CalibTOF::doChannelCalibration(int ipad, TH1F* histo, TF1* funcChOffset)
 
   int resfit = FitPeak(funcChOffset, histo, 500., 3., 2., "ChannelOffset");
 
+  // return a number greater than zero to distinguish bad fit from empty channels(fraction=0)
   if (resfit) return 0.0001; // fit was not good
   
   float mean = funcChOffset->GetParameter(1);
   float sigma = funcChOffset->GetParameter(2);
-  float intmin = mean - 5 * sigma;
+  float intmin = mean - 5 * sigma; 
   float intmax = mean + 5 * sigma;
   float intmin2 = -25000;
   float intmax2 = -25000;
@@ -542,11 +543,11 @@ Int_t CalibTOF::FitPeak(TF1* fitFunc, TH1* h, Float_t startSigma, Float_t nSigma
 
   Double_t fitCent = h->GetBinCenter(h->GetMaximumBin());
   if(fitCent < -12500){
-    printf("Why fitCent = %f (%s)?\n",fitCent,h->GetName());
+    printf("fitCent = %f (%s). This is wrong, please check!\n",fitCent,h->GetName());
     fitCent = -12500;   
   }
   if(fitCent > 12500){
-    printf("Why fitCent = %f (%s)?\n",fitCent,h->GetName());
+    printf("fitCent = %f (%s). This is wrong, please check!\n",fitCent,h->GetName());
     fitCent = 12500;
   }
   Double_t fitMin = fitCent - nSigmaMin * startSigma;
@@ -666,7 +667,8 @@ void CalibTOF::flagProblematics(){
   fFuncFraction->SetParameter(2,0.1);
   fFuncFraction->SetParameter(3,0.1);
   
-  for(int iz; iz < o2::tof::Geo::NSTRIPXSECTOR*2; iz++){
+  // we group pads according to the z-coordinate since we noted a z-dependence in sigmas and fraction-under-peak
+  for(int iz=0; iz < o2::tof::Geo::NSTRIPXSECTOR*2; iz++){
     hsigmapeak->Reset();
     hfractionpeak->Reset();
     
