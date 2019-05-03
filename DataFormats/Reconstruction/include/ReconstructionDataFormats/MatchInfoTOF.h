@@ -40,7 +40,6 @@ class MatchInfoTOF
   const o2::track::TrackLTIntegral& getLTIntegralOut() const { return mIntLT; }
 
  private:
-  evIdx mTOFClIndex; // index of the TOF cluster used for the matching
   float mChi2;     // chi2 of the pair track-TOFcluster
   o2::track::TrackLTIntegral mIntLT; ///< L,TOF integral calculated during the propagation
   evIdx mEvIdxTOFCl; ///< EvIdx for TOF cluster (first: ev index; second: cluster index)
