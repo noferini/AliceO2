@@ -82,8 +82,8 @@ class TOFDPLRecoWorkflowTask
 
 
     // send matching-info
-    pc.outputs().snapshot(Output{ "TOF", "MATCHINFOS", 0, Lifetime::Timeframe },*mMatchedTracks);
-    pc.outputs().snapshot(Output{ "TOF", "CALIBINFOS", 0, Lifetime::Timeframe },*mCalibInfoTOF);
+    pc.outputs().snapshot(Output{ "TOF", "MATCHINFOS", 0, Lifetime::Timeframe }, mMatchedTracks);
+    pc.outputs().snapshot(Output{ "TOF", "CALIBINFOS", 0, Lifetime::Timeframe }, mCalibInfoTOF);
 
     // declare done
     finished = true;
@@ -93,9 +93,9 @@ class TOFDPLRecoWorkflowTask
  private:
   o2::globaltracking::MatchTOF mMatcher;    ///< Cluster finder
 
-  //  std::vector<std::pair<evIdx, o2::dataformats::MatchInfoTOF>> mMatchedTracks; ///< this is the output of the matching
-  std::vector<o2::dataformats::CalibInfoTOF> *mCalibInfoTOF; ///< Array of calib-info
-  std::vector<o2::dataformats::MatchInfoTOF> *mMatchedTracks; ///< this is the output of the matching
+  std::vector<std::pair<evIdx, o2::dataformats::MatchInfoTOF>> mMatchedTracks; ///< this is the output of the matching
+  std::vector<o2::dataformats::CalibInfoTOF> mCalibInfoTOF; ///< Array of calib-info
+  // std::vector<o2::dataformats::MatchInfoTOF> mMatchedTracks; ///< this is the output of the matching
   // std::vector<o2::dataformats::CalibInfoTOF> mCalibInfoTOF; ///< Array of calib-info
 };
 
