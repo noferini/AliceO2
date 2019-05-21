@@ -993,7 +993,6 @@ o2_define_bucket(
     ${CMAKE_SOURCE_DIR}/Detectors/ITSMFT/common/workflow/include
 )
 
-
 o2_define_bucket(
     NAME
     fit_workflow_bucket
@@ -2665,3 +2664,23 @@ o2_define_bucket(
     ${ROOT_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/GPU/TPCSpaceChargeBase
 )
+
+o2_define_bucket(
+    NAME
+    TOF_workflow_bucket
+
+    DEPENDENCIES
+    arrow_bucket
+    Framework
+    O2FrameworkFoundation_bucket
+    TOFReconstruction
+    GlobalTracking
+    DataFormatsTOF
+    tof_reconstruction_bucket
+
+    INCLUDE_DIRECTORIES
+    ${CMAKE_SOURCE_DIR}/workflow/include/
+    ${CMAKE_SOURCE_DIR}/Framework/Core/include
+    ${CMAKE_SOURCE_DIR}/Common/Utils/include
+)
+

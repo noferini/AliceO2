@@ -69,8 +69,14 @@ class MatchTOF
   ///< perform matching for provided input
   void run();
 
+  ///< fill output tree
+  void fill();
+
   ///< perform all initializations
   void init();
+
+  ///< perform all initializations
+  void initWorkflow(const std::vector<o2::dataformats::TrackTPCITS>* trackArray, const std::vector<Cluster>* clusterArray);
 
   ///< set tree/chain containing tracks
   void setInputTreeTracks(TTree* tree) { mInputTreeTracks = tree; }
@@ -203,9 +209,9 @@ class MatchTOF
 
   ///>>>------ these are input arrays which should not be modified by the matching code
   //           since this info is provided by external device
-  std::vector<o2::dataformats::TrackTPCITS>* mTracksArrayInp = nullptr; ///< input tracks
+  const std::vector<o2::dataformats::TrackTPCITS>* mTracksArrayInp = nullptr; ///< input tracks
   std::vector<o2::TPC::TrackTPC>* mTPCTracksArrayInp = nullptr;         ///< input TPC tracks
-  std::vector<Cluster>* mTOFClustersArrayInp = nullptr;                 ///< input TOF clusters
+  const std::vector<Cluster>* mTOFClustersArrayInp = nullptr;                 ///< input TOF clusters
 
   o2::dataformats::MCTruthContainer<o2::MCCompLabel>* mTOFClusLabels = nullptr; ///< input TOF clusters MC labels
   std::vector<o2::MCCompLabel> mTracksLblWork;                                  ///<TPCITS track labels
@@ -263,9 +269,11 @@ class MatchTOF
   ///----------- aux stuff --------------///
   static constexpr float MAXSNP = 0.85; // max snp of ITS or TPC track at xRef to be matched
 
+  Bool_t mIsworkflowON = kFALSE;
+
   TStopwatch mTimerTot;
   TStopwatch mTimerDBG;
-  ClassDefNV(MatchTOF, 1);
+  ClassDefNV(MatchTOF, 2);
 };
 } // namespace globaltracking
 } // namespace o2
