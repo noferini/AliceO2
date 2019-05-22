@@ -13,10 +13,14 @@
 /// @since  2019-05-22
 /// @brief  Basic DPL workflow for TOF reconstruction starting from digits
 
+#include "TOFWorkflow/DigitReaderSpec.h"
+#include "TOFWorkflow/TOFClusterizerSpec.h"
+#include "TOFWorkflow/TOFClusterWriterSpec.h"
 #include "Framework/WorkflowSpec.h"
 #include "Framework/ConfigParamSpec.h"
 #include "TOFWorkflow/RecoWorkflowSpec.h"
 #include "Algorithm/RangeTokenizer.h"
+#include "FairLogger.h"
 
 #include <string>
 #include <stdexcept>
@@ -27,11 +31,11 @@
 void customize(std::vector<o2::framework::ConfigParamSpec>& workflowOptions)
 {
   std::vector<o2::framework::ConfigParamSpec> options{
-    { "input-type", o2::framework::VariantType::String, "digits", { "digits, raw, clusters" } },
-    { "output-type", o2::framework::VariantType::String, "tracks", { "clusters, matchinginfo" } },
-    { "disable-mc", o2::framework::VariantType::Bool, false, { "disable sending of MC information" } },
-    { "tof-sectors", o2::framework::VariantType::String, "0-17", { "TOF sector range, e.g. 5-7,8,9" } },
-    { "tof-lanes", o2::framework::VariantType::Int, 1, { "number of parallel lanes up to the matcher" } },
+    { "input-type", o2::framework::VariantType::String, "digits", { "digits, raw, clusters, TBI" } },
+    { "output-type", o2::framework::VariantType::String, "clusters,matching-info,calib-info", { "clusters, matching-info, calib-info, TBI" } },
+    { "disable-mc", o2::framework::VariantType::Bool, false, { "disable sending of MC information, TBI" } },
+    { "tof-sectors", o2::framework::VariantType::String, "0-17", { "TOF sector range, e.g. 5-7,8,9 ,TBI" } },
+    { "tof-lanes", o2::framework::VariantType::Int, 1, { "number of parallel lanes up to the matcher, TBI" } },
   };
   std::swap(workflowOptions, options);
 }
@@ -56,6 +60,9 @@ using namespace o2::framework;
 /// This function hooks up the the workflow specifications into the DPL driver.
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
+  WorkflowSpec specs(1);
+    
+
   auto tofSectors = o2::RangeTokenizer::tokenize<int>(cfgc.options().get<std::string>("tof-sectors"));
   // the lane configuration defines the subspecification ids to be distributed among the lanes.
   std::vector<int> laneConfiguration;
@@ -69,12 +76,25 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
     laneConfiguration = tofSectors;
   }
 
-  
-  // return o2::TOF::RecoWorkflow::getWorkflow(tofSectors,                                    // sector configuration
-  //                                           laneConfiguration,                             // lane configuration
-  //                                           not cfgc.options().get<bool>("disable-mc"),    //
-  //                                           nLanes,                                        //
-  //                                           inputType,                                     //
-  //                                           cfgc.options().get<std::string>("output-type") //
-  // );
+  LOG(INFO) << "TOF RECO WORKFLOW configuration";
+  LOG(INFO) << "TOF input = " << cfgc.options().get<std::string>("input-type");
+  LOG(INFO) << "TOF output = " << cfgc.options().get<std::string>("output-type");
+  LOG(INFO) << "TOF sectors = " << cfgc.options().get<std::string>("tof-sectors");
+  LOG(INFO) << "TOF disable-mc = " << cfgc.options().get<std::string>("disable-mc");
+  LOG(INFO) << "TOF lanes = " << cfgc.options().get<std::string>("tof-lanes");
+
+  auto useMC = !cfgc.options().get<bool>("disable-mc");
+
+  // TOF clusterizer
+  LOG(INFO) << "Insert TOF Digit reader from file";
+  specs.emplace_back(o2::tof::getDigitReaderSpec(useMC));
+  LOG(INFO) << "insert TOF Clusterizer";
+  //specs.emplace_back(o2::tof::getTOFClusterizerSpec());
+  LOG(INFO) << "insert TOF Cluster Writer";
+  //specs.emplace_back(o2::tof::getTOFClusterWriterSpec());
+
+  // TOF matcher
+  // to be implemented
+
+  return specs;
 }
