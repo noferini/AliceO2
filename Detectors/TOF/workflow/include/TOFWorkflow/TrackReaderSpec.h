@@ -10,16 +10,15 @@
 
 /// @file   DigitReaderSpec.h
 
-#ifndef O2_TOF_DIGITREADER
-#define O2_TOF_DIGITREADER
+#ifndef O2_TOF_TRACKREADER
+#define O2_TOF_TRACKREADER
 
 #include "TFile.h"
 
 #include "Framework/DataProcessorSpec.h"
 #include "Framework/Task.h"
-#include "TOFBase/Digit.h"
+#include "ReconstructionDataFormats/TrackTPCITS.h"
 #include "SimulationDataFormat/MCCompLabel.h"
-#include "SimulationDataFormat/MCTruthContainer.h"
 
 using namespace o2::framework;
 
@@ -28,27 +27,27 @@ namespace o2
 namespace tof
 {
 
-class DigitReader : public Task
+class TrackReader : public Task
 {
  public:
-  DigitReader(bool useMC) : mUseMC(useMC) {}
-  ~DigitReader() override = default;
+  TrackReader(bool useMC) : mUseMC(useMC) {}
+  ~TrackReader() override = default;
   void init(InitContext& ic) final;
   void run(ProcessingContext& pc) final;
-
  private:
   int mState = 0;
   bool mUseMC = true;
   std::unique_ptr<TFile> mFile = nullptr;
-  std::vector < std::vector < o2::tof::Digit >> mDigits, *mPdigits=&mDigits;
-  std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>> mLabels, *mPlabels=&mLabels;
+  std::vector < o2::dataformats::TrackTPCITS > mTracks, *mPtracks=&mTracks;
+  std::vector<o2::MCCompLabel> mTPCLabels, *mPTPCLabels=&mTPCLabels;
+  std::vector<o2::MCCompLabel> mITSLabels, *mPITSLabels=&mITSLabels;
 };
 
 /// create a processor spec
 /// read simulated TOF digits from a root file
-framework::DataProcessorSpec getDigitReaderSpec(bool useMC);
+framework::DataProcessorSpec getTrackReaderSpec(bool useMC);
 
 } // namespace tof
 } // namespace o2
 
-#endif /* O2_TOF_DIGITREADER */
+#endif /* O2_TOF_TRACKREADER */

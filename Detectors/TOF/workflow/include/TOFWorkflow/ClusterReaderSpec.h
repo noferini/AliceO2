@@ -8,16 +8,16 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// @file   DigitReaderSpec.h
+/// @file   ClusterReaderSpec.h
 
-#ifndef O2_TOF_DIGITREADER
-#define O2_TOF_DIGITREADER
+#ifndef O2_TOF_CLUSTERREADER
+#define O2_TOF_CLUSTERREADER
 
 #include "TFile.h"
 
 #include "Framework/DataProcessorSpec.h"
 #include "Framework/Task.h"
-#include "TOFBase/Digit.h"
+#include "DataFormatsTOF/Cluster.h"
 #include "SimulationDataFormat/MCCompLabel.h"
 #include "SimulationDataFormat/MCTruthContainer.h"
 
@@ -28,11 +28,11 @@ namespace o2
 namespace tof
 {
 
-class DigitReader : public Task
+class ClusterReader : public Task
 {
  public:
-  DigitReader(bool useMC) : mUseMC(useMC) {}
-  ~DigitReader() override = default;
+  ClusterReader(bool useMC) : mUseMC(useMC) {}
+  ~ClusterReader() override = default;
   void init(InitContext& ic) final;
   void run(ProcessingContext& pc) final;
 
@@ -40,15 +40,15 @@ class DigitReader : public Task
   int mState = 0;
   bool mUseMC = true;
   std::unique_ptr<TFile> mFile = nullptr;
-  std::vector < std::vector < o2::tof::Digit >> mDigits, *mPdigits=&mDigits;
-  std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>> mLabels, *mPlabels=&mLabels;
+  std::vector<Cluster> mClusters, *mPclusters=&mClusters;
+  o2::dataformats::MCTruthContainer<o2::MCCompLabel> mLabels, *mPlabels=&mLabels;
 };
 
 /// create a processor spec
 /// read simulated TOF digits from a root file
-framework::DataProcessorSpec getDigitReaderSpec(bool useMC);
+framework::DataProcessorSpec getClusterReaderSpec(bool useMC);
 
 } // namespace tof
 } // namespace o2
 
-#endif /* O2_TOF_DIGITREADER */
+#endif /* O2_TOF_CLUSTERREADER */

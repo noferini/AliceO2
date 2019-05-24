@@ -34,7 +34,10 @@ class TOFDPLClustererTask
 {
   using MCLabelContainer = o2::dataformats::MCTruthContainer<o2::MCCompLabel>;
 
+  bool mUseMC = true;
+
  public:
+  TOFDPLClustererTask(bool useMC) : mUseMC(useMC) {}
   void init(framework::InitContext& ic)
   {
     // nothing special to be set up
@@ -82,7 +85,7 @@ class TOFDPLClustererTask
   MCLabelContainer mClsLabels;
 };
 
-o2::framework::DataProcessorSpec getTOFClusterizerSpec()
+o2::framework::DataProcessorSpec getTOFClusterizerSpec(bool useMC)
 {
   return DataProcessorSpec{
     "TOFClusterer",
@@ -90,7 +93,7 @@ o2::framework::DataProcessorSpec getTOFClusterizerSpec()
             InputSpec{ "tofdigitlabels", "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe } },
     Outputs{ OutputSpec{ "TOF", "CLUSTERS", 0, Lifetime::Timeframe },
              OutputSpec{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe } },
-    AlgorithmSpec{ adaptFromTask<TOFDPLClustererTask>() },
+    AlgorithmSpec{ adaptFromTask<TOFDPLClustererTask>(useMC) },
     Options{ /* for the moment no options */ }
   };
 }

@@ -13,14 +13,22 @@
 /// @since  2019-05-22
 /// @brief  Basic DPL workflow for TOF reconstruction starting from digits
 
+#include "DetectorsBase/Propagator.h"
+#include "TOFWorkflow/TrackReaderSpec.h"
 #include "TOFWorkflow/DigitReaderSpec.h"
+#include "TOFWorkflow/ClusterReaderSpec.h"
 #include "TOFWorkflow/TOFClusterizerSpec.h"
 #include "TOFWorkflow/TOFClusterWriterSpec.h"
+#include "TOFWorkflow/TOFMatchedWriterSpec.h"
 #include "Framework/WorkflowSpec.h"
 #include "Framework/ConfigParamSpec.h"
 #include "TOFWorkflow/RecoWorkflowSpec.h"
 #include "Algorithm/RangeTokenizer.h"
 #include "FairLogger.h"
+#include "SimConfig/ConfigurableParam.h"
+
+// GRP
+#include "DataFormatsParameters/GRPObject.h"
 
 #include <string>
 #include <stdexcept>
@@ -30,14 +38,11 @@
 // including Framework/runDataProcessing
 void customize(std::vector<o2::framework::ConfigParamSpec>& workflowOptions)
 {
-  std::vector<o2::framework::ConfigParamSpec> options{
-    { "input-type", o2::framework::VariantType::String, "digits", { "digits, raw, clusters, TBI" } },
-    { "output-type", o2::framework::VariantType::String, "clusters,matching-info,calib-info", { "clusters, matching-info, calib-info, TBI" } },
-    { "disable-mc", o2::framework::VariantType::Bool, false, { "disable sending of MC information, TBI" } },
-    { "tof-sectors", o2::framework::VariantType::String, "0-17", { "TOF sector range, e.g. 5-7,8,9 ,TBI" } },
-    { "tof-lanes", o2::framework::VariantType::Int, 1, { "number of parallel lanes up to the matcher, TBI" } },
-  };
-  std::swap(workflowOptions, options);
+  workflowOptions.push_back(ConfigParamSpec{ "input-type", o2::framework::VariantType::String, "digits", { "digits, raw, clusters, TBI" } });
+  workflowOptions.push_back(ConfigParamSpec{ "output-type", o2::framework::VariantType::String, "clusters,matching-info,calib-info", { "clusters, matching-info, calib-info, TBI" } });
+  workflowOptions.push_back(ConfigParamSpec{ "disable-mc", o2::framework::VariantType::Bool, false, { "disable sending of MC information, TBI" } });
+  workflowOptions.push_back(ConfigParamSpec{ "tof-sectors", o2::framework::VariantType::String, "0-17", { "TOF sector range, e.g. 5-7,8,9 ,TBI" } });
+  workflowOptions.push_back(ConfigParamSpec{ "tof-lanes", o2::framework::VariantType::Int, 1, { "number of parallel lanes up to the matcher, TBI" } });
 }
 
 #include "Framework/runDataProcessing.h" // the main driver
@@ -60,21 +65,39 @@ using namespace o2::framework;
 /// This function hooks up the the workflow specifications into the DPL driver.
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
-  WorkflowSpec specs(1);
+  WorkflowSpec specs;
+
+  o2::base::Propagator::initFieldFromGRP("o2sim_grp.root");
+  auto grp = o2::parameters::GRPObject::loadFrom("o2sim_grp.root");
+
+  if (!grp) {
+    LOG(ERROR) << "This workflow needs a valid GRP file to start";
+    return specs;
+  }
     
+  //  o2::conf::ConfigurableParam::writeINI("o2tofrecoflow_configuration.ini");
 
   auto tofSectors = o2::RangeTokenizer::tokenize<int>(cfgc.options().get<std::string>("tof-sectors"));
   // the lane configuration defines the subspecification ids to be distributed among the lanes.
   std::vector<int> laneConfiguration;
   auto nLanes = cfgc.options().get<int>("tof-lanes");
   auto inputType = cfgc.options().get<std::string>("input-type");
-  if (inputType == "digitizer") {
-    // the digitizer is using a different lane setup so we have to force this for the moment
-    laneConfiguration.resize(nLanes);
-    std::iota(laneConfiguration.begin(), laneConfiguration.end(), 0);
-  } else {
-    laneConfiguration = tofSectors;
+  auto outputType = cfgc.options().get<std::string>("output-type");
+
+  bool writecluster = 0;
+  bool writematching = 0;
+  bool writecalib = 0;
+
+  if(outputType.rfind("clusters") < outputType.size()) writecluster = 1;
+  if(outputType.rfind("matching-info") < outputType.size()) writematching = 1;
+  if(outputType.rfind("calib-info") < outputType.size()) writecalib = 1;
+
+  bool clusterinput = 0;
+  if (inputType == "clusters") {
+    clusterinput = 1;
   }
+
+  laneConfiguration = tofSectors;
 
   LOG(INFO) << "TOF RECO WORKFLOW configuration";
   LOG(INFO) << "TOF input = " << cfgc.options().get<std::string>("input-type");
@@ -85,16 +108,41 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 
   auto useMC = !cfgc.options().get<bool>("disable-mc");
 
-  // TOF clusterizer
-  LOG(INFO) << "Insert TOF Digit reader from file";
-  specs.emplace_back(o2::tof::getDigitReaderSpec(useMC));
-  LOG(INFO) << "insert TOF Clusterizer";
-  //specs.emplace_back(o2::tof::getTOFClusterizerSpec());
-  LOG(INFO) << "insert TOF Cluster Writer";
-  //specs.emplace_back(o2::tof::getTOFClusterWriterSpec());
+  if(! clusterinput){
+    // TOF clusterizer
+    LOG(INFO) << "Insert TOF Digit reader from file";
+    specs.emplace_back(o2::tof::getDigitReaderSpec(useMC));
+    LOG(INFO) << "Insert TOF Clusterizer";
+    specs.emplace_back(o2::tof::getTOFClusterizerSpec(useMC));
+    if(writecluster){
+      LOG(INFO) << "Insert TOF Cluster Writer";
+      specs.emplace_back(o2::tof::getTOFClusterWriterSpec(useMC));
+    }
+  }
+  else{
+    LOG(INFO) << "Insert TOF Cluster Reader";
+    specs.emplace_back(o2::tof::getClusterReaderSpec(useMC));
+  }
+
+  if(writematching || writecalib){
+    LOG(INFO) << "Insert ITS-TPC Track Reader";
+    specs.emplace_back(o2::tof::getTrackReaderSpec(useMC));
+    LOG(INFO) << "Insert TOF Matching";
+    specs.emplace_back(o2::tof::getTOFRecoWorkflowSpec(useMC));
+
+    if(writematching){
+      LOG(INFO) << "Insert TOF Matched Info Writer";
+      specs.emplace_back(o2::tof::getTOFMatchedWriterSpec(useMC));
+    }
+    if(writecalib){
+      LOG(INFO) << "Insert TOF Calib Info Writer";
+      //    specs.emplace_back(o2::tof::getTOFMatchedWriterSpec(useMC));
+    }
+  }
+  LOG(INFO) << "Number of active devices = " << specs.size();
 
   // TOF matcher
   // to be implemented
 
-  return specs;
+  return std::move(specs);
 }

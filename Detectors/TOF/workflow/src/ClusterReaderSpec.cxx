@@ -8,14 +8,14 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// @file   DigitReaderSpec.cxx
+/// @file   ClusterReaderSpec.cxx
 
 #include <vector>
 
 #include "TTree.h"
 
 #include "Framework/ControlService.h"
-#include "TOFWorkflow/DigitReaderSpec.h"
+#include "TOFWorkflow/ClusterReaderSpec.h"
 #include "DataFormatsParameters/GRPObject.h"
 
 using namespace o2::framework;
@@ -26,10 +26,10 @@ namespace o2
 namespace tof
 {
 
-void DigitReader::init(InitContext& ic)
+void ClusterReader::init(InitContext& ic)
 {
-  LOG(INFO) << "Init Digit reader!";
-  auto filename = ic.options().get<std::string>("tof-digit-infile");
+  LOG(INFO) << "Init Cluster reader!";
+  auto filename = ic.options().get<std::string>("tof-cluster-infile");
   mFile = std::make_unique<TFile>(filename.c_str(), "OLD");
   if (!mFile->IsOpen()) {
     LOG(ERROR) << "Cannot open the " << filename.c_str() << " file !";
@@ -39,33 +39,33 @@ void DigitReader::init(InitContext& ic)
   mState = 1;
 }
 
-void DigitReader::run(ProcessingContext& pc)
+void ClusterReader::run(ProcessingContext& pc)
 {
   if (mState != 1) {
     return;
   }
 
-  std::unique_ptr<TTree> treeDig((TTree*)mFile->Get("o2sim"));
+  std::unique_ptr<TTree> treeClu((TTree*)mFile->Get("o2sim"));
 
-  if (treeDig) {
-    treeDig->SetBranchAddress("TOFDigit", &mPdigits);
+  if (treeClu) {
+    treeClu->SetBranchAddress("TOFCluster", &mPclusters);
 
     if (mUseMC) {
-      treeDig->SetBranchAddress("TOFDigitMCTruth", &mPlabels);
+      treeClu->SetBranchAddress("TOFClusterMCTruth", &mPlabels);
     }
 
-    treeDig->GetEntry(0);
+    treeClu->GetEntry(0);
 
-    // add digits loaded in the output snapshot
-    pc.outputs().snapshot(Output{ "TOF", "DIGITS", 0, Lifetime::Timeframe }, mDigits);
-    if(mUseMC) pc.outputs().snapshot(Output{ "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe }, mLabels);
+    // add clusters loaded in the output snapshot
+    pc.outputs().snapshot(Output{ "TOF", "CLUSTERS", 0, Lifetime::Timeframe }, mClusters);
+    if(mUseMC) pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mLabels);
 
     static o2::parameters::GRPObject::ROMode roMode = o2::parameters::GRPObject::CONTINUOUS;
 
     LOG(INFO) << "TOF: Sending ROMode= " << roMode << " to GRPUpdater";
     pc.outputs().snapshot(Output{ "TOF", "ROMode", 0, Lifetime::Timeframe }, roMode);
   } else {
-    LOG(ERROR) << "Cannot read the TOF digits !";
+    LOG(ERROR) << "Cannot read the TOF clusters !";
     return;
   }
 
@@ -73,22 +73,22 @@ void DigitReader::run(ProcessingContext& pc)
 //  pc.services().get<ControlService>().readyToQuit(false);
 }
 
-DataProcessorSpec getDigitReaderSpec(bool useMC)
+DataProcessorSpec getClusterReaderSpec(bool useMC)
 {
   std::vector<OutputSpec> outputs;
-  outputs.emplace_back("TOF", "DIGITS", 0, Lifetime::Timeframe);
+  outputs.emplace_back("TOF", "CLUSTERS", 0, Lifetime::Timeframe);
   if (useMC) {
-    outputs.emplace_back("TOF", "DIGITSMCTR", 0, Lifetime::Timeframe);
+    outputs.emplace_back("TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe);
   }
   outputs.emplace_back("TOF", "ROMode", 0, Lifetime::Timeframe);
 
   return DataProcessorSpec{
-    "tof-digit-reader",
+    "tof-cluster-reader",
     Inputs{},
     outputs,
-    AlgorithmSpec{ adaptFromTask<DigitReader>(useMC) },
+    AlgorithmSpec{ adaptFromTask<ClusterReader>(useMC) },
     Options{
-      { "tof-digit-infile", VariantType::String, "tofdigits.root", { "Name of the input file" } } }
+      { "tof-cluster-infile", VariantType::String, "tofclusters.root", { "Name of the input file" } } }
   };
 }
 

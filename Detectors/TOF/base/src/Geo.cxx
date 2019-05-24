@@ -44,9 +44,12 @@ void Geo::Init()
     det[0] = isector;
     for (Int_t iplate = 0; iplate < NPLATES; iplate++) {
       det[1] = iplate;
-      for (Int_t istrip = 0; istrip < NMAXNSTRIP; istrip++) {
+
+      if(iplate == 2 && (isector== 13 || isector == 14 || isector == 15)) continue; // PHOS HOLES
+
+      for (Int_t istrip = 0; istrip < NSTRIPC; istrip++) { // maximum number of strip is 19 for plate B and C
 	det[2] = istrip;
-	if (getAngles(iplate, istrip) > 0.) {
+	if (!(iplate == 2 && istrip >= NSTRIPA)) { // the middle plate (A) has only 15 strips
 	  for (Int_t ipadz = 0; ipadz < NPADZ; ipadz++) {
 	    det[3] = ipadz;
 	    for (Int_t ipadx = 0; ipadx < NPADX; ipadx++) {
@@ -56,9 +59,9 @@ void Geo::Init()
 	      TGeoHMatrix global;
 	      global = *gGeoManager->GetCurrentMatrix();
 	      const Double_t* tr = global.GetTranslation();
-	      mPadPosition[isector][iplate][istrip][ipadz][ipadz][0] = tr[0];
-	      mPadPosition[isector][iplate][istrip][ipadz][ipadz][1] = tr[1];
-	      mPadPosition[isector][iplate][istrip][ipadz][ipadz][2] = tr[2];
+	      mPadPosition[isector][iplate][istrip][ipadz][ipadx][0] = tr[0];
+	      mPadPosition[isector][iplate][istrip][ipadz][ipadx][1] = tr[1];
+	      mPadPosition[isector][iplate][istrip][ipadz][ipadx][2] = tr[2];
 	    }
 	  }
 	}
@@ -192,6 +195,7 @@ void Geo::getPos(Int_t* det, Float_t* pos)
   if (mToBeIntit)
     Init();
 
+  printf("TOFDBG: %d, %d, %d, %d, %d    ->    %f %f %f\n",det[0],det[1],det[2],det[3],det[4],mPadPosition[det[0]][det[1]][det[2]][det[3]][det[4]][0],mPadPosition[det[0]][det[1]][det[2]][det[3]][det[4]][1],mPadPosition[det[0]][det[1]][det[2]][det[3]][det[4]][2]);
   pos[0] =mPadPosition[det[0]][det[1]][det[2]][det[3]][det[4]][0];
   pos[1] =mPadPosition[det[0]][det[1]][det[2]][det[3]][det[4]][1];
   pos[2] =mPadPosition[det[0]][det[1]][det[2]][det[3]][det[4]][2];

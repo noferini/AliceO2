@@ -8,11 +8,19 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file MatchInfoTOF.cxx
-/// \brief Class to store the output of the matching to TOF
+#ifndef TOFWORKFLOW_TOFMATCHEDWRITER_H_
+#define TOFWORKFLOW_TOFMATCHEDWRITER_H_
 
-#include "ReconstructionDataFormats/MatchInfoTOF.h"
+#include "Framework/DataProcessorSpec.h"
 
-using namespace o2::dataformats;
+namespace o2
+{
+namespace tof
+{
 
-ClassImp(o2::dataformats::MatchInfoTOF);
+o2::framework::DataProcessorSpec getTOFMatchedWriterSpec(bool useMC);
+
+} // end namespace tof
+} // end namespace o2
+
+#endif /* TOFWORKFLOW_TOFMATCHEDWRITER_H_ */

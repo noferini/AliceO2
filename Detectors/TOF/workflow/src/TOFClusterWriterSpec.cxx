@@ -44,9 +44,9 @@ TBranch* getOrMakeBranch(TTree& tree, std::string brname, T* ptr)
 /// create the processor spec
 /// describing a processor receiving clusters for TOF writing them to file
 /// TODO: make this processor generic and reusable!!
-DataProcessorSpec getTOFClusterWriterSpec()
+DataProcessorSpec getTOFClusterWriterSpec(bool useMC)
 {
-  auto initFunction = [](InitContext& ic) {
+  auto initFunction = [useMC](InitContext& ic) {
     // get the option from the init context
     auto filename = ic.options().get<std::string>("tof-cluster-outfile");
     auto treename = ic.options().get<std::string>("treename");
@@ -69,7 +69,7 @@ DataProcessorSpec getTOFClusterWriterSpec()
     // using by-copy capture of the worker instance shared pointer
     // the shared pointer makes sure to clean up the instance when the processing
     // function gets out of scope
-    auto processingFct = [outputfile, outputtree, digits](ProcessingContext& pc) {
+    auto processingFct = [outputfile, outputtree, digits, useMC](ProcessingContext& pc) {
       static bool finished = false;
       if (finished) {
         // avoid being executed again when marked as finished;
@@ -85,13 +85,15 @@ DataProcessorSpec getTOFClusterWriterSpec()
       auto br = getOrMakeBranch(*outputtree.get(), "TOFCluster", digits.get());
       br->Fill();
 
-      // retrieve labels from the input
-      auto labeldata = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabels");
-      LOG(INFO) << "TOF GOT " << labeldata->getNElements() << " LABELS ";
-      auto labeldataraw = labeldata.get();
-      // connect this to a particular branch
-      auto labelbr = getOrMakeBranch(*outputtree.get(), "TOFClusterMCTruth", &labeldataraw);
-      labelbr->Fill();
+      if(useMC){ // retrieve labels from the input
+	auto labeldata = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabels");
+	LOG(INFO) << "TOF GOT " << labeldata->getNElements() << " LABELS ";
+	auto labeldataraw = labeldata.get();
+	// connect this to a particular branch
+
+	auto labelbr = getOrMakeBranch(*outputtree.get(), "TOFClusterMCTruth", &labeldataraw);
+	labelbr->Fill();
+      }
 
       finished = true;
       pc.services().get<ControlService>().readyToQuit(false);
@@ -102,10 +104,13 @@ DataProcessorSpec getTOFClusterWriterSpec()
     return processingFct;
   };
 
+  std::vector<InputSpec> inputs;
+  inputs.emplace_back("tofclusters", "TOF", "CLUSTERS", 0, Lifetime::Timeframe);
+  if(useMC) inputs.emplace_back("tofclusterlabels", "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe);
+
   return DataProcessorSpec{
     "TOFClusterWriter",
-    Inputs{ InputSpec{ "tofclusters", "TOF", "CLUSTERS", 0, Lifetime::Timeframe },
-            InputSpec{ "tofclusterlabels", "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe } },
+    inputs,
     {}, // no output
     AlgorithmSpec(initFunction),
     Options{

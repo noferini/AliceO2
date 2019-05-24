@@ -1509,30 +1509,6 @@ o2_define_bucket(
     DEPENDENCIES
     tof_base_bucket
     root_base_bucket
-    fairroot_geom
-    RIO
-    Graf
-    Gpad
-    Matrix
-    Physics
-    O2TOFBase
-    O2DetectorsBase
-    O2SimulationDataFormat
-
-    INCLUDE_DIRECTORIES
-    ${FAIRROOT_INCLUDE_DIR}
-    ${CMAKE_SOURCE_DIR}/Detectors/Base/include
-    ${CMAKE_SOURCE_DIR}/Detectors/TOF/base/include
-    ${MS_GSL_INCLUDE_DIR}
-)
-
-o2_define_bucket(
-    NAME
-    tof_reconstruction_bucket
-
-    DEPENDENCIES
-    tof_base_bucket
-    root_base_bucket
     data_format_TOF_bucket
     fairroot_geom
     RIO
@@ -2681,16 +2657,15 @@ o2_define_bucket(
 
     DEPENDENCIES
     arrow_bucket
-    Framework
     O2FrameworkFoundation_bucket
-    TOFReconstruction
-    GlobalTracking
-    DataFormatsTOF
     tof_reconstruction_bucket
+    GlobalTracking_workflow_bucket
+    O2TOFReconstruction
 
     INCLUDE_DIRECTORIES
     ${CMAKE_SOURCE_DIR}/workflow/include/
     ${CMAKE_SOURCE_DIR}/Framework/Core/include
     ${CMAKE_SOURCE_DIR}/Common/Utils/include
+    ${CMAKE_SOURCE_DIR}/Detectors/TOF/reconstruction/include
 )
 

@@ -18,7 +18,7 @@ namespace o2
 namespace tof
 {
 
-o2::framework::DataProcessorSpec getTOFClusterizerSpec();
+o2::framework::DataProcessorSpec getTOFClusterizerSpec(bool useMC);
 
 } // end namespace tof
 } // end namespace o2

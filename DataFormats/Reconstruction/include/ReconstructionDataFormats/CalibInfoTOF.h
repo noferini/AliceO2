@@ -14,6 +14,8 @@
 #ifndef ALICEO2_CALIBINFOTOF_H
 #define ALICEO2_CALIBINFOTOF_H
 
+#include "Rtypes.h"
+
 namespace o2
 {
 namespace dataformats
@@ -23,6 +25,7 @@ class CalibInfoTOF
  public:
   CalibInfoTOF(int indexTOFCh, int timestamp, float DeltaTimePi, float tot, int flags = 0) : mTOFChIndex(indexTOFCh), mTimestamp(timestamp), mDeltaTimePi(DeltaTimePi), mTot(tot), mFlags(flags){};
   CalibInfoTOF() = default;
+  ~CalibInfoTOF() = default;
 
   void setTOFChIndex(int index) { mTOFChIndex = index; }
   int getTOFChIndex() const { return mTOFChIndex; }
@@ -45,7 +48,8 @@ class CalibInfoTOF
   float mDeltaTimePi;   // raw tof time - expected time for pi hypotesis
   float mTot;           // time-over-threshold
   unsigned char mFlags; // bit mask with quality flags (to be defined)
-  //  ClassDefNV(CalibInfoTOF, 1);
+
+  ClassDefNV(CalibInfoTOF, 1);
 };
 }
 }

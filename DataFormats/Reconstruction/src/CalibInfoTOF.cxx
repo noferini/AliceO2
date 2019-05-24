@@ -15,4 +15,4 @@
 
 using namespace o2::dataformats;
 
-//ClassImp(o2::dataformats::CalibInfoTOF);
+ClassImp(o2::dataformats::CalibInfoTOF);
