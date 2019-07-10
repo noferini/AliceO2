@@ -12,11 +12,13 @@ set(SRCS
   src/TrackReaderSpec.cxx
   src/RecoWorkflowSpec.cxx
   src/TOFMatchedWriterSpec.cxx
+  src/TOFCalibWriterSpec.cxx
   )
 
 set(HEADERS
 #  include/ReconstructionDataFormats/MatchInfoTOF.h
   include/${MODULE_NAME}/TOFMatchedWriterSpec.h
+  include/${MODULE_NAME}/TOFCalibWriterSpec.h
   include/${MODULE_NAME}/RecoWorkflowSpec.h
   include/${MODULE_NAME}/TrackReaderSpec.h
   include/${MODULE_NAME}/DigitReaderSpec.h

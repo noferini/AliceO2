@@ -8,8 +8,8 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#ifndef STEER_DIGITIZERWORKFLOW_TOFCLUSTERIZER_H_
-#define STEER_DIGITIZERWORKFLOW_TOFCLUSTERIZER_H_
+#ifndef TOFWORKFLOW_TOFCALIBWRITER_H_
+#define TOFWORKFLOW_TOFCALIBWRITER_H_
 
 #include "Framework/DataProcessorSpec.h"
 
@@ -18,9 +18,9 @@ namespace o2
 namespace tof
 {
 
-o2::framework::DataProcessorSpec getTOFClusterizerSpec();
+o2::framework::DataProcessorSpec getTOFCalibWriterSpec();
 
 } // end namespace tof
 } // end namespace o2
 
-#endif /* STEER_DIGITIZERWORKFLOW_TOFCLUSTERIZERSPEC_H_ */
+#endif /* TOFWORKFLOW_TOFCALIBWRITER_H_ */

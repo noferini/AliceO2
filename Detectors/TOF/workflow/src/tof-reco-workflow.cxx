@@ -20,6 +20,7 @@
 #include "TOFWorkflow/TOFClusterizerSpec.h"
 #include "TOFWorkflow/TOFClusterWriterSpec.h"
 #include "TOFWorkflow/TOFMatchedWriterSpec.h"
+#include "TOFWorkflow/TOFCalibWriterSpec.h"
 #include "Framework/WorkflowSpec.h"
 #include "Framework/ConfigParamSpec.h"
 #include "TOFWorkflow/RecoWorkflowSpec.h"
@@ -136,7 +137,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
     }
     if(writecalib){
       LOG(INFO) << "Insert TOF Calib Info Writer";
-      //    specs.emplace_back(o2::tof::getTOFMatchedWriterSpec(useMC));
+      specs.emplace_back(o2::tof::getTOFCalibWriterSpec());
     }
   }
   LOG(INFO) << "Number of active devices = " << specs.size();
