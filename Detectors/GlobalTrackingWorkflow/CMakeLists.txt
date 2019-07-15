@@ -20,3 +20,6 @@ o2_add_executable(match-workflow
                   COMPONENT_NAME tpcits
                   SOURCES src/tpcits-match-workflow.cxx
                   PUBLIC_LINK_LIBRARIES O2::GlobalTrackingWorkflow)
+
+add_subdirectory(tofworkflow)
+

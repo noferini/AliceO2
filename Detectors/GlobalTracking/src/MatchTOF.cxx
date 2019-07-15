@@ -829,11 +829,11 @@ void MatchTOF::selectBestMatches()
                                mTOFClusWork[matchingPair.getTOFClIndex()].getTimeRaw() - matchingPair.getLTIntegralOut().getTOF(o2::track::PID::Pion),
                                mTOFClusWork[matchingPair.getTOFClIndex()].getTot());
 
-    const auto& labelTPCor = (*mTPCLabels)[matchingPair.getTrackIndex()];
-    const auto& labelITSor = (*mITSLabels)[matchingPair.getTrackIndex()];
+    const auto& labelTPC = (*mTPCLabels)[matchingPair.getTrackIndex()];
+    const auto& labelITS = (*mITSLabels)[matchingPair.getTrackIndex()];
     // we want to store positive labels independently of how they are flagged from TPC,ITS people
-    o2::MCCompLabel labelTPC(abs(labelTPCor.getTrackID()), labelTPCor.getEventID(), labelTPCor.getSourceID());
-    o2::MCCompLabel labelITS(abs(labelITSor.getTrackID()), labelITSor.getEventID(), labelITSor.getSourceID());
+    //    o2::MCCompLabel labelTPC(abs(labelTPCor.getTrackID()), labelTPCor.getEventID(), labelTPCor.getSourceID());
+    //    o2::MCCompLabel labelITS(abs(labelITSor.getTrackID()), labelITSor.getEventID(), labelITSor.getSourceID());
     LOG(DEBUG) << "labelTPC: trackID = " << labelTPC.getTrackID() << ", eventID = " << labelTPC.getEventID() << ", sourceID = " << labelTPC.getSourceID();
     LOG(DEBUG) << "labelITS: trackID = " << labelITS.getTrackID() << ", eventID = " << labelITS.getEventID() << ", sourceID = " << labelITS.getSourceID();
     const auto& labelsTOF = mTOFClusLabels->getLabels(matchingPair.getTOFClIndex());
