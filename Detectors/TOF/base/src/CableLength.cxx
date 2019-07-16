@@ -13,7 +13,8 @@
 using namespace o2::tof;
 
 // cable length map
-Float_t Geo::CABLELENGTH[Geo::kNCrate][10][Geo::kNChain][Geo::kNTdc / 3] = { // Cable Lengths
+
+const Float_t Geo::CABLELENGTH[Geo::kNCrate][10][Geo::kNChain][Geo::kNTdc / 3] = { // Cable Lengths
   {
     //crate 0
     { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },                                         //slot 3, chain
@@ -951,3 +952,4 @@ Float_t Geo::CABLELENGTH[Geo::kNCrate][10][Geo::kNChain][Geo::kNTdc / 3] = { // 
     { { 525.0, 525.0, 525.0, 525.0, 512.5 }, { 550.0, 550.0, 537.5, 537.5, 537.5 } }  //slot 12, chain
   }
 };
+

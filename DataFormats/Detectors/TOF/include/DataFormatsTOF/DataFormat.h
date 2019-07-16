@@ -26,64 +26,64 @@ namespace compressed
   
   struct Word_t
   {
-    uint32_t UNDEFINED : 31;
-    uint32_t WordType  : 1;
+    uint32_t undefined : 31;
+    uint32_t wordType  : 1;
   };
   
   /** data format **/
   
   struct CrateHeader_t
   {
-    uint32_t BunchID      : 12;
-    uint32_t EventCounter : 12;
-    uint32_t DRMID        :  7;
-    uint32_t MustBeOne    :  1;
+    uint32_t bunchID      : 12;
+    uint32_t eventCounter : 12;
+    uint32_t drmID        :  7;
+    uint32_t mustBeOne    :  1;
   };
   
   struct FrameHeader_t
   {
-    uint32_t NumberOfHits : 16;
-    uint32_t FrameID      :  8;
-    uint32_t TRMID        :  4;
-    uint32_t DeltaBC      :  3;
-    uint32_t MustBeZero   :  1;
+    uint32_t numberOfHits : 16;
+    uint32_t frameID      :  8;
+    uint32_t trmID        :  4;
+    uint32_t deltaBC      :  3;
+    uint32_t mustBeZero   :  1;
   };
   
   struct PackedHit_t
   {
-    uint32_t TOT          : 11;
-    uint32_t Time         : 13;
-    uint32_t Channel      :  3;
-    uint32_t TDCID        :  4;
-    uint32_t Chain        :  1;
+    uint32_t tot          : 11;
+    uint32_t time         : 13;
+    uint32_t channel      :  3;
+    uint32_t tdcID        :  4;
+    uint32_t chain        :  1;
   };
 
   struct CrateTrailer_t
   {
-    uint32_t TRMFault03   :  3;
-    uint32_t TRMFault04   :  3;
-    uint32_t TRMFault05   :  3;
-    uint32_t TRMFault06   :  3;
-    uint32_t TRMFault07   :  3;
-    uint32_t TRMFault08   :  3;
-    uint32_t TRMFault09   :  3;
-    uint32_t TRMFault10   :  3;
-    uint32_t TRMFault11   :  3;
-    uint32_t TRMFault12   :  3;
-    uint32_t CrateFault   :  1;
-    uint32_t MustBeOne    :  1;
+    uint32_t trmFault03   :  3;
+    uint32_t trmFault04   :  3;
+    uint32_t trmFault05   :  3;
+    uint32_t trmFault06   :  3;
+    uint32_t trmFault07   :  3;
+    uint32_t trmFault08   :  3;
+    uint32_t trmFault09   :  3;
+    uint32_t trmFault10   :  3;
+    uint32_t trmFault11   :  3;
+    uint32_t trmFault12   :  3;
+    uint32_t crateFault   :  1;
+    uint32_t mustBeOne    :  1;
   };
 
   /** union **/
 
   union Union_t
   {
-    uint32_t       Data;
-    Word_t         Word;
-    CrateHeader_t  CrateHeader;
-    FrameHeader_t  FrameHeader;
-    PackedHit_t    PackedHit;
-    CrateTrailer_t CrateTrailer;
+    uint32_t       data;
+    Word_t         word;
+    CrateHeader_t  crateHeader;
+    FrameHeader_t  frameHeader;
+    PackedHit_t    packedHit;
+    CrateTrailer_t crateTrailer;
   };
 } // namespace compressed
 
