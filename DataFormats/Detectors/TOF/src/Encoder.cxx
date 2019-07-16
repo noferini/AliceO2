@@ -55,15 +55,15 @@ namespace compressed {
 
     // crate header
     mUnion->CrateHeader = {0x0};
-    mUnion->CrateHeader.MustBeOne = 1;
-    //    mUnion->CrateHeader.DRMID = summary.DRMGlobalHeader.DRMID;
-    //    mUnion->CrateHeader.EventCounter = summary.DRMGlobalTrailer.LocalEventCounter;
-    //    mUnion->CrateHeader.BunchID = summary.DRMStatusHeader3.L0BCID;
+    mUnion->CrateHeader.mustBeOne = 1;
+    //    mUnion->CrateHeader.drmID = summary.DRMGlobalHeader.drmID;
+    //    mUnion->CrateHeader.eventCounter = summary.DRMGlobalTrailer.LocalEventCounter;
+    //    mUnion->CrateHeader.bunchID = summary.DRMStatusHeader3.l0BCID;
 #ifdef VERBOSE
     if (mVerbose) {
-      auto BunchID = mUnion->CrateHeader.BunchID;
-      auto EventCounter = mUnion->CrateHeader.EventCounter;
-      auto DRMID = mUnion->CrateHeader.DRMID;
+      auto BunchID = mUnion->CrateHeader.bunchID;
+      auto EventCounter = mUnion->CrateHeader.eventCounter;
+      auto DRMID = mUnion->CrateHeader.drmID;
       std::cout << boost::format("%08x") % mUnion->Data
       		<< " "
 		<< boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
@@ -116,15 +116,15 @@ namespace compressed {
 
         // frame header
 	mUnion->FrameHeader = {0x0};
-	mUnion->FrameHeader.MustBeZero = 0;
-	mUnion->FrameHeader.TRMID = itrm + 3;
-	mUnion->FrameHeader.FrameID = iframe;
-        mUnion->FrameHeader.NumberOfHits = nPackedHits[iframe];
+	mUnion->FrameHeader.mustBeZero = 0;
+	mUnion->FrameHeader.trmID = itrm + 3;
+	mUnion->FrameHeader.frameID = iframe;
+        mUnion->FrameHeader.numberOfHits = nPackedHits[iframe];
 #ifdef VERBOSE
 	if (mVerbose) {
-	  auto NumberOfHits = mUnion->FrameHeader.NumberOfHits;
-	  auto FrameID = mUnion->FrameHeader.FrameID;
-	  auto TRMID = mUnion->FrameHeader.TRMID;
+	  auto NumberOfHits = mUnion->FrameHeader.numberOfHits;
+	  auto FrameID = mUnion->FrameHeader.frameID;
+	  auto TRMID = mUnion->FrameHeader.trmID;
 	  std::cout << boost::format("%08x") % mUnion->Data
 		    << " "
 		    << boost::format("Frame header (TRMID=%d, FrameID=%d, NumberOfHits=%d)") % TRMID % FrameID % NumberOfHits
@@ -138,11 +138,11 @@ namespace compressed {
           mUnion->PackedHit = PackedHit[iframe][ihit];
 #ifdef VERBOSE
 	  if (mVerbose) {
-            auto Chain = mUnion->PackedHit.Chain;
-            auto TDCID = mUnion->PackedHit.TDCID;
-            auto Channel = mUnion->PackedHit.Channel;
-            auto Time = mUnion->PackedHit.Time;
-            auto TOT = mUnion->PackedHit.TOT;
+            auto Chain = mUnion->PackedHit.chain;
+            auto TDCID = mUnion->PackedHit.tdcID;
+            auto Channel = mUnion->PackedHit.channel;
+            auto Time = mUnion->PackedHit.time;
+            auto TOT = mUnion->PackedHit.tot;
             std::cout << boost::format("%08x") % mUnion->Data << " "
                       << boost::format("Packed hit (Chain=%d, TDCID=%d, "
                                        "Channel=%d, Time=%d, TOT=%d)") %
@@ -159,7 +159,7 @@ namespace compressed {
 
     // crate trailer
     mUnion->CrateTrailer = {0x0};
-    mUnion->CrateTrailer.MustBeOne = 1;
+    mUnion->CrateTrailer.mustBeOne = 1;
 #ifdef VERBOSE
     if (mVerbose) {
       std::cout << boost::format("%08x") % mUnion->Data

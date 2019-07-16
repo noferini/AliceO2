@@ -806,7 +806,7 @@ void MatchTOF::selectBestMatches()
 {
   ///< define the track-TOFcluster pair per sector
 
-  printf("Number of pair matched = %d\n",mMatchedTracksPairs.size());
+  printf("Number of pair matched = %lu\n", mMatchedTracksPairs.size());
 
   // first, we sort according to the chi2
   std::sort(mMatchedTracksPairs.begin(), mMatchedTracksPairs.end(), [this](o2::dataformats::MatchInfoTOF& a, o2::dataformats::MatchInfoTOF& b) { return (a.getChi2() < b.getChi2()); });

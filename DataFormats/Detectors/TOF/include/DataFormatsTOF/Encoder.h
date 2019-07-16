@@ -32,8 +32,8 @@ namespace compressed
     
   public:
     
-  Encoder() : mVerbose(false) {};
-    ~Encoder() {};
+  Encoder() = default;
+    ~Encoder() = default;
     
     bool open(std::string name);
     bool alloc(long size);
@@ -49,11 +49,11 @@ namespace compressed
   protected:
     
     std::ofstream mFile;
-    bool mVerbose;
+    bool mVerbose = false;
     
-    char *mBuffer;
+    char *mBuffer = nullptr;
     long mSize;
-    Union_t *mUnion;
+    Union_t *mUnion = nullptr;
   };
 
 } // namespace compressed
