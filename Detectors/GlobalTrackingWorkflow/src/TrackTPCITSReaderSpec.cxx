@@ -8,25 +8,25 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// @file   TrackReaderSpec.cxx
+/// @file   TrackTPCITSReaderSpec.cxx
 
 #include <vector>
 
 #include "TTree.h"
 
 #include "Framework/ControlService.h"
-#include "TOFWorkflow/TrackReaderSpec.h"
+#include "GlobalTrackingWorkflow/TrackTPCITSReaderSpec.h"
 #include "DataFormatsParameters/GRPObject.h"
 #include "Framework/SerializationMethods.h"
 
 using namespace o2::framework;
-using namespace o2::tof;
+using namespace o2::globaltracking;
 
 namespace o2
 {
-namespace tof
+namespace globaltracking
 {
-void TrackReader::init(InitContext& ic)
+void TrackTPCITSReader::init(InitContext& ic)
 {
   LOG(INFO) << "Init ITS-TPC Track reader!";
   auto filename = ic.options().get<std::string>("itstpc-track-infile");
@@ -39,7 +39,7 @@ void TrackReader::init(InitContext& ic)
   mState = 1;
 }
 
-void TrackReader::run(ProcessingContext& pc)
+void TrackTPCITSReader::run(ProcessingContext& pc)
 {
   if (mState != 1) {
     return;
@@ -76,7 +76,7 @@ void TrackReader::run(ProcessingContext& pc)
   //  pc.services().get<ControlService>().readyToQuit(false);
 }
 
-DataProcessorSpec getTrackReaderSpec(bool useMC)
+DataProcessorSpec getTrackTPCITSReaderSpec(bool useMC)
 {
   std::vector<OutputSpec> outputs;
   outputs.emplace_back("GLO", "TPCITS", 0, Lifetime::Timeframe);
@@ -89,11 +89,11 @@ DataProcessorSpec getTrackReaderSpec(bool useMC)
     "itstpc-track-reader",
     Inputs{},
     outputs,
-    AlgorithmSpec{ adaptFromTask<TrackReader>(useMC) },
+    AlgorithmSpec{ adaptFromTask<TrackTPCITSReader>(useMC) },
     Options{
       { "itstpc-track-infile", VariantType::String, "o2match_itstpc.root", { "Name of the input file" } } }
   };
 }
 
-} // namespace tof
+} // namespace globaltracking
 } // namespace o2

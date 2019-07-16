@@ -10,8 +10,8 @@
 
 /// @file   DigitReaderSpec.h
 
-#ifndef O2_TOF_TRACKREADER
-#define O2_TOF_TRACKREADER
+#ifndef O2_GLOBAL_TRACKITSTPCREADER
+#define O2_GLOBAL_TRACKITSTPCREADER
 
 #include "TFile.h"
 
@@ -24,14 +24,14 @@ using namespace o2::framework;
 
 namespace o2
 {
-namespace tof
+namespace globaltracking
 {
 
-class TrackReader : public Task
+class TrackTPCITSReader : public Task
 {
  public:
-  TrackReader(bool useMC) : mUseMC(useMC) {}
-  ~TrackReader() override = default;
+  TrackTPCITSReader(bool useMC) : mUseMC(useMC) {}
+  ~TrackTPCITSReader() override = default;
   void init(InitContext& ic) final;
   void run(ProcessingContext& pc) final;
 
@@ -46,9 +46,9 @@ class TrackReader : public Task
 
 /// create a processor spec
 /// read simulated TOF digits from a root file
-framework::DataProcessorSpec getTrackReaderSpec(bool useMC);
+framework::DataProcessorSpec getTrackTPCITSReaderSpec(bool useMC);
 
-} // namespace tof
+} // namespace globaltracking
 } // namespace o2
 
-#endif /* O2_TOF_TRACKREADER */
+#endif /* O2_GLOBAL_TRACKITSTPCREADER */

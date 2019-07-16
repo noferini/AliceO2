@@ -11,8 +11,8 @@
 /// \file CalibInfoTOF.cxx
 /// \brief Class to store the output of the matching to TOF for calibration
 
-#include "ReconstructionDataFormats/CalibInfoTOFshort.h"
+#include "DataFormatsTOF/CalibInfoTOF.h"
 
 using namespace o2::dataformats;
 
-//ClassImp(o2::dataformats::CalibInfoTOFshort);
+ClassImp(o2::dataformats::CalibInfoTOF);

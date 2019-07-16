@@ -11,7 +11,7 @@
 # FIXME: do we actually need a library here, or is the executable enough ?
 o2_add_library(GlobalTrackingWorkflow
                SOURCES src/TrackWriterTPCITSSpec.cxx src/TPCITSMatchingSpec.cxx
-                       src/MatchTPCITSWorkflow.cxx
+                       src/MatchTPCITSWorkflow.cxx src/TrackTPCITSReaderSpec.cxx
                PUBLIC_LINK_LIBRARIES O2::GlobalTracking O2::ITSWorkflow
                                      O2::TPCWorkflow O2::FITWorkflow
                                      O2::ITSMFTWorkflow)

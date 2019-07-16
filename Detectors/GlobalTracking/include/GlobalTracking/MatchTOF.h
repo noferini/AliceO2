@@ -23,7 +23,7 @@
 #include "ReconstructionDataFormats/Track.h"
 #include "ReconstructionDataFormats/TrackTPCITS.h"
 #include "ReconstructionDataFormats/MatchInfoTOF.h"
-#include "ReconstructionDataFormats/CalibInfoTOF.h"
+#include "DataFormatsTOF/CalibInfoTOF.h"
 #include "CommonDataFormat/EvIndex.h"
 #include "SimulationDataFormat/MCCompLabel.h"
 #include "CommonUtils/TreeStreamRedirector.h"

@@ -14,7 +14,7 @@
 /// @brief  Basic DPL workflow for TOF reconstruction starting from digits
 
 #include "DetectorsBase/Propagator.h"
-#include "TOFWorkflow/TrackReaderSpec.h"
+#include "GlobalTrackingWorkflow/TrackTPCITSReaderSpec.h"
 #include "TOFWorkflow/DigitReaderSpec.h"
 #include "TOFWorkflow/ClusterReaderSpec.h"
 #include "TOFWorkflow/TOFClusterizerSpec.h"
@@ -129,7 +129,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 
   if (writematching || writecalib) {
     LOG(INFO) << "Insert ITS-TPC Track Reader";
-    specs.emplace_back(o2::tof::getTrackReaderSpec(useMC));
+    specs.emplace_back(o2::globaltracking::getTrackTPCITSReaderSpec(useMC));
     LOG(INFO) << "Insert TOF Matching";
     specs.emplace_back(o2::tof::getTOFRecoWorkflowSpec(useMC));
 
