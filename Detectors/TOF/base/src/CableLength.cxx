@@ -952,4 +952,3 @@ const Float_t Geo::CABLELENGTH[Geo::kNCrate][10][Geo::kNChain][Geo::kNTdc / 3] =
     { { 525.0, 525.0, 525.0, 525.0, 512.5 }, { 550.0, 550.0, 537.5, 537.5, 537.5 } }  //slot 12, chain
   }
 };
-

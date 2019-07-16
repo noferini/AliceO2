@@ -40,8 +40,8 @@ class ClusterReader : public Task
   int mState = 0;
   bool mUseMC = true;
   std::unique_ptr<TFile> mFile = nullptr;
-  std::vector<Cluster> mClusters, *mPclusters=&mClusters;
-  o2::dataformats::MCTruthContainer<o2::MCCompLabel> mLabels, *mPlabels=&mLabels;
+  std::vector<Cluster> mClusters, *mPclusters = &mClusters;
+  o2::dataformats::MCTruthContainer<o2::MCCompLabel> mLabels, *mPlabels = &mLabels;
 };
 
 /// create a processor spec

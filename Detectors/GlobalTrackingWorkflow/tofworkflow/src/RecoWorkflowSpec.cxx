@@ -57,78 +57,77 @@ class TOFDPLRecoWorkflowTask
       return;
     }
 
-  //>>>---------- attach input data --------------->>>
-  auto tracks = pc.inputs().get<std::vector<o2::dataformats::TrackTPCITS>*>("globaltrack");
-  auto clusters = pc.inputs().get<std::vector<o2::tof::Cluster>*>("tofcluster");
+    //>>>---------- attach input data --------------->>>
+    auto tracks = pc.inputs().get<std::vector<o2::dataformats::TrackTPCITS>*>("globaltrack");
+    auto clusters = pc.inputs().get<std::vector<o2::tof::Cluster>*>("tofcluster");
 
-  auto toflabel = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabel");
-  auto itslabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("itstracklabel");
-  auto tpclabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("tpctracklabel");
-  
-  //-------- init geometry and field --------//
-  std::string path = "./";
-  std::string inputGeom = "O2geometry.root";
-  std::string inputGRP = "o2sim_grp.root";
+    auto toflabel = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabel");
+    auto itslabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("itstracklabel");
+    auto tpclabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("tpctracklabel");
 
-  //  o2::base::GeometryManager::loadGeometry(path + inputGeom, "FAIRGeom");
-  //  o2::base::Propagator::initFieldFromGRP(path + inputGRP);
+    //-------- init geometry and field --------//
+    std::string path = "./";
+    std::string inputGeom = "O2geometry.root";
+    std::string inputGRP = "o2sim_grp.root";
 
-  // call actual matching info routine
-  //#ifdef _ALLOW_DEBUG_TREES_
-  //  mMatcher.setDebugTreeFileName(path + mMatcher.getDebugTreeFileName());
-  //  mMatcher.setDebugFlag(o2::globaltracking::MatchTOF::MatchTreeAll);
-  //#endif
-  
-  // we do a copy of the input but we are looking for a way to avoid it (current problem in conversion form unique_ptr to *)
+    //  o2::base::GeometryManager::loadGeometry(path + inputGeom, "FAIRGeom");
+    //  o2::base::Propagator::initFieldFromGRP(path + inputGRP);
 
-  auto tracksRO = std::make_shared<std::vector<o2::dataformats::TrackTPCITS>>();
+    // call actual matching info routine
+    //#ifdef _ALLOW_DEBUG_TREES_
+    //  mMatcher.setDebugTreeFileName(path + mMatcher.getDebugTreeFileName());
+    //  mMatcher.setDebugFlag(o2::globaltracking::MatchTOF::MatchTreeAll);
+    //#endif
+
+    // we do a copy of the input but we are looking for a way to avoid it (current problem in conversion form unique_ptr to *)
+
+    auto tracksRO = std::make_shared<std::vector<o2::dataformats::TrackTPCITS>>();
     //  std::vector<o2::dataformats::TrackTPCITS> tracksRO;
-  *tracksRO.get() = std::move(*tracks);
-  // for (int i = 0; i < tracks->size(); i++) {
-  //   tracksRO.emplace_back(tracks->at(i));
-  // }
-  auto clustersRO = std::make_shared<std::vector<o2::tof::Cluster>>();
-  //std::vector<o2::tof::Cluster> clustersRO;
-  *clustersRO.get() = std::move(*clusters);
-  //  for (int i = 0; i < clusters->size(); i++) {
-  //    clustersRO.emplace_back(clusters->at(i));
-  // } 
+    *tracksRO.get() = std::move(*tracks);
+    // for (int i = 0; i < tracks->size(); i++) {
+    //   tracksRO.emplace_back(tracks->at(i));
+    // }
+    auto clustersRO = std::make_shared<std::vector<o2::tof::Cluster>>();
+    //std::vector<o2::tof::Cluster> clustersRO;
+    *clustersRO.get() = std::move(*clusters);
+    //  for (int i = 0; i < clusters->size(); i++) {
+    //    clustersRO.emplace_back(clusters->at(i));
+    // }
 
-  o2::dataformats::MCTruthContainer<o2::MCCompLabel> toflab = std::move(*toflabel);//*toflabel;
+    o2::dataformats::MCTruthContainer<o2::MCCompLabel> toflab = std::move(*toflabel); //*toflabel;
 
-  auto itslab = std::make_shared<std::vector<o2::MCCompLabel>>();
+    auto itslab = std::make_shared<std::vector<o2::MCCompLabel>>();
     //  std::vector<o2::MCCompLabel> itslab;
-  *itslab.get() = std::move(*itslabel);
-  // for (int i = 0; i < itslabel->size(); i++) {
-  //   itslab.emplace_back(itslabel->at(i));
-  // }
+    *itslab.get() = std::move(*itslabel);
+    // for (int i = 0; i < itslabel->size(); i++) {
+    //   itslab.emplace_back(itslabel->at(i));
+    // }
 
-  auto tpclab = std::make_shared<std::vector<o2::MCCompLabel>>();
+    auto tpclab = std::make_shared<std::vector<o2::MCCompLabel>>();
     //  std::vector<o2::MCCompLabel> tpclab;
-  *tpclab.get() = std::move(*tpclabel);
-  // for (int i = 0; i < tpclabel->size(); i++) {
-  //   tpclab.emplace_back(tpclabel->at(i));
-  // }
+    *tpclab.get() = std::move(*tpclabel);
+    // for (int i = 0; i < tpclabel->size(); i++) {
+    //   tpclab.emplace_back(tpclabel->at(i));
+    // }
 
-  mMatcher.initWorkflow(tracksRO.get() , clustersRO.get(), &toflab, itslab.get(), tpclab.get());
+    mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), &toflab, itslab.get(), tpclab.get());
 
-  mMatcher.run();
+    mMatcher.run();
 
-  // in run_match_tof aggiugnere esplicitamente la chiamata a fill del tree (nella classe MatchTOF) e il metodo per leggere i vettori di output
+    // in run_match_tof aggiugnere esplicitamente la chiamata a fill del tree (nella classe MatchTOF) e il metodo per leggere i vettori di output
 
-  //...
+    //...
     // LOG(INFO) << "TOF CLUSTERER : TRANSFORMED " << digits->size()
     //           << " DIGITS TO " << mClustersArray.size() << " CLUSTERS";
 
-
     // send matching-info
-  pc.outputs().snapshot(Output{ "TOF", "MATCHINFOS", 0, Lifetime::Timeframe }, mMatcher.getMatchedTrackVector());
-  if(mUseMC){
-    pc.outputs().snapshot(Output{ "TOF", "MATCHTOFINFOSMC", 0, Lifetime::Timeframe }, mMatcher.getMatchedTOFLabelsVector());
-    pc.outputs().snapshot(Output{ "TOF", "MATCHTPCINFOSMC", 0, Lifetime::Timeframe }, mMatcher.getMatchedTPCLabelsVector());
-    pc.outputs().snapshot(Output{ "TOF", "MATCHITSINFOSMC", 0, Lifetime::Timeframe }, mMatcher.getMatchedITSLabelsVector());
-  }
-  pc.outputs().snapshot(Output{ "TOF", "CALIBINFOS", 0, Lifetime::Timeframe }, mMatcher.getCalibVector());
+    pc.outputs().snapshot(Output{ "TOF", "MATCHINFOS", 0, Lifetime::Timeframe }, mMatcher.getMatchedTrackVector());
+    if (mUseMC) {
+      pc.outputs().snapshot(Output{ "TOF", "MATCHTOFINFOSMC", 0, Lifetime::Timeframe }, mMatcher.getMatchedTOFLabelsVector());
+      pc.outputs().snapshot(Output{ "TOF", "MATCHTPCINFOSMC", 0, Lifetime::Timeframe }, mMatcher.getMatchedTPCLabelsVector());
+      pc.outputs().snapshot(Output{ "TOF", "MATCHITSINFOSMC", 0, Lifetime::Timeframe }, mMatcher.getMatchedITSLabelsVector());
+    }
+    pc.outputs().snapshot(Output{ "TOF", "CALIBINFOS", 0, Lifetime::Timeframe }, mMatcher.getCalibVector());
 
     // declare done
     finished = true;
@@ -136,23 +135,23 @@ class TOFDPLRecoWorkflowTask
   }
 
  private:
-  o2::globaltracking::MatchTOF mMatcher;    ///< Cluster finder
+  o2::globaltracking::MatchTOF mMatcher; ///< Cluster finder
 };
 
 o2::framework::DataProcessorSpec getTOFRecoWorkflowSpec(bool useMC)
-{  
+{
   std::vector<InputSpec> inputs;
   std::vector<OutputSpec> outputs;
-  inputs.emplace_back("tofcluster","TOF", "CLUSTERS", 0, Lifetime::Timeframe);
-  inputs.emplace_back("globaltrack","GLO", "TPCITS", 0, Lifetime::Timeframe);
-  if(useMC){
-    inputs.emplace_back("tofclusterlabel","TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe);
-    inputs.emplace_back("itstracklabel","GLO", "TPCITS_ITSMC", 0, Lifetime::Timeframe);
-    inputs.emplace_back("tpctracklabel","GLO", "TPCITS_TPCMC", 0, Lifetime::Timeframe);
+  inputs.emplace_back("tofcluster", "TOF", "CLUSTERS", 0, Lifetime::Timeframe);
+  inputs.emplace_back("globaltrack", "GLO", "TPCITS", 0, Lifetime::Timeframe);
+  if (useMC) {
+    inputs.emplace_back("tofclusterlabel", "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe);
+    inputs.emplace_back("itstracklabel", "GLO", "TPCITS_ITSMC", 0, Lifetime::Timeframe);
+    inputs.emplace_back("tpctracklabel", "GLO", "TPCITS_TPCMC", 0, Lifetime::Timeframe);
   }
 
   outputs.emplace_back("TOF", "MATCHINFOS", 0, Lifetime::Timeframe);
-  if(useMC){
+  if (useMC) {
     outputs.emplace_back("TOF", "MATCHTOFINFOSMC", 0, Lifetime::Timeframe);
     outputs.emplace_back("TOF", "MATCHTPCINFOSMC", 0, Lifetime::Timeframe);
     outputs.emplace_back("TOF", "MATCHITSINFOSMC", 0, Lifetime::Timeframe);
@@ -161,10 +160,10 @@ o2::framework::DataProcessorSpec getTOFRecoWorkflowSpec(bool useMC)
 
   return DataProcessorSpec{
     "TOFRecoWorkflow",
-      inputs,
-      outputs,
-      AlgorithmSpec{ adaptFromTask<TOFDPLRecoWorkflowTask>(useMC) },
-      Options{ /* for the moment no options */ }
+    inputs,
+    outputs,
+    AlgorithmSpec{ adaptFromTask<TOFDPLRecoWorkflowTask>(useMC) },
+    Options{ /* for the moment no options */ }
   };
 }
 

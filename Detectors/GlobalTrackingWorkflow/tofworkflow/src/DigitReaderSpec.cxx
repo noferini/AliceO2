@@ -58,7 +58,8 @@ void DigitReader::run(ProcessingContext& pc)
 
     // add digits loaded in the output snapshot
     pc.outputs().snapshot(Output{ "TOF", "DIGITS", 0, Lifetime::Timeframe }, mDigits);
-    if(mUseMC) pc.outputs().snapshot(Output{ "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe }, mLabels);
+    if (mUseMC)
+      pc.outputs().snapshot(Output{ "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe }, mLabels);
 
     static o2::parameters::GRPObject::ROMode roMode = o2::parameters::GRPObject::CONTINUOUS;
 
@@ -70,7 +71,7 @@ void DigitReader::run(ProcessingContext& pc)
   }
 
   mState = 2;
-//  pc.services().get<ControlService>().readyToQuit(false);
+  //  pc.services().get<ControlService>().readyToQuit(false);
 }
 
 DataProcessorSpec getDigitReaderSpec(bool useMC)

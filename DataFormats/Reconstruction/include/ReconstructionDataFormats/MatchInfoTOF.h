@@ -26,7 +26,7 @@ class MatchInfoTOF
   using evIdx = o2::dataformats::EvIndex<int, int>;
 
  public:
- MatchInfoTOF(evIdx evIdxTOFCl, float chi2, o2::track::TrackLTIntegral trkIntLT,evIdx evIdxTrack = evIdx(0,0)) : mEvIdxTOFCl(evIdxTOFCl), mChi2(chi2), mIntLT(trkIntLT) ,mEvIdxTrack(evIdxTrack){};
+  MatchInfoTOF(evIdx evIdxTOFCl, float chi2, o2::track::TrackLTIntegral trkIntLT, evIdx evIdxTrack = evIdx(0, 0)) : mEvIdxTOFCl(evIdxTOFCl), mChi2(chi2), mIntLT(trkIntLT), mEvIdxTrack(evIdxTrack){};
   MatchInfoTOF() = default;
   void setEvIdxTOFCl(evIdx index) { mEvIdxTOFCl = index; }
   void setEvIdxTrack(evIdx index) { mEvIdxTrack = index; }

@@ -59,7 +59,7 @@ void TrackReader::run(ProcessingContext& pc)
 
     treeTrack->GetEntry(0);
 
-    printf("N ITS-TPC tracks = %d\n",mTracks.size());
+    printf("N ITS-TPC tracks = %d\n", mTracks.size());
 
     // add digits loaded in the output snapshot
     pc.outputs().snapshot(Output{ "GLO", "TPCITS", 0, Lifetime::Timeframe }, mTracks);
@@ -73,7 +73,7 @@ void TrackReader::run(ProcessingContext& pc)
   }
 
   mState = 2;
-//  pc.services().get<ControlService>().readyToQuit(false);
+  //  pc.services().get<ControlService>().readyToQuit(false);
 }
 
 DataProcessorSpec getTrackReaderSpec(bool useMC)
@@ -87,12 +87,12 @@ DataProcessorSpec getTrackReaderSpec(bool useMC)
 
   return DataProcessorSpec{
     "itstpc-track-reader",
-     Inputs{},
-     outputs,
-     AlgorithmSpec{ adaptFromTask<TrackReader>(useMC) },
-     Options{
-       { "itstpc-track-infile", VariantType::String, "o2match_itstpc.root", { "Name of the input file" } } }
-   };
+    Inputs{},
+    outputs,
+    AlgorithmSpec{ adaptFromTask<TrackReader>(useMC) },
+    Options{
+      { "itstpc-track-infile", VariantType::String, "o2match_itstpc.root", { "Name of the input file" } } }
+  };
 }
 
 } // namespace tof
