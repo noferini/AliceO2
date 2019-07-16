@@ -61,9 +61,19 @@ class TOFDPLRecoWorkflowTask
     auto tracks = pc.inputs().get<std::vector<o2::dataformats::TrackTPCITS>*>("globaltrack");
     auto clusters = pc.inputs().get<std::vector<o2::tof::Cluster>*>("tofcluster");
 
-    auto toflabel = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabel");
-    auto itslabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("itstracklabel");
-    auto tpclabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("tpctracklabel");
+    
+    o2::dataformats::MCTruthContainer<o2::MCCompLabel> toflab;
+    auto itslab = std::make_shared<std::vector<o2::MCCompLabel>>();
+    auto tpclab = std::make_shared<std::vector<o2::MCCompLabel>>();
+
+    if(mUseMC){
+      auto toflabel = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabel");
+      auto itslabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("itstracklabel");
+      auto tpclabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("tpctracklabel");
+      toflab = std::move(*toflabel);
+      *itslab.get() = std::move(*itslabel);
+      *tpclab.get() = std::move(*tpclabel);
+    }
 
     //-------- init geometry and field --------//
     std::string path = "./";
@@ -94,23 +104,8 @@ class TOFDPLRecoWorkflowTask
     //    clustersRO.emplace_back(clusters->at(i));
     // }
 
-    o2::dataformats::MCTruthContainer<o2::MCCompLabel> toflab = std::move(*toflabel); //*toflabel;
-
-    auto itslab = std::make_shared<std::vector<o2::MCCompLabel>>();
-    //  std::vector<o2::MCCompLabel> itslab;
-    *itslab.get() = std::move(*itslabel);
-    // for (int i = 0; i < itslabel->size(); i++) {
-    //   itslab.emplace_back(itslabel->at(i));
-    // }
-
-    auto tpclab = std::make_shared<std::vector<o2::MCCompLabel>>();
-    //  std::vector<o2::MCCompLabel> tpclab;
-    *tpclab.get() = std::move(*tpclabel);
-    // for (int i = 0; i < tpclabel->size(); i++) {
-    //   tpclab.emplace_back(tpclabel->at(i));
-    // }
-
-    mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), &toflab, itslab.get(), tpclab.get());
+    if(mUseMC) mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), &toflab, itslab.get(), tpclab.get());
+    else mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), NULL, NULL, NULL);
 
     mMatcher.run();
 

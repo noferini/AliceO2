@@ -20,6 +20,8 @@
 #include "DataFormatsTOF/Cluster.h"
 #include "SimulationDataFormat/MCTruthContainer.h"
 #include "SimulationDataFormat/MCCompLabel.h"
+#include <memory> // for make_shared, make_unique, unique_ptr
+#include <vector>
 
 using namespace o2::framework;
 
@@ -33,7 +35,6 @@ namespace tof
 class TOFDPLClustererTask
 {
   using MCLabelContainer = o2::dataformats::MCTruthContainer<o2::MCCompLabel>;
-
   bool mUseMC = true;
 
  public:
@@ -51,18 +52,24 @@ class TOFDPLClustererTask
     }
     // get digit data
     auto digits = pc.inputs().get<std::vector<std::vector<o2::tof::Digit>>*>("tofdigits");
-    auto digitlabels = pc.inputs().get<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>*>("tofdigitlabels");
-    mClusterer.setMCTruthContainer(&mClsLabels);
-
+    auto labelvector = std::make_shared<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>>();
+    if(mUseMC){
+      auto digitlabels  = pc.inputs().get<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>*>("tofdigitlabels");
+      *labelvector.get() = std::move(*digitlabels);
+      mClusterer.setMCTruthContainer(&mClsLabels);
+      mClsLabels.clear();
+    }
     // call actual clustering routine
     mClustersArray.clear();
-    mClsLabels.clear();
 
     for (int i = 0; i < digits->size(); i++) {
       printf("# TOF readout window for clusterization = %i\n", i);
       auto digitsRO = digits->at(i);
       mReader.setDigitArray(&digitsRO);
-      mClusterer.process(mReader, mClustersArray, &(digitlabels->at(i)));
+      if(mUseMC){
+	mClusterer.process(mReader, mClustersArray, &(labelvector->at(i)));
+      }
+      else mClusterer.process(mReader, mClustersArray, NULL);
     }
     LOG(INFO) << "TOF CLUSTERER : TRANSFORMED " << digits->size()
               << " DIGITS TO " << mClustersArray.size() << " CLUSTERS";
@@ -70,7 +77,7 @@ class TOFDPLClustererTask
     // send clusters
     pc.outputs().snapshot(Output{ "TOF", "CLUSTERS", 0, Lifetime::Timeframe }, mClustersArray);
     // send labels
-    pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mClsLabels);
+    if(mUseMC) pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mClsLabels);
 
     // declare done
     finished = true;
@@ -87,10 +94,14 @@ class TOFDPLClustererTask
 
 o2::framework::DataProcessorSpec getTOFClusterizerSpec(bool useMC)
 {
+  std::vector<InputSpec> inputs;
+  inputs.emplace_back("tofdigits", "TOF", "DIGITS", 0, Lifetime::Timeframe);
+  if(useMC) inputs.emplace_back("tofdigitlabels", "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe);
+  
+
   return DataProcessorSpec{
     "TOFClusterer",
-    Inputs{ InputSpec{ "tofdigits", "TOF", "DIGITS", 0, Lifetime::Timeframe },
-            InputSpec{ "tofdigitlabels", "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe } },
+    inputs,
     Outputs{ OutputSpec{ "TOF", "CLUSTERS", 0, Lifetime::Timeframe },
              OutputSpec{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe } },
     AlgorithmSpec{ adaptFromTask<TOFDPLClustererTask>(useMC) },

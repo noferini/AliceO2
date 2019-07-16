@@ -8,10 +8,11 @@
 # granted to it by virtue of its status as an Intergovernmental Organization or
 # submit itself to any jurisdiction.
 
-add_subdirectory(base)
-add_subdirectory(simulation)
-add_subdirectory(reconstruction)
-if(BUILD_TESTING)
-  add_subdirectory(prototyping)
-endif()
-add_subdirectory(workflow)
+o2_add_library(TOFWorkflowUtils
+               SOURCES src/DigitReaderSpec.cxx
+	               src/ClusterReaderSpec.cxx
+ 		       src/TOFClusterizerSpec.cxx
+  		       src/TOFClusterWriterSpec.cxx
+               PUBLIC_LINK_LIBRARIES O2::Framework O2::TOFBase O2::DataFormatsTOF
+                                     O2::TOFReconstruction)
+

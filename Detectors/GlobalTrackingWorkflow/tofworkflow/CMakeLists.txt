@@ -9,16 +9,12 @@
 # submit itself to any jurisdiction.
 
 o2_add_library(TOFWorkflow
-               SOURCES src/DigitReaderSpec.cxx
-	               src/ClusterReaderSpec.cxx
- 		       src/TOFClusterizerSpec.cxx
-  		       src/TOFClusterWriterSpec.cxx
-  		       src/TrackReaderSpec.cxx
+               SOURCES src/TrackReaderSpec.cxx
  		       src/RecoWorkflowSpec.cxx
 		       src/TOFMatchedWriterSpec.cxx
   		       src/TOFCalibWriterSpec.cxx
                PUBLIC_LINK_LIBRARIES O2::Framework O2::TOFBase O2::DataFormatsTOF
-                                     O2::TOFReconstruction O2::GlobalTracking)
+                                     O2::TOFReconstruction O2::GlobalTracking O2::TOFWorkflowUtils)
 
 o2_add_executable(reco-workflow
                   COMPONENT_NAME tof
