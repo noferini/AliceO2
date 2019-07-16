@@ -85,14 +85,14 @@ DataProcessorSpec getTOFClusterWriterSpec(bool useMC)
       auto br = getOrMakeBranch(*outputtree.get(), "TOFCluster", digits.get());
       br->Fill();
 
-      if(useMC){ // retrieve labels from the input
-	auto labeldata = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabels");
-	LOG(INFO) << "TOF GOT " << labeldata->getNElements() << " LABELS ";
-	auto labeldataraw = labeldata.get();
-	// connect this to a particular branch
+      if (useMC) { // retrieve labels from the input
+        auto labeldata = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabels");
+        LOG(INFO) << "TOF GOT " << labeldata->getNElements() << " LABELS ";
+        auto labeldataraw = labeldata.get();
+        // connect this to a particular branch
 
-	auto labelbr = getOrMakeBranch(*outputtree.get(), "TOFClusterMCTruth", &labeldataraw);
-	labelbr->Fill();
+        auto labelbr = getOrMakeBranch(*outputtree.get(), "TOFClusterMCTruth", &labeldataraw);
+        labelbr->Fill();
       }
 
       finished = true;
@@ -106,7 +106,8 @@ DataProcessorSpec getTOFClusterWriterSpec(bool useMC)
 
   std::vector<InputSpec> inputs;
   inputs.emplace_back("tofclusters", "TOF", "CLUSTERS", 0, Lifetime::Timeframe);
-  if(useMC) inputs.emplace_back("tofclusterlabels", "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe);
+  if (useMC)
+    inputs.emplace_back("tofclusterlabels", "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe);
 
   return DataProcessorSpec{
     "TOFClusterWriter",

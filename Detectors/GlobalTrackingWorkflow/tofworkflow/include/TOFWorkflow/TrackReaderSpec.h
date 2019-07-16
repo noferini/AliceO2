@@ -34,13 +34,14 @@ class TrackReader : public Task
   ~TrackReader() override = default;
   void init(InitContext& ic) final;
   void run(ProcessingContext& pc) final;
+
  private:
   int mState = 0;
   bool mUseMC = true;
   std::unique_ptr<TFile> mFile = nullptr;
-  std::vector < o2::dataformats::TrackTPCITS > mTracks, *mPtracks=&mTracks;
-  std::vector<o2::MCCompLabel> mTPCLabels, *mPTPCLabels=&mTPCLabels;
-  std::vector<o2::MCCompLabel> mITSLabels, *mPITSLabels=&mITSLabels;
+  std::vector<o2::dataformats::TrackTPCITS> mTracks, *mPtracks = &mTracks;
+  std::vector<o2::MCCompLabel> mTPCLabels, *mPTPCLabels = &mTPCLabels;
+  std::vector<o2::MCCompLabel> mITSLabels, *mPITSLabels = &mITSLabels;
 };
 
 /// create a processor spec

@@ -38,8 +38,8 @@ namespace o2
 namespace tof
 {
 
-  using evIdx = o2::dataformats::EvIndex<int, int>;
-  using OutputType = std::vector<o2::dataformats::CalibInfoTOF>;
+using evIdx = o2::dataformats::EvIndex<int, int>;
+using OutputType = std::vector<o2::dataformats::CalibInfoTOF>;
 
 template <typename T>
 TBranch* getOrMakeBranch(TTree& tree, std::string brname, T* ptr)
@@ -98,7 +98,7 @@ DataProcessorSpec getTOFCalibWriterSpec()
       br->Fill();
 
       finished = true;
-      LOG(INFO) << "TOF Calib info filled! N matched = " << calibinfo.get()->size() ;
+      LOG(INFO) << "TOF Calib info filled! N matched = " << calibinfo.get()->size();
       pc.services().get<ControlService>().readyToQuit(false);
     };
 
@@ -108,7 +108,7 @@ DataProcessorSpec getTOFCalibWriterSpec()
   };
 
   std::vector<InputSpec> inputs;
-  inputs.emplace_back("tofcalibinfo","TOF", "CALIBINFOS", 0, Lifetime::Timeframe);
+  inputs.emplace_back("tofcalibinfo", "TOF", "CALIBINFOS", 0, Lifetime::Timeframe);
 
   return DataProcessorSpec{
     "TOFCalibWriter",

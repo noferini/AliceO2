@@ -15,8 +15,8 @@ void checkTOFMatching()
   // getting TOF info
   TFile* fmatchTOF = new TFile("o2match_tof.root");
   TTree* matchTOF = (TTree*)fmatchTOF->Get("matchTOF");
-  std::vector< o2::dataformats::MatchInfoTOF>* TOFMatchInfo;
-  TOFMatchInfo = new std::vector< o2::dataformats::MatchInfoTOF>;
+  std::vector<o2::dataformats::MatchInfoTOF>* TOFMatchInfo;
+  TOFMatchInfo = new std::vector<o2::dataformats::MatchInfoTOF>;
   matchTOF->SetBranchAddress("TOFMatchInfo", &TOFMatchInfo);
 
   // getting the ITSTPCtracks

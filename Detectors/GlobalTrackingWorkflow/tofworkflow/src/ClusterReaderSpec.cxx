@@ -58,7 +58,8 @@ void ClusterReader::run(ProcessingContext& pc)
 
     // add clusters loaded in the output snapshot
     pc.outputs().snapshot(Output{ "TOF", "CLUSTERS", 0, Lifetime::Timeframe }, mClusters);
-    if(mUseMC) pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mLabels);
+    if (mUseMC)
+      pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mLabels);
 
     static o2::parameters::GRPObject::ROMode roMode = o2::parameters::GRPObject::CONTINUOUS;
 
@@ -70,7 +71,7 @@ void ClusterReader::run(ProcessingContext& pc)
   }
 
   mState = 2;
-//  pc.services().get<ControlService>().readyToQuit(false);
+  //  pc.services().get<ControlService>().readyToQuit(false);
 }
 
 DataProcessorSpec getClusterReaderSpec(bool useMC)

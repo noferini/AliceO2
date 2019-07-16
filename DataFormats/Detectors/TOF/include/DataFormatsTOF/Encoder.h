@@ -28,35 +28,34 @@ namespace compressed
 /// \class Encoder
 /// \brief Encoder class for TOF
 ///
-  class Encoder {
-    
-  public:
-    
+class Encoder
+{
+
+ public:
   Encoder() = default;
-    ~Encoder() = default;
-    
-    bool open(std::string name);
-    bool alloc(long size);
-    bool encode(/*define input structure*/);
-    bool flush();
-    bool close();
-    void setVerbose(bool val) {mVerbose = val;};
-    
-    // benchmarks
-    double mIntegratedBytes = 0.;
-    double mIntegratedTime = 0.;
-    
-  protected:
-    
-    std::ofstream mFile;
-    bool mVerbose = false;
-    
-    char *mBuffer = nullptr;
-    long mSize;
-    Union_t *mUnion = nullptr;
-  };
+  ~Encoder() = default;
+
+  bool open(std::string name);
+  bool alloc(long size);
+  bool encode(/*define input structure*/);
+  bool flush();
+  bool close();
+  void setVerbose(bool val) { mVerbose = val; };
+
+  // benchmarks
+  double mIntegratedBytes = 0.;
+  double mIntegratedTime = 0.;
+
+ protected:
+  std::ofstream mFile;
+  bool mVerbose = false;
+
+  char* mBuffer = nullptr;
+  long mSize;
+  Union_t* mUnion = nullptr;
+};
 
 } // namespace compressed
-} // namespace TOF
+} // namespace tof
 } // namespace o2
 #endif

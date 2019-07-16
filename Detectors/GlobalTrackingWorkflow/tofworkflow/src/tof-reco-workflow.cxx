@@ -75,7 +75,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
     LOG(ERROR) << "This workflow needs a valid GRP file to start";
     return specs;
   }
-    
+
   //  o2::conf::ConfigurableParam::writeINI("o2tofrecoflow_configuration.ini");
 
   auto tofSectors = o2::RangeTokenizer::tokenize<int>(cfgc.options().get<std::string>("tof-sectors"));
@@ -89,9 +89,12 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   bool writematching = 0;
   bool writecalib = 0;
 
-  if(outputType.rfind("clusters") < outputType.size()) writecluster = 1;
-  if(outputType.rfind("matching-info") < outputType.size()) writematching = 1;
-  if(outputType.rfind("calib-info") < outputType.size()) writecalib = 1;
+  if (outputType.rfind("clusters") < outputType.size())
+    writecluster = 1;
+  if (outputType.rfind("matching-info") < outputType.size())
+    writematching = 1;
+  if (outputType.rfind("calib-info") < outputType.size())
+    writecalib = 1;
 
   bool clusterinput = 0;
   if (inputType == "clusters") {
@@ -109,33 +112,32 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 
   auto useMC = !cfgc.options().get<bool>("disable-mc");
 
-  if(! clusterinput){
+  if (!clusterinput) {
     // TOF clusterizer
     LOG(INFO) << "Insert TOF Digit reader from file";
     specs.emplace_back(o2::tof::getDigitReaderSpec(useMC));
     LOG(INFO) << "Insert TOF Clusterizer";
     specs.emplace_back(o2::tof::getTOFClusterizerSpec(useMC));
-    if(writecluster){
+    if (writecluster) {
       LOG(INFO) << "Insert TOF Cluster Writer";
       specs.emplace_back(o2::tof::getTOFClusterWriterSpec(useMC));
     }
-  }
-  else{
+  } else {
     LOG(INFO) << "Insert TOF Cluster Reader";
     specs.emplace_back(o2::tof::getClusterReaderSpec(useMC));
   }
 
-  if(writematching || writecalib){
+  if (writematching || writecalib) {
     LOG(INFO) << "Insert ITS-TPC Track Reader";
     specs.emplace_back(o2::tof::getTrackReaderSpec(useMC));
     LOG(INFO) << "Insert TOF Matching";
     specs.emplace_back(o2::tof::getTOFRecoWorkflowSpec(useMC));
 
-    if(writematching){
+    if (writematching) {
       LOG(INFO) << "Insert TOF Matched Info Writer";
       specs.emplace_back(o2::tof::getTOFMatchedWriterSpec(useMC));
     }
-    if(writecalib){
+    if (writecalib) {
       LOG(INFO) << "Insert TOF Calib Info Writer";
       specs.emplace_back(o2::tof::getTOFCalibWriterSpec());
     }

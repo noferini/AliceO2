@@ -167,13 +167,13 @@ class MatchTOF
   void fillTOFmatchTree(const char* tname, int cacheTOF, int sectTOF, int plateTOF, int stripTOF, int padXTOF, int padZTOF, int cacheeTrk, int crossedStrip, int sectPropagation, int platePropagation, int stripPropagation, int padXPropagation, int padZPropagation, float resX, float resZ, float res, o2::dataformats::TrackTPCITS& trk, float intLength, float intTimePion, float timeTOF);
   void fillTOFmatchTreeWithLabels(const char* tname, int cacheTOF, int sectTOF, int plateTOF, int stripTOF, int padXTOF, int padZTOF, int cacheeTrk, int crossedStrip, int sectPropagation, int platePropagation, int stripPropagation, int padXPropagation, int padZPropagation, float resX, float resZ, float res, o2::dataformats::TrackTPCITS& trk, int TPClabelTrackID, int TPClabelEventID, int TPClabelSourceID, int ITSlabelTrackID, int ITSlabelEventID, int ITSlabelSourceID, int TOFlabelTrackID0, int TOFlabelEventID0, int TOFlabelSourceID0, int TOFlabelTrackID1, int TOFlabelEventID1, int TOFlabelSourceID1, int TOFlabelTrackID2, int TOFlabelEventID2, int TOFlabelSourceID2, float intLength, float intTimePion, float timeTOF);
   void dumpWinnerMatches();
-  
-  std::vector<o2::dataformats::MatchInfoTOF> &getMatchedTrackVector() {return mMatchedTracks;}
-  std::vector<o2::dataformats::CalibInfoTOF> &getCalibVector() {return mCalibInfoTOF;}
-  
-  std::vector<o2::MCCompLabel> &getMatchedTOFLabelsVector() {return mOutTOFLabels;}     ///< get vector of TOF label of matched tracks
-  std::vector<o2::MCCompLabel> &getMatchedTPCLabelsVector() {return mOutTPCLabels;}     ///< get vector of TPC label of matched tracks
-  std::vector<o2::MCCompLabel> &getMatchedITSLabelsVector() {return mOutITSLabels;}     ///< get vector of ITS label of matched tracks
+
+  std::vector<o2::dataformats::MatchInfoTOF>& getMatchedTrackVector() { return mMatchedTracks; }
+  std::vector<o2::dataformats::CalibInfoTOF>& getCalibVector() { return mCalibInfoTOF; }
+
+  std::vector<o2::MCCompLabel>& getMatchedTOFLabelsVector() { return mOutTOFLabels; } ///< get vector of TOF label of matched tracks
+  std::vector<o2::MCCompLabel>& getMatchedTPCLabelsVector() { return mOutTPCLabels; } ///< get vector of TPC label of matched tracks
+  std::vector<o2::MCCompLabel>& getMatchedITSLabelsVector() { return mOutITSLabels; } ///< get vector of ITS label of matched tracks
 
  private:
   void attachInputTrees();
@@ -247,7 +247,7 @@ class MatchTOF
 
   ///<array of matched TOFCluster with matching information (residuals, expected times...) with the corresponding vector of indices
   //std::vector<o2::dataformats::MatchInfoTOF> mMatchedTracks;
-  std::vector<o2::dataformats::MatchInfoTOF> mMatchedTracks; // this is the output of the matching
+  std::vector<o2::dataformats::MatchInfoTOF> mMatchedTracks;                 // this is the output of the matching
   std::vector<o2::MCCompLabel> mOutTOFLabels;                                ///< TOF label of matched tracks
   std::vector<o2::MCCompLabel> mOutTPCLabels;                                ///< TPC label of matched tracks
   std::vector<o2::MCCompLabel> mOutITSLabels;                                ///< ITS label of matched tracks

@@ -38,8 +38,8 @@ namespace o2
 namespace tof
 {
 
-  using evIdx = o2::dataformats::EvIndex<int, int>;
-  using MatchOutputType = std::vector<o2::dataformats::MatchInfoTOF>;
+using evIdx = o2::dataformats::EvIndex<int, int>;
+using MatchOutputType = std::vector<o2::dataformats::MatchInfoTOF>;
 
 template <typename T>
 TBranch* getOrMakeBranch(TTree& tree, std::string brname, T* ptr)
@@ -102,33 +102,33 @@ DataProcessorSpec getTOFMatchedWriterSpec(bool useMC)
       auto br = getOrMakeBranch(*outputtree.get(), "TOFMatchInfo", matched.get());
       br->Fill();
 
-      if(useMC){
-	// retrieve labels from the input
+      if (useMC) {
+        // retrieve labels from the input
 
-	auto indatalabeltof = pc.inputs().get<std::vector<o2::MCCompLabel>>("matchtoflabels");
-	LOG(INFO) << "TOF LABELS GOT " << indatalabeltof.size() << " LABELS ";
-	*labeltof.get() = std::move(indatalabeltof);
-	//connect this to a particular branch
-	auto labeltofbr = getOrMakeBranch(*outputtree.get(), "MatchTOFMCTruth", labeltof.get());
-	labeltofbr->Fill();
+        auto indatalabeltof = pc.inputs().get<std::vector<o2::MCCompLabel>>("matchtoflabels");
+        LOG(INFO) << "TOF LABELS GOT " << indatalabeltof.size() << " LABELS ";
+        *labeltof.get() = std::move(indatalabeltof);
+        //connect this to a particular branch
+        auto labeltofbr = getOrMakeBranch(*outputtree.get(), "MatchTOFMCTruth", labeltof.get());
+        labeltofbr->Fill();
 
-	auto indatalabeltpc = pc.inputs().get<std::vector<o2::MCCompLabel>>("matchtpclabels");
-	LOG(INFO) << "TPC LABELS GOT " << indatalabeltpc.size() << " LABELS ";
-	*labeltpc.get() = std::move(indatalabeltpc);
-	//connect this to a particular branch
-	auto labeltpcbr = getOrMakeBranch(*outputtree.get(), "MatchTPCMCTruth", labeltpc.get());
-	labeltpcbr->Fill();
+        auto indatalabeltpc = pc.inputs().get<std::vector<o2::MCCompLabel>>("matchtpclabels");
+        LOG(INFO) << "TPC LABELS GOT " << indatalabeltpc.size() << " LABELS ";
+        *labeltpc.get() = std::move(indatalabeltpc);
+        //connect this to a particular branch
+        auto labeltpcbr = getOrMakeBranch(*outputtree.get(), "MatchTPCMCTruth", labeltpc.get());
+        labeltpcbr->Fill();
 
-	auto indatalabelits = pc.inputs().get<std::vector<o2::MCCompLabel>>("matchitslabels");
-	LOG(INFO) << "ITS LABELS GOT " << indatalabelits.size() << " LABELS ";
-	*labelits.get() = std::move(indatalabelits);
-	//connect this to a particular branch
-	auto labelitsbr = getOrMakeBranch(*outputtree.get(), "MatchITSMCTruth", labelits.get());
-	labelitsbr->Fill();
+        auto indatalabelits = pc.inputs().get<std::vector<o2::MCCompLabel>>("matchitslabels");
+        LOG(INFO) << "ITS LABELS GOT " << indatalabelits.size() << " LABELS ";
+        *labelits.get() = std::move(indatalabelits);
+        //connect this to a particular branch
+        auto labelitsbr = getOrMakeBranch(*outputtree.get(), "MatchITSMCTruth", labelits.get());
+        labelitsbr->Fill();
       }
 
       finished = true;
-      LOG(INFO) << "TOF Macthing info filled! N matched = " << matched.get()->size() ;
+      LOG(INFO) << "TOF Macthing info filled! N matched = " << matched.get()->size();
       pc.services().get<ControlService>().readyToQuit(false);
     };
 
@@ -138,8 +138,8 @@ DataProcessorSpec getTOFMatchedWriterSpec(bool useMC)
   };
 
   std::vector<InputSpec> inputs;
-  inputs.emplace_back("tofmatching","TOF", "MATCHINFOS", 0, Lifetime::Timeframe);
-  if(useMC){
+  inputs.emplace_back("tofmatching", "TOF", "MATCHINFOS", 0, Lifetime::Timeframe);
+  if (useMC) {
     inputs.emplace_back("matchtoflabels", "TOF", "MATCHTOFINFOSMC", 0, Lifetime::Timeframe);
     inputs.emplace_back("matchtpclabels", "TOF", "MATCHTPCINFOSMC", 0, Lifetime::Timeframe);
     inputs.emplace_back("matchitslabels", "TOF", "MATCHITSINFOSMC", 0, Lifetime::Timeframe);
