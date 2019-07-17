@@ -41,7 +41,7 @@ class TOFDPLRecoWorkflowTask
   bool mUseMC = true;
 
  public:
-  TOFDPLRecoWorkflowTask(bool useMC) : mUseMC(useMC) {}
+  explicit TOFDPLRecoWorkflowTask(bool useMC) : mUseMC(useMC) {}
 
   void init(framework::InitContext& ic)
   {
@@ -75,9 +75,9 @@ class TOFDPLRecoWorkflowTask
     }
 
     //-------- init geometry and field --------//
-    std::string path = "./";
-    std::string inputGeom = "O2geometry.root";
-    std::string inputGRP = "o2sim_grp.root";
+    // std::string path = "./";
+    // std::string inputGeom = "O2geometry.root";
+    // std::string inputGRP = "o2sim_grp.root";
 
     //  o2::base::GeometryManager::loadGeometry(path + inputGeom, "FAIRGeom");
     //  o2::base::Propagator::initFieldFromGRP(path + inputGRP);

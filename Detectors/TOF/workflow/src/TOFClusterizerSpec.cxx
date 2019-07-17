@@ -38,7 +38,7 @@ class TOFDPLClustererTask
   bool mUseMC = true;
 
  public:
-  TOFDPLClustererTask(bool useMC) : mUseMC(useMC) {}
+  explicit TOFDPLClustererTask(bool useMC) : mUseMC(useMC) {}
   void init(framework::InitContext& ic)
   {
     // nothing special to be set up

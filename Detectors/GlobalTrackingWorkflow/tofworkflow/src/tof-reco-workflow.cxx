@@ -78,9 +78,9 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 
   //  o2::conf::ConfigurableParam::writeINI("o2tofrecoflow_configuration.ini");
 
-  auto tofSectors = o2::RangeTokenizer::tokenize<int>(cfgc.options().get<std::string>("tof-sectors"));
   // the lane configuration defines the subspecification ids to be distributed among the lanes.
-  std::vector<int> laneConfiguration;
+  // auto tofSectors = o2::RangeTokenizer::tokenize<int>(cfgc.options().get<std::string>("tof-sectors"));
+  // std::vector<int> laneConfiguration = tofSectors; 
   auto nLanes = cfgc.options().get<int>("tof-lanes");
   auto inputType = cfgc.options().get<std::string>("input-type");
   auto outputType = cfgc.options().get<std::string>("output-type");
@@ -100,8 +100,6 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   if (inputType == "clusters") {
     clusterinput = 1;
   }
-
-  laneConfiguration = tofSectors;
 
   LOG(INFO) << "TOF RECO WORKFLOW configuration";
   LOG(INFO) << "TOF input = " << cfgc.options().get<std::string>("input-type");
