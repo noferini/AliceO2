@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+#define VERBOSE
 
 namespace o2
 {
@@ -49,6 +50,7 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
 // return next TRM index (-1 if not in the same crate)
 // start to convert digiti from istart --> then update istart to the starting position of the new TRM
 {
+  printf("Encode TRM %d \n",itrm);
   unsigned char nPackedHits[256] = { 0 };
   PackedHit_t PackedHit[256][256];
   
@@ -56,20 +58,22 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
   //      if (summary.nTRMSpiderHits[itrm] == 0)
   //	continue;
   
-  // ????????????????
   unsigned char firstFilledFrame = 255;
   unsigned char lastFilledFrame = 0;
   
   /** loop over hits **/
+  static unsigned char round=0;
   int whatTRM = summary[istart].getElTRMIndex();
-  while(whatTRM == itrm){   
+  while(whatTRM == itrm){ 
     auto iframe = 0  >> 13; // 0 to be replace with hittime
+    iframe = round;
+    round++;
     auto phit = nPackedHits[iframe];
-    //    PackedHit[iframe][phit].Chain = hit.Chain;
-    //    PackedHit[iframe][phit].TDCID = hit.TDCID;
-    //    PackedHit[iframe][phit].Channel = hit.Chan;
-    //    PackedHit[iframe][phit].Time = hit.HitTime;
-    //    PackedHit[iframe][phit].TOT = hit.TOTWidth;
+    PackedHit[iframe][phit].chain = summary[istart].getElChainIndex();
+    PackedHit[iframe][phit].tdcID = summary[istart].getElTDCIndex();
+    PackedHit[iframe][phit].channel = summary[istart].getElTDCIndex();
+    PackedHit[iframe][phit].time = summary[istart].getTDC()/*0:1023 bin 24.4 ps*/; // to be checked
+    PackedHit[iframe][phit].tot = summary[istart].getTOT()/*bin 48.8 ns*/; // to be checked
     nPackedHits[iframe]++;
     
     if (iframe < firstFilledFrame)
@@ -121,6 +125,8 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
 	auto Channel = mUnion->packedHit.channel;
 	auto Time = mUnion->packedHit.time;
 	auto TOT = mUnion->packedHit.tot;
+	//	printf("hit: Chain=%d -- TDC=%d -- ch=%d -- time=%d -- tot=%d\n",Chain,TDCID,Channel,Time,TOT);
+
 	//          std::cout << boost::format("%08x") % mUnion->data << " "
 	//                    << boost::format(
 	//                         "Packed hit (Chain=%d, TDCID=%d, "
@@ -145,6 +151,8 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
 // return next crate index (-1 if not)
 // start to convert digiti from istart --> then update istart to the starting position of the new crate
 {
+
+  printf("Encode Crate %d \n",icrate);
   // crate header
   mUnion->crateHeader = { 0x0 };
   mUnion->crateHeader.mustBeOne = 1;
@@ -156,6 +164,8 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
     auto BunchID = mUnion->crateHeader.bunchID;
     auto EventCounter = mUnion->crateHeader.eventCounter;
     auto DRMID = mUnion->crateHeader.drmID;
+
+    printf("BunchID = %d -- EventCounter = %d -- DRMID = %d\n",BunchID,EventCounter,DRMID);
 //    std::cout << boost::format("%08x") % mUnion->data
 //              << " "
 //              << boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
@@ -224,18 +234,10 @@ bool Encoder::encode(std::vector<Digit> summary) // pass a vector of digits in a
 #endif
   auto start = std::chrono::high_resolution_clock::now();
 
-  /*
-  Int_t getElCrateIndex() const {return 0;} // to be derived from mElectronIndex
-  Int_t getElTRMIndex() const {return 0;} // to be derived from mElectronIndex
-  Int_t	getElChainIndex()   const {return 0;} // to be derived from mElectronIndex
-  Int_t getElTDCIndex()   const {return 0;} // to be derived from mElectronIndex
-  Int_t getElChIndex()   const {return 0;} // to be derived from mElectronIndex
-  */
-
   int currentEvent = 0;
   int currentCrate = summary[0].getElCrateIndex();
 
-  while(currentCrate > -1){
+  while(currentCrate > -1){ // process also empty crates --> to be added
     currentCrate = encodeCrate(summary, currentCrate, currentEvent);
   }
 
