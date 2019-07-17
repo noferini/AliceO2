@@ -61,12 +61,11 @@ class TOFDPLRecoWorkflowTask
     auto tracks = pc.inputs().get<std::vector<o2::dataformats::TrackTPCITS>*>("globaltrack");
     auto clusters = pc.inputs().get<std::vector<o2::tof::Cluster>*>("tofcluster");
 
-    
     o2::dataformats::MCTruthContainer<o2::MCCompLabel> toflab;
     auto itslab = std::make_shared<std::vector<o2::MCCompLabel>>();
     auto tpclab = std::make_shared<std::vector<o2::MCCompLabel>>();
 
-    if(mUseMC){
+    if (mUseMC) {
       auto toflabel = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabel");
       auto itslabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("itstracklabel");
       auto tpclabel = pc.inputs().get<std::vector<o2::MCCompLabel>*>("tpctracklabel");
@@ -104,8 +103,10 @@ class TOFDPLRecoWorkflowTask
     //    clustersRO.emplace_back(clusters->at(i));
     // }
 
-    if(mUseMC) mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), &toflab, itslab.get(), tpclab.get());
-    else mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), NULL, NULL, NULL);
+    if (mUseMC)
+      mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), &toflab, itslab.get(), tpclab.get());
+    else
+      mMatcher.initWorkflow(tracksRO.get(), clustersRO.get(), NULL, NULL, NULL);
 
     mMatcher.run();
 

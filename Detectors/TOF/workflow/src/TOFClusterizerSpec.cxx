@@ -53,8 +53,8 @@ class TOFDPLClustererTask
     // get digit data
     auto digits = pc.inputs().get<std::vector<std::vector<o2::tof::Digit>>*>("tofdigits");
     auto labelvector = std::make_shared<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>>();
-    if(mUseMC){
-      auto digitlabels  = pc.inputs().get<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>*>("tofdigitlabels");
+    if (mUseMC) {
+      auto digitlabels = pc.inputs().get<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>*>("tofdigitlabels");
       *labelvector.get() = std::move(*digitlabels);
       mClusterer.setMCTruthContainer(&mClsLabels);
       mClsLabels.clear();
@@ -66,10 +66,10 @@ class TOFDPLClustererTask
       printf("# TOF readout window for clusterization = %i\n", i);
       auto digitsRO = digits->at(i);
       mReader.setDigitArray(&digitsRO);
-      if(mUseMC){
-	mClusterer.process(mReader, mClustersArray, &(labelvector->at(i)));
-      }
-      else mClusterer.process(mReader, mClustersArray, NULL);
+      if (mUseMC) {
+        mClusterer.process(mReader, mClustersArray, &(labelvector->at(i)));
+      } else
+        mClusterer.process(mReader, mClustersArray, NULL);
     }
     LOG(INFO) << "TOF CLUSTERER : TRANSFORMED " << digits->size()
               << " DIGITS TO " << mClustersArray.size() << " CLUSTERS";
@@ -77,7 +77,8 @@ class TOFDPLClustererTask
     // send clusters
     pc.outputs().snapshot(Output{ "TOF", "CLUSTERS", 0, Lifetime::Timeframe }, mClustersArray);
     // send labels
-    if(mUseMC) pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mClsLabels);
+    if (mUseMC)
+      pc.outputs().snapshot(Output{ "TOF", "CLUSTERSMCTR", 0, Lifetime::Timeframe }, mClsLabels);
 
     // declare done
     finished = true;
@@ -96,8 +97,8 @@ o2::framework::DataProcessorSpec getTOFClusterizerSpec(bool useMC)
 {
   std::vector<InputSpec> inputs;
   inputs.emplace_back("tofdigits", "TOF", "DIGITS", 0, Lifetime::Timeframe);
-  if(useMC) inputs.emplace_back("tofdigitlabels", "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe);
-  
+  if (useMC)
+    inputs.emplace_back("tofdigitlabels", "TOF", "DIGITSMCTR", 0, Lifetime::Timeframe);
 
   return DataProcessorSpec{
     "TOFClusterer",

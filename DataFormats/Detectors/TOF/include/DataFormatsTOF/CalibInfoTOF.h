@@ -51,6 +51,6 @@ class CalibInfoTOF
 
   ClassDefNV(CalibInfoTOF, 1);
 };
-}
-}
+} // namespace dataformats
+} // namespace o2
 #endif

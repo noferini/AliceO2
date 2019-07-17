@@ -22,7 +22,7 @@
 #pragma link C++ class o2::dataformats::CalibLHCphaseTOF + ;
 #pragma link C++ class o2::dataformats::CalibTimeSlewingParamTOF + ;
 
-#pragma link C++ class std::vector < o2::dataformats::CalibInfoTOFshort > +;
-#pragma link C++ class std::vector < o2::dataformats::CalibInfoTOF > +;
+#pragma link C++ class std::vector < o2::dataformats::CalibInfoTOFshort> + ;
+#pragma link C++ class std::vector < o2::dataformats::CalibInfoTOF> + ;
 
 #endif

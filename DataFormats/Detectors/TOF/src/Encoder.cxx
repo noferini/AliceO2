@@ -66,10 +66,10 @@ bool Encoder::encode(/*define input structure*/)
     auto BunchID = mUnion->CrateHeader.bunchID;
     auto EventCounter = mUnion->CrateHeader.eventCounter;
     auto DRMID = mUnion->CrateHeader.drmID;
-//    std::cout << boost::format("%08x") % mUnion->Data
-//              << " "
-//              << boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
-//              << std::endl;
+    //    std::cout << boost::format("%08x") % mUnion->Data
+    //              << " "
+    //              << boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
+    //              << std::endl;
   }
 #endif
   mUnion++;
@@ -128,10 +128,10 @@ bool Encoder::encode(/*define input structure*/)
         auto NumberOfHits = mUnion->FrameHeader.numberOfHits;
         auto FrameID = mUnion->FrameHeader.frameID;
         auto TRMID = mUnion->FrameHeader.trmID;
-//        std::cout << boost::format("%08x") % mUnion->Data
-//                  << " "
-//                  << boost::format("Frame header (TRMID=%d, FrameID=%d, NumberOfHits=%d)") % TRMID % FrameID % NumberOfHits
-//                  << std::endl;
+        //        std::cout << boost::format("%08x") % mUnion->Data
+        //                  << " "
+        //                  << boost::format("Frame header (TRMID=%d, FrameID=%d, NumberOfHits=%d)") % TRMID % FrameID % NumberOfHits
+        //                  << std::endl;
       }
 #endif
       mUnion++;
@@ -147,12 +147,12 @@ bool Encoder::encode(/*define input structure*/)
           auto Channel = mUnion->PackedHit.channel;
           auto Time = mUnion->PackedHit.time;
           auto TOT = mUnion->PackedHit.tot;
-//          std::cout << boost::format("%08x") % mUnion->Data << " "
-//                    << boost::format(
-//                         "Packed hit (Chain=%d, TDCID=%d, "
-//                         "Channel=%d, Time=%d, TOT=%d)") %
-//                         Chain % TDCID % Channel % Time % TOT
-//                    << std::endl;
+          //          std::cout << boost::format("%08x") % mUnion->Data << " "
+          //                    << boost::format(
+          //                         "Packed hit (Chain=%d, TDCID=%d, "
+          //                         "Channel=%d, Time=%d, TOT=%d)") %
+          //                         Chain % TDCID % Channel % Time % TOT
+          //                    << std::endl;
         }
 #endif
         mUnion++;
@@ -168,10 +168,10 @@ bool Encoder::encode(/*define input structure*/)
   mUnion->CrateTrailer.mustBeOne = 1;
 #ifdef VERBOSE
   if (mVerbose) {
-//    std::cout << boost::format("%08x") % mUnion->Data
-//              << " "
-//              << "Crate trailer"
-//              << std::endl;
+    //    std::cout << boost::format("%08x") % mUnion->Data
+    //              << " "
+    //              << "Crate trailer"
+    //              << std::endl;
   }
 #endif
   mUnion++;

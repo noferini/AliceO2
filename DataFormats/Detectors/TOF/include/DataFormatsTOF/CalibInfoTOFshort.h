@@ -45,6 +45,6 @@ class CalibInfoTOFshort
   unsigned char mFlags; // bit mask with quality flags (to be defined)
   //  ClassDefNV(CalibInfoTOFshort, 1);
 };
-}
-}
+} // namespace dataformats
+} // namespace o2
 #endif
