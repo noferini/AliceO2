@@ -80,7 +80,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 
   // the lane configuration defines the subspecification ids to be distributed among the lanes.
   // auto tofSectors = o2::RangeTokenizer::tokenize<int>(cfgc.options().get<std::string>("tof-sectors"));
-  // std::vector<int> laneConfiguration = tofSectors; 
+  // std::vector<int> laneConfiguration = tofSectors;
   auto nLanes = cfgc.options().get<int>("tof-lanes");
   auto inputType = cfgc.options().get<std::string>("input-type");
   auto outputType = cfgc.options().get<std::string>("output-type");
