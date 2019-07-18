@@ -59,7 +59,7 @@ void TrackTPCITSReader::run(ProcessingContext& pc)
 
     treeTrack->GetEntry(0);
 
-    printf("N ITS-TPC tracks = %d\n", mTracks.size());
+    printf("N ITS-TPC tracks = %lu\n", mTracks.size());
 
     // add digits loaded in the output snapshot
     pc.outputs().snapshot(Output{ "GLO", "TPCITS", 0, Lifetime::Timeframe }, mTracks);
