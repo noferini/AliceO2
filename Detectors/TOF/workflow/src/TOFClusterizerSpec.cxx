@@ -69,7 +69,7 @@ class TOFDPLClustererTask
       if (mUseMC) {
         mClusterer.process(mReader, mClustersArray, &(labelvector->at(i)));
       } else
-        mClusterer.process(mReader, mClustersArray, NULL);
+        mClusterer.process(mReader, mClustersArray, nullptr);
     }
     LOG(INFO) << "TOF CLUSTERER : TRANSFORMED " << digits->size()
               << " DIGITS TO " << mClustersArray.size() << " CLUSTERS";
