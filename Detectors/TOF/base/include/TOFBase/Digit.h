@@ -13,6 +13,7 @@
 
 #include <iosfwd>
 #include "Rtypes.h"
+#include "TOFBase/Geo.h"
 
 #include <boost/serialization/base_object.hpp> // for base_object
 
@@ -63,11 +64,11 @@ class Digit
 
   Int_t getElectronicIndex() const {return mElectronIndex;}
   void setElectronicIndex(Int_t ind) {mElectronIndex = ind;}
-  Int_t getElCrateIndex() const {return 0;} // to be derived from mElectronIndex
-  Int_t	getElTRMIndex()	const {return 0;} // to	be derived from	mElectronIndex
-  Int_t	getElChainIndex()   const {return 0;} // to be derived from mElectronIndex
-  Int_t	getElTDCIndex()   const {return 0;} // to be derived from mElectronIndex
-  Int_t	getElChIndex()   const {return 0;} // to be derived from mElectronIndex
+  Int_t getElCrateIndex() const {return Geo::getCrateFromECH(mElectronIndex);} // to be derived from mElectronIndex
+  Int_t	getElTRMIndex()	const {return Geo::getTRMFromECH(mElectronIndex);} // to be derived from mElectronIndex
+  Int_t	getElChainIndex()   const {return Geo::getChainFromECH(mElectronIndex);} // to be derived from mElectronIndex
+  Int_t	getElTDCIndex()   const {return Geo::getTDCFromECH(mElectronIndex);} // to be derived from mElectronIndex
+  Int_t	getElChIndex()   const {return Geo::getTDCChFromECH(mElectronIndex);} // to be derived from mElectronIndex
 
  private:
   friend class boost::serialization::access;

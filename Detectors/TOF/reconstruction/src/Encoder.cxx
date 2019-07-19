@@ -50,7 +50,7 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
 // return next TRM index (-1 if not in the same crate)
 // start to convert digiti from istart --> then update istart to the starting position of the new TRM
 {
-  printf("Encode TRM %d \n",itrm);
+  // printf("Encode TRM %d \n",itrm);
   unsigned char nPackedHits[256] = { 0 };
   PackedHit_t PackedHit[256][256];
   
@@ -220,8 +220,10 @@ bool Encoder::encode(std::vector<Digit> summary) // pass a vector of digits in a
   if(!summary.size()) return 1; // empty array
 
   // caching electronic indexes in digit array
+  int digitchannel;
   for ( auto dig = summary.begin(); dig != summary.end(); dig++ ) {
-    dig->setElectronicIndex(0/*to be filled*/);
+    digitchannel = dig->getChannel();
+    dig->setElectronicIndex(Geo::getECHFromCH(digitchannel));
   }
 
   // sorting by electroni indexes
