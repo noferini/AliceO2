@@ -65,9 +65,11 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
   static unsigned char round=0;
   int whatTRM = summary[istart].getElTRMIndex();
   while(whatTRM == itrm){ 
-    auto iframe = 0  >> 13; // 0 to be replace with hittime
-    iframe = round;
+    auto iframe = 0  >> 13; // 0 to be replaced with hittime
+
+    iframe = round; // now filled with dummy values
     round++;
+
     auto phit = nPackedHits[iframe];
     PackedHit[iframe][phit].chain = summary[istart].getElChainIndex();
     PackedHit[iframe][phit].tdcID = summary[istart].getElTDCIndex();
