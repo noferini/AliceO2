@@ -47,6 +47,7 @@ install(FILES CheckClusters_mft.C
               run_primary_vertexer_ITS.C
               run_rawdecoding_its.C
               run_rawdecoding_mft.C
+              run_rawdecoding_tof.C
               run_sim.C
               run_sim_emcal.C
               run_sim_mft.C
@@ -292,6 +293,12 @@ o2_add_test_root_macro(run_rawdecoding_mft.C
                                              O2::DataFormatsITSMFT
                                              O2::CommonDataFormat
                        LABELS mft)
+
+# FIXME: move to subsystem dir
+o2_add_test_root_macro(run_rawdecoding_tof.C
+                      PUBLIC_LINK_LIBRARIES O2::TOFSimulation
+                                            O2::TOFReconstruction
+                       LABELS tof)
 
 # FIXME: move to subsystem dir + check compilation o2_add_test_root_macro(
 # run_rec_ca.C PUBLIC_LINK_LIBRARIES O2::DetectorsCommonDataFormats

@@ -12,7 +12,7 @@
 
 void run_digi2raw_tof(std::string outName = "rawtof.bin",                           // name of the output binary file
                       std::string inpName = "tofdigits.root",                       // name of the input TOF digits
-                      int verbosity = 1,                                            // set verbosity
+                      int verbosity = 0,                                            // set verbosity
                       int cache = 100000000)                                        // memory caching in Byte
 {
   TFile *f = new TFile(inpName.c_str());
@@ -36,7 +36,7 @@ void run_digi2raw_tof(std::string outName = "rawtof.bin",                       
 
   for(int i=0;i < nwindow;i++){
     if(verbosity) printf("----------\nwindow = %d\n----------\n",i);
-    encoder.encode(digits.at(i));
+    encoder.encode(digits.at(i),i);
   }
 
   encoder.flush();

@@ -1,7 +1,9 @@
 #include "TOFReconstruction/Encoder.h"
+#include "TOFReconstruction/Decoder.h"
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+#include "CommonConstants/LHCConstants.h"
 #define VERBOSE
 
 namespace o2
@@ -62,21 +64,38 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
   unsigned char lastFilledFrame = 0;
   
   /** loop over hits **/
-  static unsigned char round=0;
   int whatTRM = summary[istart].getElTRMIndex();
-  while(whatTRM == itrm){ 
-    auto iframe = 0  >> 13; // 0 to be replaced with hittime
+  int whatCrate = summary[istart].getElCrateIndex();
+  double hittime;
+  int hittimeTDC;
+  while(whatTRM == itrm && whatCrate==icrate){ 
+    hittimeTDC = (summary[istart].getBC() - mEventCounter*Geo::BC_IN_WINDOW)*1024 + summary[istart].getTDC();   // time in TDC bin within the TOF WINDOW
 
-    iframe = round; // now filled with dummy values
-    round++;
+    auto iframe = hittimeTDC  >> 13; // 0 to be replaced with hittime
 
     auto phit = nPackedHits[iframe];
     PackedHit[iframe][phit].chain = summary[istart].getElChainIndex();
     PackedHit[iframe][phit].tdcID = summary[istart].getElTDCIndex();
-    PackedHit[iframe][phit].channel = summary[istart].getElTDCIndex();
-    PackedHit[iframe][phit].time = summary[istart].getTDC()/*0:1023 bin 24.4 ps*/; // to be checked
+    PackedHit[iframe][phit].channel = summary[istart].getElChIndex();
+    PackedHit[iframe][phit].time = hittimeTDC & 0x1FFF;
     PackedHit[iframe][phit].tot = summary[istart].getTOT()/*bin 48.8 ns*/; // to be checked
     nPackedHits[iframe]++;
+
+    if (mVerbose) {
+      auto Chain = PackedHit[iframe][phit].chain;
+      auto TDCID = PackedHit[iframe][phit].tdcID;
+      auto Channel = PackedHit[iframe][phit].channel;
+      auto Time = PackedHit[iframe][phit].time;
+      auto TOT = PackedHit[iframe][phit].tot;
+      
+      int digitInfo[4];
+      int ext_time = iframe<<13;
+      Decoder::FromRawHit2Digit(icrate, itrm, TDCID, Chain, Channel, mOrbitID, mBunchID, Time+ext_time, TOT, digitInfo);
+
+      printf("orbit = %d\n",mOrbitID);
+      printf("DigitOriginal: channel = %d -- TDC = %d -- BC = %d -- TOT = %d \n",summary[istart].getChannel(), summary[istart].getTDC(), summary[istart].getBC(), summary[istart].getTOT());
+    printf("DigitAfter   :  channel = %d -- TDC = %d -- BC = %d -- TOT = %d \n",digitInfo[0],digitInfo[1],digitInfo[3],digitInfo[2]);
+    }
     
     if (iframe < firstFilledFrame)
       firstFilledFrame = iframe;
@@ -84,10 +103,14 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
       lastFilledFrame = iframe;
 
     istart++;
-    if(istart < summary.size())
+    if(istart < summary.size()){
       whatTRM = summary[istart].getElTRMIndex();
-    else
+      whatCrate = summary[istart].getElCrateIndex();
+    }
+    else{
       whatTRM = -1;
+      whatCrate = -1;
+    }
   }
   
   /** loop over frames **/
@@ -100,7 +123,7 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
     // frame header
     mUnion->frameHeader = { 0x0 };
     mUnion->frameHeader.mustBeZero = 0;
-    mUnion->frameHeader.trmID = itrm + 3;
+    mUnion->frameHeader.trmID = itrm;
     mUnion->frameHeader.frameID = iframe;
     mUnion->frameHeader.numberOfHits = nPackedHits[iframe];
 #ifdef VERBOSE
@@ -120,23 +143,6 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
     // packed hits
     for (int ihit = 0; ihit < nPackedHits[iframe]; ++ihit) {
       mUnion->packedHit = PackedHit[iframe][ihit];
-#ifdef VERBOSE
-      if (mVerbose) {
-	auto Chain = mUnion->packedHit.chain;
-	auto TDCID = mUnion->packedHit.tdcID;
-	auto Channel = mUnion->packedHit.channel;
-	auto Time = mUnion->packedHit.time;
-	auto TOT = mUnion->packedHit.tot;
-	//	printf("hit: Chain=%d -- TDC=%d -- ch=%d -- time=%d -- tot=%d\n",Chain,TDCID,Channel,Time,TOT);
-
-	//          std::cout << boost::format("%08x") % mUnion->data << " "
-	//                    << boost::format(
-	//                         "Packed hit (Chain=%d, TDCID=%d, "
-	//                         "Channel=%d, Time=%d, TOT=%d)") %
-	//                         Chain % TDCID % Channel % Time % TOT
-	//                    << std::endl;
-      }
-#endif
       mUnion++;
       mIntegratedBytes += 4;
     }
@@ -144,9 +150,34 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
     nPackedHits[iframe] = 0;
   }
 
+  // if current crate is over
+  if(whatCrate != icrate) return -1;
+  // otherwise point to the next trm of the same crate
   if(istart < summary.size()) return whatTRM;
 
   return -1;
+}
+
+void Encoder::encodeEmptyCrate(Int_t icrate){
+  printf("Encode Empty Crate %d \n",icrate);
+  mUnion->crateHeader = { 0x0 };
+  mUnion->crateHeader.mustBeOne = 1;
+  mUnion->crateHeader.drmID = icrate;
+  mUnion->crateHeader.eventCounter = mEventCounter;
+  mUnion->crateHeader.bunchID = mBunchID;
+  mUnion++;
+  mIntegratedBytes += 4;
+
+  // crate orbit
+  mUnion->crateOrbit.orbitID = mOrbitID;
+  mUnion++;
+  mIntegratedBytes += 4;
+
+  // crate trailer
+  mUnion->crateTrailer = { 0x0 };
+  mUnion->crateTrailer.mustBeOne = 1;
+  mUnion++;
+  mIntegratedBytes += 4;
 }
 
 int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &istart) // encode one crate assuming digit vector sorted by electronic index
@@ -159,8 +190,8 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
   mUnion->crateHeader = { 0x0 };
   mUnion->crateHeader.mustBeOne = 1;
   mUnion->crateHeader.drmID = icrate;
-  //    mUnion->crateHeader.eventCounter = summary.DRMGlobalTrailer.LocalEventCounter;
-  //    mUnion->crateHeader.bunchID = summary.DRMStatusHeader3.l0BCID;
+  mUnion->crateHeader.eventCounter = mEventCounter;
+  mUnion->crateHeader.bunchID = mBunchID;
 #ifdef VERBOSE
   if (mVerbose) {
     auto BunchID = mUnion->crateHeader.bunchID;
@@ -178,7 +209,7 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
   mIntegratedBytes += 4;
 
   // crate orbit
-  mUnion->crateOrbit = {0x0};
+  mUnion->crateOrbit.orbitID = mOrbitID;
   //  mUnion->crateOrbit.orbitID = 0;
 #ifdef VERBOSE
   if (mVerbose) {
@@ -216,10 +247,20 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
 
   return -1;
 }
-bool Encoder::encode(std::vector<Digit> summary) // pass a vector of digits in a TOF readout window
+
+bool Encoder::encode(std::vector<Digit> summary, int tofwindow) // pass a vector of digits in a TOF readout window, tof window is the entry in the vector-of-vector of digits needed to extract bunch id and orbit
 {
 
-  if(!summary.size()) return 1; // empty array
+  mEventCounter = tofwindow; // tof window index
+  mOrbitID = mEventCounter / Geo::NWINDOW_IN_ORBIT; // since 3 tof window = 1 orbit
+  mBunchID = ((mEventCounter % Geo::NWINDOW_IN_ORBIT) * Geo::BC_IN_ORBIT) / Geo::NWINDOW_IN_ORBIT; // bunch crossing in the current orbit at the beginning of the window
+
+  if(!summary.size()){
+    for(int iemptycrate=0; iemptycrate < 72;iemptycrate++){
+      encodeEmptyCrate(iemptycrate);
+    }
+    return 1; // empty array
+  }
 
   // caching electronic indexes in digit array
   int digitchannel;
@@ -241,8 +282,25 @@ bool Encoder::encode(std::vector<Digit> summary) // pass a vector of digits in a
   int currentEvent = 0;
   int currentCrate = summary[0].getElCrateIndex();
 
-  while(currentCrate > -1){ // process also empty crates --> to be added
+  for(int iemptycrate=0; iemptycrate < currentCrate;iemptycrate++){
+    encodeEmptyCrate(iemptycrate);
+  }
+
+  int prevCrate;
+  while(currentCrate > -1){ // process also empty crates
+    prevCrate = currentCrate;
     currentCrate = encodeCrate(summary, currentCrate, currentEvent);
+
+    if(currentCrate==-1){
+      for(int iemptycrate=prevCrate+1; iemptycrate < 72;iemptycrate++){
+	encodeEmptyCrate(iemptycrate);
+      }     
+    }
+    else{
+      for(int iemptycrate=prevCrate+1; iemptycrate < currentCrate;iemptycrate++){
+	encodeEmptyCrate(iemptycrate);
+      }     
+    }
   }
 
   auto finish = std::chrono::high_resolution_clock::now();

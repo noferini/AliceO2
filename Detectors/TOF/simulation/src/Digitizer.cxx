@@ -242,7 +242,13 @@ void Digitizer::addDigit(Int_t channel, UInt_t istrip, Float_t time, Float_t x, 
   if (mContinuous) {
     isnext = Int_t(time * 1E-3 * Geo::READOUTWINDOW_INV) - mReadoutWindowCurrent; // to be replaced with uncalibrated time
 
-    if (isnext < 0 || isnext >= MAXWINDOWS - 1) {
+    if (isnext < 0){
+      LOG(ERROR) << "error: isnext =" << isnext << "(current window = " << mReadoutWindowCurrent << ")" << "\n";
+
+      return;
+    }
+
+    if (isnext < 0 || isnext >= MAXWINDOWS) {
 
       lblCurrent = mFutureIevent.size(); // this is the size of mHeaderArray;
       mFutureIevent.push_back(mEventID);
