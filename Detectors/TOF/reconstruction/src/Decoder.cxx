@@ -24,18 +24,19 @@ bool Decoder::open(std::string name)
     return true;
   }
 
-  if(mBuffer) delete[] mBuffer;
+  if (mBuffer)
+    delete[] mBuffer;
 
-  mFile.seekg (0,mFile.end);
+  mFile.seekg(0, mFile.end);
   mSize = mFile.tellg();
-  mFile.seekg (0);
+  mFile.seekg(0);
 
   mBuffer = new char[mSize];
 
   // read content of infile
-  mFile.read (mBuffer,mSize);
+  mFile.read(mBuffer, mSize);
   mUnion = reinterpret_cast<Union_t*>(mBuffer);
-  mUnionEnd = reinterpret_cast<Union_t*>(mBuffer+mSize-1);
+  mUnionEnd = reinterpret_cast<Union_t*>(mBuffer + mSize - 1);
   close();
 
   return false;
@@ -48,46 +49,49 @@ bool Decoder::close()
   return false;
 }
 
-  void Decoder::readTRM(std::vector<Digit> *digits, int iddl, int orbit, int bunchid){
-  if(mVerbose) printTRMInfo();
+void Decoder::readTRM(std::vector<Digit>* digits, int iddl, int orbit, int bunchid)
+{
+  if (mVerbose)
+    printTRMInfo();
   int nhits = mUnion->frameHeader.numberOfHits;
   int time_ext = mUnion->frameHeader.frameID << 13;
   int itrm = mUnion->frameHeader.trmID;
   mUnion++;
 
   // read hits
-  Int_t channel,echannel;
+  Int_t channel, echannel;
   Int_t tdc;
   Int_t tot;
   Int_t bc;
   Int_t time;
 
   Int_t digitInfo[4];
- 
-  for(int i=0;i < nhits;i++){
+
+  for (int i = 0; i < nhits; i++) {
     FromRawHit2Digit(iddl, itrm, mUnion->packedHit.tdcID, mUnion->packedHit.chain, mUnion->packedHit.channel, orbit, bunchid, time_ext + mUnion->packedHit.time, mUnion->packedHit.tot, digitInfo);
 
-    if(mVerbose) printHitInfo();
+    if (mVerbose)
+      printHitInfo();
     digits->emplace_back(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
     mUnion++;
   }
-
 }
 
-void  Decoder::FromRawHit2Digit(int iddl, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, int *digitInfo){
+void Decoder::FromRawHit2Digit(int iddl, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, int* digitInfo)
+{
   // convert raw info in digit info (channel, tdc, tot, bc)
   // tdc = packetHit.time + (frameHeader.frameID << 13)
   int echannel = Geo::getECHFromIndexes(iddl, itrm, ichain, itdc, channel);
   digitInfo[0] = Geo::getCHFromECH(echannel);
   digitInfo[2] = tot;
-  
-  digitInfo[3] = int(orbit*o2::tof::Geo::BC_IN_ORBIT);
+
+  digitInfo[3] = int(orbit * o2::tof::Geo::BC_IN_ORBIT);
   digitInfo[3] += bunchid;
-  digitInfo[3] += tdc/1024;
-  digitInfo[1] = tdc%1024;
+  digitInfo[3] += tdc / 1024;
+  digitInfo[1] = tdc % 1024;
 }
 
-bool Decoder::decode(std::vector<Digit> *digits) // return a vector of digits in a TOF readout window
+bool Decoder::decode(std::vector<Digit>* digits) // return a vector of digits in a TOF readout window
 {
 #ifdef VERBOSE
   if (mVerbose)
@@ -95,33 +99,36 @@ bool Decoder::decode(std::vector<Digit> *digits) // return a vector of digits in
 #endif
   auto start = std::chrono::high_resolution_clock::now();
 
-  if(mUnion > mUnionEnd) return 1;
+  if (mUnion > mUnionEnd)
+    return 1;
 
   // .. decoding
-  char *buffer = (char *) &mUnion;
+  char* buffer = (char*)&mUnion;
 
   int eventcounter, bunchid;
-  for(int icrate=0;icrate < 72;icrate++){
+  for (int icrate = 0; icrate < 72; icrate++) {
     // read Crate Header
     eventcounter = mUnion->crateHeader.eventCounter;
     bunchid = mUnion->crateHeader.bunchID;
-    if(mVerbose) printCrateInfo();
+    if (mVerbose)
+      printCrateInfo();
     mUnion++;
 
     //read Orbit
     int orbit = mUnion->crateOrbit.orbitID;
-    if(mVerbose) printf("orbit ID      = %d\n", orbit);
+    if (mVerbose)
+      printf("orbit ID      = %d\n", orbit);
     mUnion++;
 
-    while(!mUnion->frameHeader.mustBeZero){
+    while (!mUnion->frameHeader.mustBeZero) {
       readTRM(digits, icrate, orbit, bunchid);
     }
 
     // read Crate Tralier
-    if(mVerbose) printCrateTrailerInfo();
+    if (mVerbose)
+      printCrateTrailerInfo();
     mUnion++;
   }
-
 
   auto finish = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = finish - start;
@@ -139,16 +146,18 @@ bool Decoder::decode(std::vector<Digit> *digits) // return a vector of digits in
   return 0;
 }
 
-void Decoder::printCrateInfo() const {
+void Decoder::printCrateInfo() const
+{
   printf("___CRATE HEADER____\n");
   printf("DRM ID        = %d\n", mUnion->crateHeader.drmID);
-  printf("Bunch ID      = %d\n",mUnion->crateHeader.bunchID);
-  printf("Event Counter = %d\n",mUnion->crateHeader.eventCounter);
-  printf("Must be ONE   = %d\n",mUnion->crateHeader.mustBeOne);
+  printf("Bunch ID      = %d\n", mUnion->crateHeader.bunchID);
+  printf("Event Counter = %d\n", mUnion->crateHeader.eventCounter);
+  printf("Must be ONE   = %d\n", mUnion->crateHeader.mustBeOne);
   printf("___________________\n");
 }
 
-void Decoder::printCrateTrailerInfo() const {
+void Decoder::printCrateTrailerInfo() const
+{
   printf("___CRATE TRAILER___\n");
   printf("TRM fault 03  = %d\n", mUnion->crateTrailer.trmFault03);
   printf("TRM fault 04  = %d\n", mUnion->crateTrailer.trmFault04);
@@ -161,11 +170,12 @@ void Decoder::printCrateTrailerInfo() const {
   printf("TRM fault 11  = %d\n", mUnion->crateTrailer.trmFault11);
   printf("TRM fault 12  = %d\n", mUnion->crateTrailer.trmFault12);
   printf("crate fault   = %d\n", mUnion->crateTrailer.crateFault);
-  printf("Must be ONE   = %d\n",mUnion->crateTrailer.mustBeOne);
+  printf("Must be ONE   = %d\n", mUnion->crateTrailer.mustBeOne);
   printf("___________________\n");
 }
 
-void Decoder::printTRMInfo() const {
+void Decoder::printTRMInfo() const
+{
   printf("______TRM_INFO_____\n");
   printf("TRM ID        = %d\n", mUnion->frameHeader.trmID);
   printf("Frame ID      = %d\n", mUnion->frameHeader.frameID);
@@ -175,7 +185,8 @@ void Decoder::printTRMInfo() const {
   printf("___________________\n");
 }
 
-void Decoder::printHitInfo() const {
+void Decoder::printHitInfo() const
+{
   printf("______HIT_INFO_____\n");
   printf("TDC ID        = %d\n", mUnion->packedHit.tdcID);
   printf("CHAIN ID      = %d\n", mUnion->packedHit.chain);
@@ -183,7 +194,6 @@ void Decoder::printHitInfo() const {
   printf("TIME          = %d\n", mUnion->packedHit.time);
   printf("TOT           = %d\n", mUnion->packedHit.tot);
   printf("___________________\n");
-
 }
 } // namespace compressed
 } // namespace tof

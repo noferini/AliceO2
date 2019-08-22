@@ -39,9 +39,8 @@ struct CrateHeader_t {
 };
 
 struct CrateOrbit_t {
-    uint32_t orbitID : 32;
+  uint32_t orbitID : 32;
 };
-  
 
 struct FrameHeader_t {
   uint32_t numberOfHits : 16;

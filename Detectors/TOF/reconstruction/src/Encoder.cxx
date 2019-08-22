@@ -48,37 +48,37 @@ bool Encoder::alloc(long size)
   return false;
 }
 
-int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t itrm, int &istart) // encode one TRM assuming digit vector sorted by electronic index
+int Encoder::encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t itrm, int& istart) // encode one TRM assuming digit vector sorted by electronic index
 // return next TRM index (-1 if not in the same crate)
 // start to convert digiti from istart --> then update istart to the starting position of the new TRM
 {
   // printf("Encode TRM %d \n",itrm);
-  unsigned char nPackedHits[256] = { 0 };
+  unsigned char nPackedHits[256] = {0};
   PackedHit_t PackedHit[256][256];
-  
+
   /** check if TRM is empty **/
   //      if (summary.nTRMSpiderHits[itrm] == 0)
   //	continue;
-  
+
   unsigned char firstFilledFrame = 255;
   unsigned char lastFilledFrame = 0;
-  
+
   /** loop over hits **/
   int whatTRM = summary[istart].getElTRMIndex();
   int whatCrate = summary[istart].getElCrateIndex();
   double hittime;
   int hittimeTDC;
-  while(whatTRM == itrm && whatCrate==icrate){ 
-    hittimeTDC = (summary[istart].getBC() - mEventCounter*Geo::BC_IN_WINDOW)*1024 + summary[istart].getTDC();   // time in TDC bin within the TOF WINDOW
+  while (whatTRM == itrm && whatCrate == icrate) {
+    hittimeTDC = (summary[istart].getBC() - mEventCounter * Geo::BC_IN_WINDOW) * 1024 + summary[istart].getTDC(); // time in TDC bin within the TOF WINDOW
 
-    auto iframe = hittimeTDC  >> 13; // 0 to be replaced with hittime
+    auto iframe = hittimeTDC >> 13; // 0 to be replaced with hittime
 
     auto phit = nPackedHits[iframe];
     PackedHit[iframe][phit].chain = summary[istart].getElChainIndex();
     PackedHit[iframe][phit].tdcID = summary[istart].getElTDCIndex();
     PackedHit[iframe][phit].channel = summary[istart].getElChIndex();
     PackedHit[iframe][phit].time = hittimeTDC & 0x1FFF;
-    PackedHit[iframe][phit].tot = summary[istart].getTOT()/*bin 48.8 ns*/; // to be checked
+    PackedHit[iframe][phit].tot = summary[istart].getTOT() /*bin 48.8 ns*/; // to be checked
     nPackedHits[iframe]++;
 
     if (mVerbose) {
@@ -87,41 +87,40 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
       auto Channel = PackedHit[iframe][phit].channel;
       auto Time = PackedHit[iframe][phit].time;
       auto TOT = PackedHit[iframe][phit].tot;
-      
-      int digitInfo[4];
-      int ext_time = iframe<<13;
-      Decoder::FromRawHit2Digit(icrate, itrm, TDCID, Chain, Channel, mOrbitID, mBunchID, Time+ext_time, TOT, digitInfo);
 
-      printf("orbit = %d\n",mOrbitID);
-      printf("DigitOriginal: channel = %d -- TDC = %d -- BC = %d -- TOT = %d \n",summary[istart].getChannel(), summary[istart].getTDC(), summary[istart].getBC(), summary[istart].getTOT());
-    printf("DigitAfter   :  channel = %d -- TDC = %d -- BC = %d -- TOT = %d \n",digitInfo[0],digitInfo[1],digitInfo[3],digitInfo[2]);
+      int digitInfo[4];
+      int ext_time = iframe << 13;
+      Decoder::FromRawHit2Digit(icrate, itrm, TDCID, Chain, Channel, mOrbitID, mBunchID, Time + ext_time, TOT, digitInfo);
+
+      printf("orbit = %d\n", mOrbitID);
+      printf("DigitOriginal: channel = %d -- TDC = %d -- BC = %d -- TOT = %d \n", summary[istart].getChannel(), summary[istart].getTDC(), summary[istart].getBC(), summary[istart].getTOT());
+      printf("DigitAfter   :  channel = %d -- TDC = %d -- BC = %d -- TOT = %d \n", digitInfo[0], digitInfo[1], digitInfo[3], digitInfo[2]);
     }
-    
+
     if (iframe < firstFilledFrame)
       firstFilledFrame = iframe;
     if (iframe > lastFilledFrame)
       lastFilledFrame = iframe;
 
     istart++;
-    if(istart < summary.size()){
+    if (istart < summary.size()) {
       whatTRM = summary[istart].getElTRMIndex();
       whatCrate = summary[istart].getElCrateIndex();
-    }
-    else{
+    } else {
       whatTRM = -1;
       whatCrate = -1;
     }
   }
-  
+
   /** loop over frames **/
   for (int iframe = firstFilledFrame; iframe < lastFilledFrame + 1; iframe++) {
-    
+
     /** check if frame is empty **/
     if (nPackedHits[iframe] == 0)
       continue;
 
     // frame header
-    mUnion->frameHeader = { 0x0 };
+    mUnion->frameHeader = {0x0};
     mUnion->frameHeader.mustBeZero = 0;
     mUnion->frameHeader.trmID = itrm;
     mUnion->frameHeader.frameID = iframe;
@@ -139,28 +138,31 @@ int Encoder::encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t it
 #endif
     mUnion++;
     mIntegratedBytes += 4;
-    
+
     // packed hits
     for (int ihit = 0; ihit < nPackedHits[iframe]; ++ihit) {
       mUnion->packedHit = PackedHit[iframe][ihit];
       mUnion++;
       mIntegratedBytes += 4;
     }
-    
+
     nPackedHits[iframe] = 0;
   }
 
   // if current crate is over
-  if(whatCrate != icrate) return -1;
+  if (whatCrate != icrate)
+    return -1;
   // otherwise point to the next trm of the same crate
-  if(istart < summary.size()) return whatTRM;
+  if (istart < summary.size())
+    return whatTRM;
 
   return -1;
 }
 
-void Encoder::encodeEmptyCrate(Int_t icrate){
-  printf("Encode Empty Crate %d \n",icrate);
-  mUnion->crateHeader = { 0x0 };
+void Encoder::encodeEmptyCrate(Int_t icrate)
+{
+  printf("Encode Empty Crate %d \n", icrate);
+  mUnion->crateHeader = {0x0};
   mUnion->crateHeader.mustBeOne = 1;
   mUnion->crateHeader.drmID = icrate;
   mUnion->crateHeader.eventCounter = mEventCounter;
@@ -174,20 +176,20 @@ void Encoder::encodeEmptyCrate(Int_t icrate){
   mIntegratedBytes += 4;
 
   // crate trailer
-  mUnion->crateTrailer = { 0x0 };
+  mUnion->crateTrailer = {0x0};
   mUnion->crateTrailer.mustBeOne = 1;
   mUnion++;
   mIntegratedBytes += 4;
 }
 
-int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &istart) // encode one crate assuming digit vector sorted by electronic index
+int Encoder::encodeCrate(const std::vector<Digit>& summary, Int_t icrate, int& istart) // encode one crate assuming digit vector sorted by electronic index
 // return next crate index (-1 if not)
 // start to convert digiti from istart --> then update istart to the starting position of the new crate
 {
 
-  printf("Encode Crate %d \n",icrate);
+  printf("Encode Crate %d \n", icrate);
   // crate header
-  mUnion->crateHeader = { 0x0 };
+  mUnion->crateHeader = {0x0};
   mUnion->crateHeader.mustBeOne = 1;
   mUnion->crateHeader.drmID = icrate;
   mUnion->crateHeader.eventCounter = mEventCounter;
@@ -198,11 +200,11 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
     auto EventCounter = mUnion->crateHeader.eventCounter;
     auto DRMID = mUnion->crateHeader.drmID;
 
-    printf("BunchID = %d -- EventCounter = %d -- DRMID = %d\n",BunchID,EventCounter,DRMID);
-//    std::cout << boost::format("%08x") % mUnion->data
-//              << " "
-//              << boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
-//              << std::endl;
+    printf("BunchID = %d -- EventCounter = %d -- DRMID = %d\n", BunchID, EventCounter, DRMID);
+    //    std::cout << boost::format("%08x") % mUnion->data
+    //              << " "
+    //              << boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
+    //              << std::endl;
   }
 #endif
   mUnion++;
@@ -222,28 +224,29 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
 #endif
   mUnion++;
   mIntegratedBytes += 4;
-  
+
   /** loop over TRMs **/
   Int_t currentTRM = summary[istart].getElTRMIndex();
-  while(currentTRM > -1){
+  while (currentTRM > -1) {
     currentTRM = encodeTRM(summary, icrate, currentTRM, istart);
   }
 
   // crate trailer
-  mUnion->crateTrailer = { 0x0 };
+  mUnion->crateTrailer = {0x0};
   mUnion->crateTrailer.mustBeOne = 1;
 #ifdef VERBOSE
   if (mVerbose) {
-//    std::cout << boost::format("%08x") % mUnion->data
-//              << " "
-//              << "Crate trailer"
-//              << std::endl;
+    //    std::cout << boost::format("%08x") % mUnion->data
+    //              << " "
+    //              << "Crate trailer"
+    //              << std::endl;
   }
 #endif
   mUnion++;
   mIntegratedBytes += 4;
 
-  if(istart < summary.size()) return summary[istart].getElCrateIndex();
+  if (istart < summary.size())
+    return summary[istart].getElCrateIndex();
 
   return -1;
 }
@@ -251,12 +254,12 @@ int Encoder::encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &i
 bool Encoder::encode(std::vector<Digit> summary, int tofwindow) // pass a vector of digits in a TOF readout window, tof window is the entry in the vector-of-vector of digits needed to extract bunch id and orbit
 {
 
-  mEventCounter = tofwindow; // tof window index
-  mOrbitID = mEventCounter / Geo::NWINDOW_IN_ORBIT; // since 3 tof window = 1 orbit
+  mEventCounter = tofwindow;                                                                       // tof window index
+  mOrbitID = mEventCounter / Geo::NWINDOW_IN_ORBIT;                                                // since 3 tof window = 1 orbit
   mBunchID = ((mEventCounter % Geo::NWINDOW_IN_ORBIT) * Geo::BC_IN_ORBIT) / Geo::NWINDOW_IN_ORBIT; // bunch crossing in the current orbit at the beginning of the window
 
-  if(!summary.size()){
-    for(int iemptycrate=0; iemptycrate < 72;iemptycrate++){
+  if (!summary.size()) {
+    for (int iemptycrate = 0; iemptycrate < 72; iemptycrate++) {
       encodeEmptyCrate(iemptycrate);
     }
     return 1; // empty array
@@ -264,14 +267,14 @@ bool Encoder::encode(std::vector<Digit> summary, int tofwindow) // pass a vector
 
   // caching electronic indexes in digit array
   int digitchannel;
-  for ( auto dig = summary.begin(); dig != summary.end(); dig++ ) {
+  for (auto dig = summary.begin(); dig != summary.end(); dig++) {
     digitchannel = dig->getChannel();
     dig->setElectronicIndex(Geo::getECHFromCH(digitchannel));
   }
 
   // sorting by electroni indexes
   std::sort(summary.begin(), summary.end(),
-                [](Digit a, Digit b) { return a.getElectronicIndex() < b.getElectronicIndex(); });
+            [](Digit a, Digit b) { return a.getElectronicIndex() < b.getElectronicIndex(); });
 
 #ifdef VERBOSE
   if (mVerbose)
@@ -282,24 +285,23 @@ bool Encoder::encode(std::vector<Digit> summary, int tofwindow) // pass a vector
   int currentEvent = 0;
   int currentCrate = summary[0].getElCrateIndex();
 
-  for(int iemptycrate=0; iemptycrate < currentCrate;iemptycrate++){
+  for (int iemptycrate = 0; iemptycrate < currentCrate; iemptycrate++) {
     encodeEmptyCrate(iemptycrate);
   }
 
   int prevCrate;
-  while(currentCrate > -1){ // process also empty crates
+  while (currentCrate > -1) { // process also empty crates
     prevCrate = currentCrate;
     currentCrate = encodeCrate(summary, currentCrate, currentEvent);
 
-    if(currentCrate==-1){
-      for(int iemptycrate=prevCrate+1; iemptycrate < 72;iemptycrate++){
-	encodeEmptyCrate(iemptycrate);
-      }     
-    }
-    else{
-      for(int iemptycrate=prevCrate+1; iemptycrate < currentCrate;iemptycrate++){
-	encodeEmptyCrate(iemptycrate);
-      }     
+    if (currentCrate == -1) {
+      for (int iemptycrate = prevCrate + 1; iemptycrate < 72; iemptycrate++) {
+        encodeEmptyCrate(iemptycrate);
+      }
+    } else {
+      for (int iemptycrate = prevCrate + 1; iemptycrate < currentCrate; iemptycrate++) {
+        encodeEmptyCrate(iemptycrate);
+      }
     }
   }
 

@@ -40,10 +40,10 @@ class Encoder
   bool open(std::string name);
   bool alloc(long size);
 
-  bool encode(std::vector<Digit> summary, int tofwindow=0);
-  int encodeCrate(const std::vector<Digit> &summary, Int_t icrate, int &istart); // return next crate index
+  bool encode(std::vector<Digit> summary, int tofwindow = 0);
+  int encodeCrate(const std::vector<Digit>& summary, Int_t icrate, int& istart); // return next crate index
   void encodeEmptyCrate(Int_t icrate);
-  int encodeTRM(const std::vector<Digit> &summary, Int_t icrate, Int_t itrm, int &istart); // return next trm index
+  int encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t itrm, int& istart); // return next trm index
 
   bool flush();
   bool close();
@@ -62,9 +62,9 @@ class Encoder
   Union_t* mUnion = nullptr;
 
   // temporary variable for encoding
-  int mBunchID;         //!
-  int mOrbitID;         //!
-  int mEventCounter;     //!
+  int mBunchID;      //!
+  int mOrbitID;      //!
+  int mEventCounter; //!
 };
 
 } // namespace compressed

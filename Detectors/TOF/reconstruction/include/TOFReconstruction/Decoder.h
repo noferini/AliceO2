@@ -39,9 +39,8 @@ class Decoder
 
   bool open(std::string name);
 
-  bool decode(std::vector<Digit> *digits);
-  void readTRM(std::vector<Digit> *digits, int iddl, int orbit, int bunchid);
-
+  bool decode(std::vector<Digit>* digits);
+  void readTRM(std::vector<Digit>* digits, int iddl, int orbit, int bunchid);
 
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
@@ -55,8 +54,7 @@ class Decoder
   void printCrateTrailerInfo() const;
   void printHitInfo() const;
 
-  static void  FromRawHit2Digit(int iddl, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, int *digitInfo); // convert raw info in digit info (channel, tdc, tot, bc), tdc = packetHit.time + (frameHeader.frameID << 13)
-
+  static void FromRawHit2Digit(int iddl, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, int* digitInfo); // convert raw info in digit info (channel, tdc, tot, bc), tdc = packetHit.time + (frameHeader.frameID << 13)
 
  protected:
   std::ifstream mFile;
@@ -64,8 +62,8 @@ class Decoder
 
   char* mBuffer = nullptr;
   long mSize;
-  Union_t *mUnion;
-  Union_t *mUnionEnd;
+  Union_t* mUnion;
+  Union_t* mUnionEnd;
 };
 
 } // namespace compressed
