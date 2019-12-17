@@ -14,10 +14,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class o2::tof::DataReader + ;
-#pragma link C++ class o2::tof::Clusterer + ;
-#pragma link C++ class o2::tof::ClustererTask + ;
-#pragma link C++ class o2::tof::raw::Encoder + ;
-#pragma link C++ class o2::tof::compressed::Decoder + ;
+#pragma link C++ class o2::tof::RawDataFrame + ;
 
 #endif

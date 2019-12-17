@@ -101,7 +101,8 @@ class Geo
 
   static constexpr Float_t TDCBIN = o2::constants::lhc::LHCBunchSpacingNS * 1E3 / 1024; ///< TDC bin width [ps]
   static constexpr Float_t NTDCBIN_PER_PS = 1. / TDCBIN;     ///< number of TDC bins in 1 ns
-  static constexpr Float_t TOTBIN = TDCBIN * 2;              // time-over-threshold bin width [ps]
+  static constexpr Int_t   RATIO_TOT_TDC_BIN = 2;            // ratio between TDC and TOT bin sizes
+  static constexpr Float_t TOTBIN = TDCBIN * RATIO_TOT_TDC_BIN; // time-over-threshold bin width [ps]
   static constexpr Float_t TOTBIN_NS = TOTBIN * 1E-3;        // time-over-threshold bin width [ns]
   static constexpr Float_t NTOTBIN_PER_NS = 1000. / TOTBIN;  // number of time-over-threshold bin in 1 ns
   static constexpr Float_t BUNCHCROSSINGBIN = TDCBIN * 1024; // bunch-crossing bin width [ps]
@@ -263,10 +264,9 @@ class Geo
   static Int_t getChainFromECH(int ech) { return (ech % 256) >> 7; }
   static Int_t getTDCFromECH(int ech) { return (ech % 128) >> 3; }
   static Int_t getTDCChFromECH(int ech) { return (ech % 8); }
-  static Int_t getECHFromElIndexes(int crate, int trm, int chain, int tdc, int chan) { return (crate >> 12) + (trm >> 8) + (chain >> 7) + (tdc >> 3) + chan; }
+  static Int_t getECHFromIndexes(int crate, int trm, int chain, int tdc, int chan) { return (crate << 12) + ((trm-3) << 8) + (chain << 7) + (tdc << 3) + chan; }
   static Int_t getECHFromCH(int chan) { return CHAN_TO_ELCHAN[chan]; }
   static Int_t getCHFromECH(int echan) { return ELCHAN_TO_CHAN[echan]; }
-  static Int_t getECHFromIndexes(int iddl, int itrm, int ichain, int itdc, int ich) { return iddl * 4096 + (itrm - 3) * 256 + ichain * 128 + itdc * 8 + ich; }
 
  private:
   static void Init();
