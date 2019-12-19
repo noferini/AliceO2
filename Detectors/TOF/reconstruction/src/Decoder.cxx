@@ -115,7 +115,6 @@ bool Decoder::decode(std::vector<Digit>* digits) // return a vector of digits in
   // int eventcounter;
   for (int icrate = 0; icrate < 72; icrate++) {
     // read Crate Header
-    //eventcounter = mUnion->crateHeader.eventCounter;
     int bunchid = mUnion->crateHeader.bunchID;
     if (mVerbose)
       printCrateInfo();
@@ -135,6 +134,11 @@ bool Decoder::decode(std::vector<Digit>* digits) // return a vector of digits in
     if (mVerbose)
       printCrateTrailerInfo();
     mUnion++;
+
+    // loop over number of diagnostic words
+    auto ndw = mUnion->crateTrailer.numberOfDiagnostics;
+    for (int idw = 0; idw < ndw; ++idw)
+      mUnion++;
   }
 
   auto finish = std::chrono::high_resolution_clock::now();
@@ -156,28 +160,19 @@ bool Decoder::decode(std::vector<Digit>* digits) // return a vector of digits in
 void Decoder::printCrateInfo() const
 {
   printf("___CRATE HEADER____\n");
-  printf("DRM ID        = %d\n", mUnion->crateHeader.drmID);
-  printf("Bunch ID      = %d\n", mUnion->crateHeader.bunchID);
-  printf("Event Counter = %d\n", mUnion->crateHeader.eventCounter);
-  printf("Must be ONE   = %d\n", mUnion->crateHeader.mustBeOne);
+  printf("DRM ID           = %d\n", mUnion->crateHeader.drmID);
+  printf("Bunch ID         = %d\n", mUnion->crateHeader.bunchID);
+  printf("Slot enable mask = %d\n", mUnion->crateHeader.slotEnableMask);
+  printf("Must be ONE      = %d\n", mUnion->crateHeader.mustBeOne);
   printf("___________________\n");
 }
 
 void Decoder::printCrateTrailerInfo() const
 {
   printf("___CRATE TRAILER___\n");
-  printf("TRM fault 03  = %d\n", mUnion->crateTrailer.trmFault03);
-  printf("TRM fault 04  = %d\n", mUnion->crateTrailer.trmFault04);
-  printf("TRM fault 05  = %d\n", mUnion->crateTrailer.trmFault05);
-  printf("TRM fault 06  = %d\n", mUnion->crateTrailer.trmFault06);
-  printf("TRM fault 07  = %d\n", mUnion->crateTrailer.trmFault07);
-  printf("TRM fault 08  = %d\n", mUnion->crateTrailer.trmFault08);
-  printf("TRM fault 09  = %d\n", mUnion->crateTrailer.trmFault09);
-  printf("TRM fault 10  = %d\n", mUnion->crateTrailer.trmFault10);
-  printf("TRM fault 11  = %d\n", mUnion->crateTrailer.trmFault11);
-  printf("TRM fault 12  = %d\n", mUnion->crateTrailer.trmFault12);
-  printf("crate fault   = %d\n", mUnion->crateTrailer.crateFault);
-  printf("Must be ONE   = %d\n", mUnion->crateTrailer.mustBeOne);
+  printf("Event counter         = %d\n", mUnion->crateTrailer.eventCounter);
+  printf("Number of diagnostics = %d\n", mUnion->crateTrailer.numberOfDiagnostics);
+  printf("Must be ONE           = %d\n", mUnion->crateTrailer.mustBeOne);
   printf("___________________\n");
 }
 
