@@ -176,7 +176,7 @@ void Encoder::encodeEmptyCrate(Int_t icrate)
   mUnion->crateHeader = {0x0};
   mUnion->crateHeader.mustBeOne = 1;
   mUnion->crateHeader.drmID = icrate;
-  mUnion->crateHeader.eventCounter = mEventCounter;
+  mUnion->crateHeader.slotEnableMask = (icrate % 2 == 0 ? 0x7fc : 0x7fe); // LTM disabled, TRM3 not present in CrateRX
   mUnion->crateHeader.bunchID = mBunchID;
   mUnion++;
   mIntegratedBytes += 4;
@@ -189,6 +189,8 @@ void Encoder::encodeEmptyCrate(Int_t icrate)
   // crate trailer
   mUnion->crateTrailer = {0x0};
   mUnion->crateTrailer.mustBeOne = 1;
+  mUnion->crateTrailer.eventCounter = mEventCounter;
+  mUnion->crateTrailer.numberOfDiagnostics = 0;
   mUnion++;
   mIntegratedBytes += 4;
 }
@@ -203,15 +205,15 @@ int Encoder::encodeCrate(const std::vector<Digit>& summary, Int_t icrate, int& i
   mUnion->crateHeader = {0x0};
   mUnion->crateHeader.mustBeOne = 1;
   mUnion->crateHeader.drmID = icrate;
-  mUnion->crateHeader.eventCounter = mEventCounter;
+  mUnion->crateHeader.slotEnableMask = (icrate % 2 == 0 ? 0x7fc : 0x7fe);
   mUnion->crateHeader.bunchID = mBunchID;
 #ifdef VERBOSE
   if (mVerbose) {
     auto BunchID = mUnion->crateHeader.bunchID;
-    auto EventCounter = mUnion->crateHeader.eventCounter;
+    auto SlotEnableMask = mUnion->crateHeader.slotEnableMask;
     auto DRMID = mUnion->crateHeader.drmID;
 
-    printf("BunchID = %d -- EventCounter = %d -- DRMID = %d\n", BunchID, EventCounter, DRMID);
+    printf("BunchID = %d -- SlotEnableMask = %03x -- DRMID = %d\n", BunchID, SlotEnableMask, DRMID);
     //    std::cout << boost::format("%08x") % mUnion->data
     //              << " "
     //              << boost::format("Crate header (DRMID=%d, EventCounter=%d, BunchID=%d)") % DRMID % EventCounter % BunchID
@@ -245,6 +247,8 @@ int Encoder::encodeCrate(const std::vector<Digit>& summary, Int_t icrate, int& i
   // crate trailer
   mUnion->crateTrailer = {0x0};
   mUnion->crateTrailer.mustBeOne = 1;
+  mUnion->crateTrailer.eventCounter = mEventCounter;
+  mUnion->crateTrailer.numberOfDiagnostics = 0;
 #ifdef VERBOSE
   if (mVerbose) {
     //    std::cout << boost::format("%08x") % mUnion->data
