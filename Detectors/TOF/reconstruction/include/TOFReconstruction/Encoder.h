@@ -17,7 +17,7 @@
 #include <fstream>
 #include <string>
 #include <cstdint>
-#include "DataFormatsTOF/DataFormat.h"
+#include "DataFormatsTOF/CompressedDataFormat.h"
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
 
