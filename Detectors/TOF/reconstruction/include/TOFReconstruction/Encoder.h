@@ -17,15 +17,16 @@
 #include <fstream>
 #include <string>
 #include <cstdint>
-#include "DataFormatsTOF/CompressedDataFormat.h"
+#include "DataFormatsTOF/RawDataFormat.h"
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
+#include "Headers/RAWDataHeader.h"
 
 namespace o2
 {
 namespace tof
 {
-namespace compressed
+namespace raw
 {
 /// \class Encoder
 /// \brief Encoder class for TOF
@@ -34,33 +35,47 @@ class Encoder
 {
 
  public:
-  Encoder() = default;
+  Encoder();
   ~Encoder() = default;
 
   bool open(std::string name);
   bool alloc(long size);
 
-  bool encode(std::vector<Digit> summary, int tofwindow = 0);
-  int encodeCrate(const std::vector<Digit>& summary, Int_t icrate, int& istart); // return next crate index
-  void encodeEmptyCrate(Int_t icrate);
-  int encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t itrm, int& istart); // return next trm index
+  bool encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int tofwindow = 0);
+  void encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t itrm, int& istart); // return next trm index
+
+  void openRDH(int icrate);
+  void closeRDH(int icrate);
 
   bool flush();
+  bool flush(int icrate);
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
 
+  char *nextPage(void *current);
+  int getSize(void *first,void *last);
+
+  void nextWord(int icrate);
+
  protected:
   // benchmarks
-  double mIntegratedBytes = 0.;
+  double mIntegratedBytes[72];
+  double mIntegratedAllBytes = 0;
   double mIntegratedTime = 0.;
 
-  std::ofstream mFile;
+  std::ofstream mFile[72];
   bool mVerbose = false;
 
-  char* mBuffer = nullptr;
+  char* mBuffer[72];
   std::vector<char> mBufferLocal;
-  long mSize;
-  Union_t* mUnion = nullptr;
+  long mSize[72];
+  Union_t* mUnion[72];
+  Union_t* mStart[72];
+  DRMCommonHeader_t* mDRMCommonHeader[72];
+  DRMGlobalHeader_t* mDRMGlobalHeader[72];
+  bool mNextWordStatus[72];
+
+  o2::header::RAWDataHeader* mRDH[72];
 
   // temporary variable for encoding
   int mBunchID;      //!
