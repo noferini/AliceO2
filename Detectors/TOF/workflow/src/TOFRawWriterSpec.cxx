@@ -13,6 +13,7 @@
 #include "TOFWorkflow/TOFRawWriterSpec.h"
 #include "Framework/ControlService.h"
 #include "Framework/ConfigParamRegistry.h"
+#include "TOFBase/Geo.h"
 
 using namespace o2::framework;
 
@@ -37,18 +38,34 @@ void RawWriter::run(ProcessingContext& pc)
   int nwindow = digits->size();
   LOG(INFO) << "Encoding " << nwindow << " TOF readout windows";
 
-  int cache = 100000000;
+  int cache = 5000000;
   int verbosity = 0;
 
-  o2::tof::compressed::Encoder encoder;
+  o2::tof::raw::Encoder encoder;
   encoder.setVerbose(verbosity);
 
   encoder.open(mOutFileName.c_str());
   encoder.alloc(cache);
 
-  for(int i=0;i < nwindow;i++){
-    if(verbosity) printf("----------\nwindow = %d\n----------\n",i);
-    encoder.encode(digits->at(i),i);
+  int nwindowperorbit = Geo::NWINDOW_IN_ORBIT;
+  int nwindowintimeframe = 256*nwindowperorbit;
+  
+  std::vector<o2::tof::Digit> emptyWindow;
+
+  for(int i=0;i < nwindowintimeframe;i+=nwindowperorbit){ // encode 3 tof windows (1 orbit)
+    if(verbosity) printf("----------\nwindow = %d - %d\n----------\n",i,i+nwindowperorbit-1);
+    std::vector<std::vector<o2::tof::Digit>> digitWindows;
+
+    // push all windows in the current orbit in the structure
+    for(int j=i;j < i+nwindowperorbit;j++){
+       if(j < nwindow)
+          digitWindows.push_back(digits->at(j));
+       else{
+          digitWindows.push_back(emptyWindow);
+       }
+    }
+
+    encoder.encode(digitWindows,i);
   }
 
   encoder.flush();

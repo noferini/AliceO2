@@ -284,7 +284,6 @@ bool Compressor::processRDH()
 
 bool Compressor::processDRM()
 {
-
   /** check if we have memory to decode **/
   if (getDecoderByteCounter() >= mDecoderRDH->memorySize) {
 #ifdef DECODER_VERBOSE
@@ -323,7 +322,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     auto DRMCommonHeader = reinterpret_cast<raw::DRMCommonHeader_t*>(mDecoderPointer);
-    auto Payload = DRMCommonHeader->Payload;
+    auto Payload = DRMCommonHeader->payload;
     printf(" %08x DRM Common Header     (Payload=%d) \n", *mDecoderPointer, Payload);
   }
 #endif
@@ -334,12 +333,11 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     auto DRMOrbitHeader = reinterpret_cast<raw::DRMOrbitHeader_t*>(mDecoderPointer);
-    auto Orbit = DRMOrbitHeader->Orbit;
+    auto Orbit = DRMOrbitHeader->orbit;
     printf(" %08x DRM Orbit Header      (Orbit=%d) \n", *mDecoderPointer, Orbit);
   }
 #endif
   decoderNext();
-
   /** check DRM Global Header **/
   if (!IS_DRM_GLOBAL_HEADER(*mDecoderPointer)) {
 #ifdef DECODER_VERBOSE
@@ -351,7 +349,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     auto DRMGlobalHeader = reinterpret_cast<raw::DRMGlobalHeader_t*>(mDecoderPointer);
-    auto DRMID = DRMGlobalHeader->DRMID;
+    auto DRMID = DRMGlobalHeader->drmID;
     printf(" %08x DRM Global Header     (DRMID=%d) \n", *mDecoderPointer, DRMID);
   }
 #endif
@@ -366,9 +364,9 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     auto DRMStatusHeader1 = reinterpret_cast<raw::DRMStatusHeader1_t*>(mDecoderPointer);
-    auto ParticipatingSlotID = DRMStatusHeader1->ParticipatingSlotID;
-    auto CBit = DRMStatusHeader1->CBit;
-    auto DRMhSize = DRMStatusHeader1->DRMhSize;
+    auto ParticipatingSlotID = DRMStatusHeader1->participatingSlotID;
+    auto CBit = DRMStatusHeader1->cBit;
+    auto DRMhSize = DRMStatusHeader1->drmHSize;
     printf(" %08x DRM Status Header 1   (ParticipatingSlotID=0x%03x, CBit=%d, DRMhSize=%d) \n", *mDecoderPointer, ParticipatingSlotID, CBit, DRMhSize);
   }
 #endif
@@ -379,9 +377,9 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     auto DRMStatusHeader2 = reinterpret_cast<raw::DRMStatusHeader2_t*>(mDecoderPointer);
-    auto SlotEnableMask = DRMStatusHeader2->SlotEnableMask;
-    auto FaultID = DRMStatusHeader2->FaultID;
-    auto RTOBit = DRMStatusHeader2->RTOBit;
+    auto SlotEnableMask = DRMStatusHeader2->slotEnableMask;
+    auto FaultID = DRMStatusHeader2->faultID;
+    auto RTOBit = DRMStatusHeader2->rtoBit;
     printf(" %08x DRM Status Header 2   (SlotEnableMask=0x%03x, FaultID=%d, RTOBit=%d) \n", *mDecoderPointer, SlotEnableMask, FaultID, RTOBit);
   }
 #endif
@@ -392,8 +390,8 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     auto DRMStatusHeader3 = reinterpret_cast<raw::DRMStatusHeader3_t*>(mDecoderPointer);
-    auto L0BCID = DRMStatusHeader3->L0BCID;
-    auto RunTimeInfo = DRMStatusHeader3->RunTimeInfo;
+    auto L0BCID = DRMStatusHeader3->l0BunchID;
+    auto RunTimeInfo = DRMStatusHeader3->runTimeInfo;
     printf(" %08x DRM Status Header 3   (L0BCID=%d, RunTimeInfo=0x%03x) \n", *mDecoderPointer, L0BCID, RunTimeInfo);
   }
 #endif
@@ -488,9 +486,9 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
       if (mDecoderVerbose) {
         auto TRMGlobalHeader = reinterpret_cast<raw::TRMGlobalHeader_t*>(mDecoderPointer);
-        auto EventWords = TRMGlobalHeader->EventWords;
-        auto EventNumber = TRMGlobalHeader->EventNumber;
-        auto EBit = TRMGlobalHeader->EBit;
+        auto EventWords = TRMGlobalHeader->eventWords;
+        auto EventNumber = TRMGlobalHeader->eventNumber;
+        auto EBit = TRMGlobalHeader->eBit;
         printf(" %08x TRM Global Header     (SlotID=%d, EventWords=%d, EventNumber=%d, EBit=%01x) \n", *mDecoderPointer, SlotID, EventWords, EventNumber, EBit);
       }
 #endif
@@ -506,7 +504,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
           if (mDecoderVerbose) {
             auto TRMChainHeader = reinterpret_cast<raw::TRMChainHeader_t*>(mDecoderPointer);
-            auto BunchID = TRMChainHeader->BunchID;
+            auto BunchID = TRMChainHeader->bunchID;
             printf(" %08x TRM Chain-A Header    (SlotID=%d, BunchID=%d) \n", *mDecoderPointer, SlotID, BunchID);
           }
 #endif
@@ -525,11 +523,11 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
               if (mDecoderVerbose) {
                 auto TDCUnpackedHit = reinterpret_cast<raw::TDCUnpackedHit_t*>(mDecoderPointer);
-                auto HitTime = TDCUnpackedHit->HitTime;
-                auto Chan = TDCUnpackedHit->Chan;
-                auto TDCID = TDCUnpackedHit->TDCID;
-                auto EBit = TDCUnpackedHit->EBit;
-                auto PSBits = TDCUnpackedHit->PSBits;
+                auto HitTime = TDCUnpackedHit->hitTime;
+                auto Chan = TDCUnpackedHit->chan;
+                auto TDCID = TDCUnpackedHit->tdcID;
+                auto EBit = TDCUnpackedHit->eBit;
+                auto PSBits = TDCUnpackedHit->psBits;
                 printf(" %08x TDC Hit               (HitTime=%d, Chan=%d, TDCID=%d, EBit=%d, PSBits=%d \n", *mDecoderPointer, HitTime, Chan, TDCID, EBit, PSBits);
               }
 #endif
@@ -555,7 +553,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
               if (mDecoderVerbose) {
                 auto TRMChainTrailer = reinterpret_cast<raw::TRMChainTrailer_t*>(mDecoderPointer);
-                auto EventCounter = TRMChainTrailer->EventCounter;
+                auto EventCounter = TRMChainTrailer->eventCounter;
                 printf(" %08x TRM Chain-A Trailer   (SlotID=%d, EventCounter=%d) \n", *mDecoderPointer, SlotID, EventCounter);
               }
 #endif
@@ -580,7 +578,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
           if (mDecoderVerbose) {
             auto TRMChainHeader = reinterpret_cast<raw::TRMChainHeader_t*>(mDecoderPointer);
-            auto BunchID = TRMChainHeader->BunchID;
+            auto BunchID = TRMChainHeader->bunchID;
             printf(" %08x TRM Chain-B Header    (SlotID=%d, BunchID=%d) \n", *mDecoderPointer, SlotID, BunchID);
           }
 #endif
@@ -599,11 +597,11 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
               if (mDecoderVerbose) {
                 auto TDCUnpackedHit = reinterpret_cast<raw::TDCUnpackedHit_t*>(mDecoderPointer);
-                auto HitTime = TDCUnpackedHit->HitTime;
-                auto Chan = TDCUnpackedHit->Chan;
-                auto TDCID = TDCUnpackedHit->TDCID;
-                auto EBit = TDCUnpackedHit->EBit;
-                auto PSBits = TDCUnpackedHit->PSBits;
+                auto HitTime = TDCUnpackedHit->hitTime;
+                auto Chan = TDCUnpackedHit->chan;
+                auto TDCID = TDCUnpackedHit->tdcID;
+                auto EBit = TDCUnpackedHit->eBit;
+                auto PSBits = TDCUnpackedHit->psBits;
                 printf(" %08x TDC Hit               (HitTime=%d, Chan=%d, TDCID=%d, EBit=%d, PSBits=%d \n", *mDecoderPointer, HitTime, Chan, TDCID, EBit, PSBits);
               }
 #endif
@@ -629,7 +627,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
               if (mDecoderVerbose) {
                 auto TRMChainTrailer = reinterpret_cast<raw::TRMChainTrailer_t*>(mDecoderPointer);
-                auto EventCounter = TRMChainTrailer->EventCounter;
+                auto EventCounter = TRMChainTrailer->eventCounter;
                 printf(" %08x TRM Chain-B Trailer   (SlotID=%d, EventCounter=%d) \n", *mDecoderPointer, SlotID, EventCounter);
               }
 #endif
@@ -653,8 +651,8 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
           if (mDecoderVerbose) {
             auto TRMGlobalTrailer = reinterpret_cast<raw::TRMGlobalTrailer_t*>(mDecoderPointer);
-            auto EventCRC = TRMGlobalTrailer->EventCRC;
-            auto LBit = TRMGlobalTrailer->LBit;
+            auto EventCRC = TRMGlobalTrailer->eventCRC;
+            auto LBit = TRMGlobalTrailer->lBit;
             printf(" %08x TRM Global Trailer    (SlotID=%d, EventCRC=%d, LBit=%d) \n", *mDecoderPointer, SlotID, EventCRC, LBit);
           }
 #endif
@@ -741,7 +739,7 @@ bool Compressor::processDRM()
 #ifdef DECODER_VERBOSE
       if (mDecoderVerbose) {
         auto DRMGlobalTrailer = reinterpret_cast<raw::DRMGlobalTrailer_t*>(mDecoderPointer);
-        auto LocalEventCounter = DRMGlobalTrailer->LocalEventCounter;
+        auto LocalEventCounter = DRMGlobalTrailer->localEventCounter;
         printf(" %08x DRM Global Trailer    (LocalEventCounter=%d) \n", *mDecoderPointer, LocalEventCounter);
       }
 #endif
