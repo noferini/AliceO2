@@ -151,6 +151,27 @@ struct TDCUnpackedHit_t {
   uint32_t mustBeOne : 1; // must-be-one bit
 };
 
+/** union **/
+
+union Union_t {
+  uint32_t data;
+  DRMCommonHeader_t drmCommonHeader;
+  DRMOrbitHeader_t drmOrbitHeader;
+  DRMGlobalHeader_t drmGlobalHeader;
+  DRMStatusHeader1_t drmStatusHeader1;
+  DRMStatusHeader2_t drmStatusHeader2;
+  DRMStatusHeader3_t drmStatusHeader3;
+  DRMStatusHeader4_t drmStatusHeader4;
+  DRMStatusHeader5_t drmStatusHeader5;
+  DRMGlobalTrailer_t drmGlobalTrailer;
+  TRMGlobalHeader_t trmGlobalHeader;
+  TRMGlobalTrailer_t trmGlobalTrailer;
+  TRMChainHeader_t trmChainHeader;
+  TRMChainTrailer_t trmChainTrailer;
+  TDCPackedHit_t tdcPackedHit;
+  TDCUnpackedHit_t tdcUnpackedHit;
+};
+
 } // namespace raw
 } // namespace tof
 } // namespace o2
