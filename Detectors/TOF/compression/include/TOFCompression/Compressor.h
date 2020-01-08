@@ -40,7 +40,7 @@ class Compressor
     rewind();
     if (processRDH())
       return false;
-    for (int i = 0; i < 3 && processDRM(); ++i)
+    for (int i = 0; i < 3 && !processDRM(); ++i)
       ;
     return false;
   };
