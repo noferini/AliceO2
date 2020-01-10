@@ -21,6 +21,7 @@
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
 #include <array>
+#include "Headers/RAWDataHeader.h"
 
 namespace o2
 {
@@ -35,37 +36,46 @@ class Decoder
 {
 
  public:
-  Decoder() = default;
+  Decoder();
   ~Decoder() = default;
 
   bool open(std::string name);
 
-  bool decode(std::vector<Digit>* digits);
-  void readTRM(std::vector<Digit>* digits, int iddl, int orbit, int bunchid);
+  bool decode();
+  void loadDigits(int window, std::vector<Digit> *digits);
+  void readTRM(std::vector<Digit>* digits, int icrate, int orbit, int bunchid);
 
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
 
-  void printCrateInfo() const;
-  void printTRMInfo() const;
-  void printCrateTrailerInfo() const;
-  void printHitInfo() const;
+  void printRDH() const;
+  void printCrateInfo(int icrate) const;
+  void printTRMInfo(int icrate) const;
+  void printCrateTrailerInfo(int icrate) const;
+  void printHitInfo(int icrate) const;
 
-  static void fromRawHit2Digit(int iddl, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, std::array<int, 4>& digitInfo); // convert raw info in digit info (channel, tdc, tot, bc), tdc = packetHit.time + (frameHeader.frameID << 13)
+  static void fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, std::array<int, 4>& digitInfo); // convert raw info in digit info (channel, tdc, tot, bc), tdc = packetHit.time + (frameHeader.frameID << 13)
+
+  char *nextPage(void *current,int shift=8192);
 
  protected:
   // benchmarks
-  double mIntegratedBytes = 0.;
+  double mIntegratedBytes[72];
   double mIntegratedTime = 0.;
 
-  std::ifstream mFile;
+  std::ifstream mFile[72];
   bool mVerbose = false;
+  bool mCrateIn[72];
 
-  char* mBuffer = nullptr;
+  char* mBuffer[72];
   std::vector<char> mBufferLocal;
-  long mSize;
-  Union_t* mUnion;
-  Union_t* mUnionEnd;
+  long mSize[72];
+  Union_t* mUnion[72];
+  Union_t* mUnionEnd[72];
+
+  o2::header::RAWDataHeader* mRDH;
+
+  std::vector<Digit> mDigitWindow[Geo::NWINDOW_IN_ORBIT];
 };
 
 } // namespace compressed

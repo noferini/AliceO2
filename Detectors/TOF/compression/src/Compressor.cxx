@@ -1,8 +1,12 @@
 #include "TOFCompression/Compressor.h"
+#include "TOFBase/Geo.h"
 
 #include <cstring>
 #include <iostream>
 #include <chrono>
+
+#define DECODER_VERBOSE
+#define ENCODER_VERBOSE
 
 #ifdef DECODER_VERBOSE
 #warning "Building code with DecoderVerbose option. This may limit the speed."
@@ -424,7 +428,7 @@ bool Compressor::processDRM()
   if (mEncoderVerbose) {
     auto CrateHeader = reinterpret_cast<compressed::CrateHeader_t*>(mEncoderPointer);
     auto BunchID = CrateHeader->bunchID;
-    auto DRMID = CrateHeader->bRMID;
+    auto DRMID = CrateHeader->drmID;
     auto SlotEnableMask = CrateHeader->slotEnableMask;
     printf("%s %08x Crate header          (DRMID=%d, BunchID=%d, SlotEnableMask=0x%x) %s \n", colorGreen, *mEncoderPointer, DRMID, BunchID, SlotEnableMask, colorReset);
   }
@@ -436,7 +440,7 @@ bool Compressor::processDRM()
 #ifdef ENCODER_VERBOSE
   if (mEncoderVerbose) {
     auto CrateOrbit = reinterpret_cast<compressed::CrateOrbit_t*>(mEncoderPointer);
-    auto OrbitID = crateOrbit->OrbitID;
+    auto OrbitID = CrateOrbit->orbitID;
     printf("%s %08x Crate orbit           (OrbitID=%d) %s \n", colorGreen, *mEncoderPointer, OrbitID, colorReset);
   }
 #endif
@@ -853,9 +857,9 @@ void Compressor::encoderSPIDER()
         // check next hits for packing
         for (int jhit = ihit + 1; jhit < nhits; ++jhit) {
           auto thit = mRawSummary.TDCUnpackedHit[ichain][itdc][jhit];
-          if (GET_TDCHIT_PSBITS(thit) == 0x2 && GET_TDCHIT_CHAN(thit) == Chan) { // must be a trailing hit from same channel
-            TOTWidth = GET_TDCHIT_HITTIME(thit) - HitTime;                       // compute TOT
-            lhit = 0x0;                                                          // mark as used
+          if (GET_TDCHIT_PSBITS(thit) == 0x2 && GET_TDCHIT_CHAN(thit) == Chan) {    // must be a trailing hit from same channel
+            TOTWidth = (GET_TDCHIT_HITTIME(thit) - HitTime)/Geo::RATIO_TOT_TDC_BIN; // compute TOT
+            lhit = 0x0;                                                             // mark as used
             break;
           }
         }
