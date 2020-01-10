@@ -264,10 +264,9 @@ class Geo
   static Int_t getChainFromECH(int ech) { return (ech % 256) >> 7; }
   static Int_t getTDCFromECH(int ech) { return (ech % 128) >> 3; }
   static Int_t getTDCChFromECH(int ech) { return (ech % 8); }
-  static Int_t getECHFromElIndexes(int crate, int trm, int chain, int tdc, int chan) { return (crate >> 12) + (trm >> 8) + (chain >> 7) + (tdc >> 3) + chan; }
+  static Int_t getECHFromIndexes(int crate, int trm, int chain, int tdc, int chan) { return (crate << 12) + ((trm-3) << 8) + (chain << 7) + (tdc << 3) + chan; }
   static Int_t getECHFromCH(int chan) { return CHAN_TO_ELCHAN[chan]; }
   static Int_t getCHFromECH(int echan) { return ELCHAN_TO_CHAN[echan]; }
-  static Int_t getECHFromIndexes(int iddl, int itrm, int ichain, int itdc, int ich) { return iddl * 4096 + (itrm - 3) * 256 + ichain * 128 + itdc * 8 + ich; }
 
  private:
   static void Init();
