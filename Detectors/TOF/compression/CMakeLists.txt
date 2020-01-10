@@ -13,7 +13,7 @@ o2_add_library(TOFCompression
 	       	       src/RawReaderTask.cxx
                	       src/CompressorTask.cxx
 	       	       src/CompressedWriterTask.cxx
-               PUBLIC_LINK_LIBRARIES O2::Framework O2::Headers O2::DataFormatsTOF
+               PUBLIC_LINK_LIBRARIES O2::TOFBase O2::Framework O2::Headers O2::DataFormatsTOF
 	       )
 
 o2_target_root_dictionary(TOFCompression

@@ -18,6 +18,7 @@
 #include "Framework/ConfigParamRegistry.h"
 #include "TOFWorkflow/RawReaderSpec.h"
 #include "DataFormatsParameters/GRPObject.h"
+#include "TOFBase/Geo.h"
 #include <fstream> 
 
 using namespace o2::framework;
@@ -32,6 +33,9 @@ void RawReader::init(InitContext& ic)
 {
   LOG(INFO) << "Init Raw reader!";
   mFilename = ic.options().get<std::string>("tof-raw-infile");
+  mState = 1;
+
+/*
   std::ifstream f(mFilename.c_str(), std::ifstream::in);
 
   if(f.good()){
@@ -43,6 +47,7 @@ void RawReader::init(InitContext& ic)
     mState = 2;
     LOG(ERROR) << "TOF: TOF Raw file " << mFilename.c_str() << " not found";
   }
+*/
 }
 
 void RawReader::run(ProcessingContext& pc)
@@ -50,6 +55,8 @@ void RawReader::run(ProcessingContext& pc)
   if (mState != 1) {
     return;
   }
+
+  printf("Run TOF compressed decoding\n");
 
   mState = 2;
 
@@ -63,20 +70,24 @@ void RawReader::run(ProcessingContext& pc)
   // decode raw to digit here
   std::vector<o2::tof::Digit> digitsTemp;
   int n_tof_window=0;
+  int n_orbits=0;
   int digit_size = 0;
   int end_of_file = 0;
   while(! end_of_file){
-    digitsTemp.clear();
-    
-    end_of_file=decoder.decode(&digitsTemp);
-    digit_size += digitsTemp.size();
+    end_of_file=decoder.decode();
     if(! end_of_file){
-      mDigits.push_back(digitsTemp);
-      n_tof_window++;
+      n_orbits++;
+      for(int window=0; window < Geo::NWINDOW_IN_ORBIT; window++){
+         digitsTemp.clear();
+         decoder.loadDigits(window,&digitsTemp);
+         digit_size += digitsTemp.size();
+         mDigits.push_back(digitsTemp);
+         n_tof_window++;
+      }
     }
   }
 
-  LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << " with " << digit_size<< " digits";
+  LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size<< " digits";
 
   // add digits in the output snapshot
   pc.outputs().snapshot(Output{"TOF", "DIGITS", 0, Lifetime::Timeframe}, mDigits);
@@ -101,7 +112,7 @@ DataProcessorSpec getRawReaderSpec()
     Inputs{},
     outputs,
     AlgorithmSpec{adaptFromTask<RawReader>()},
-    Options{{"tof-raw-infile", VariantType::String, "rawtof.bin", {"Name of the input file"}}}};
+    Options{{"tof-raw-infile", VariantType::String, "cmptof.bin", {"Name of the input file"}}}};
 }
 
 } // namespace tof
