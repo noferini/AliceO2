@@ -215,9 +215,9 @@ union Union_t {
 
 // TDC getters
 #define GET_TDCHIT_HITTIME(x) ((x & 0x001FFFFF))
-#define GET_TDCHIT_CHAN(x) ((x & 0x00E00000) >> 3)
+#define GET_TDCHIT_CHAN(x) ((x & 0x00E00000) >> 21)
 #define GET_TDCHIT_TDCID(x) ((x & 0x0F000000) >> 24)
-#define GET_TDCHIT_EBIT(x) ((x & 0x10000000) >> 29)
+#define GET_TDCHIT_EBIT(x) ((x & 0x10000000) >> 28)
 #define GET_TDCHIT_PSBITS(x) ((x & 0x60000000) >> 29)
 
 #endif /** O2_TOF_RAWDATAFORMAT **/
