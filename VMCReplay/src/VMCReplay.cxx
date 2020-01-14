@@ -8,20 +8,6 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#include "DataFormatsITSMFT/ROFRecord.h"
-#include <iostream>
+#include "VMCReplay/VMCReplay.h"
 
-using namespace o2::itsmft;
-
-void ROFRecord::print() const
-{
-  std::cout << "ROF: " << mROFrame << " | " << getNEntries() << " entries starting from "
-            << getFirstEntry() << std::endl;
-  mBCData.print();
-}
-
-void MC2ROFRecord::print() const
-{
-  std::cout << "MCEventID: " << eventRecordID << " ROFs: " << minROF << '-' << maxROF
-            << " Entry in ROFRecords: " << rofRecordID << std::endl;
-}
+ClassImp(VMCReplay);

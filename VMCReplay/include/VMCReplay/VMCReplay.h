@@ -8,20 +8,17 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#include "DataFormatsITSMFT/ROFRecord.h"
-#include <iostream>
+#ifndef O2_VMCREPLAY_H
+#define O2_VMCREPLAY_H
 
-using namespace o2::itsmft;
+#include "TGeant3TGeo.h"
 
-void ROFRecord::print() const
+class VMCReplay : public TGeant3TGeo
 {
-  std::cout << "ROF: " << mROFrame << " | " << getNEntries() << " entries starting from "
-            << getFirstEntry() << std::endl;
-  mBCData.print();
-}
+ public:
+  using TGeant3TGeo::TGeant3TGeo;
 
-void MC2ROFRecord::print() const
-{
-  std::cout << "MCEventID: " << eventRecordID << " ROFs: " << minROF << '-' << maxROF
-            << " Entry in ROFRecords: " << rofRecordID << std::endl;
-}
+  ClassDef(VMCReplay, 1); // needed as long we inherit from TObject
+};
+
+#endif //O2_VMCREPLAY_H

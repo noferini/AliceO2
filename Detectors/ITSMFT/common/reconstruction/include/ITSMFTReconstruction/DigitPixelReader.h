@@ -17,7 +17,7 @@
 #include "ITSMFTReconstruction/PixelReader.h"
 #include "ITSMFTReconstruction/PixelData.h"
 #include "DataFormatsITSMFT/ROFRecord.h"
-#include "ITSMFTBase/Digit.h"
+#include "DataFormatsITSMFT/Digit.h"
 #include "DetectorsCommonDataFormats/DetID.h"
 #include "SimulationDataFormat/MCTruthContainer.h"
 #include "SimulationDataFormat/MCCompLabel.h"
@@ -108,8 +108,6 @@ class DigitPixelReader : public PixelReader
   Int_t mIdROF = 0; // last ROFRecord slot read
 
   std::unique_ptr<TTree> mInputTree;       // input tree for digits
-  std::unique_ptr<TTree> mInputTreeROF;    // input tree for ROF references
-  std::unique_ptr<TTree> mInputTreeMC2ROF; // input tree for MC2ROF references
 
   ClassDefOverride(DigitPixelReader, 1);
 };
