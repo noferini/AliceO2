@@ -7,9 +7,6 @@
 #define DECODER_VERBOSE
 #define ENCODER_VERBOSE
 
-#define DECODER_VERBOSE
-#define ENCODER_VERBOSE
-
 #ifdef DECODER_VERBOSE
 #warning "Building code with DecoderVerbose option. This may limit the speed."
 #endif
