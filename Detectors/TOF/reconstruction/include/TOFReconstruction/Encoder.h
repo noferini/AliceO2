@@ -21,6 +21,7 @@
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
 #include "Headers/RAWDataHeader.h"
+#include "CommonUtils/HBFUtils.h"
 
 namespace o2
 {
@@ -28,6 +29,7 @@ namespace tof
 {
 namespace raw
 {
+
 /// \class Encoder
 /// \brief Encoder class for TOF
 ///
@@ -52,10 +54,13 @@ class Encoder
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
 
-  char *nextPage(void *current);
+char *nextPage(void *current, int step);
   int getSize(void *first,void *last);
 
   void nextWord(int icrate);
+
+  void setContinuous(bool value) {mIsContinuous = value;}
+  bool isContinuous() const {return mIsContinuous;}
 
  protected:
   // benchmarks
@@ -63,24 +68,31 @@ class Encoder
   double mIntegratedAllBytes = 0;
   double mIntegratedTime = 0.;
 
+  static const int NCRU = 4;
+  static const int NLINKSPERCRU = 72/NCRU;
+  std::ofstream mFileCRU[NCRU];
+
   std::ofstream mFile[72];
   bool mVerbose = false;
 
   char* mBuffer[72];
   std::vector<char> mBufferLocal;
-  long mSize[72];
+  long mSize;
   Union_t* mUnion[72];
   Union_t* mStart[72];
   DRMCommonHeader_t* mDRMCommonHeader[72];
   DRMGlobalHeader_t* mDRMGlobalHeader[72];
   bool mNextWordStatus[72];
+  
+  bool mIsContinuous = true;
 
   o2::header::RAWDataHeader* mRDH[72];
+  o2::utils::HBFUtils mHBFSampler;
+  int mNRDH[72];
 
   // temporary variable for encoding
-  int mBunchID;      //!
-  int mOrbitID;      //!
-  int mEventCounter; //!
+  int                   mEventCounter; //!
+  o2::InteractionRecord mIR;           //!
 };
 
 } // namespace compressed
