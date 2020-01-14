@@ -38,7 +38,7 @@ void RawWriter::run(ProcessingContext& pc)
   int nwindow = digits->size();
   LOG(INFO) << "Encoding " << nwindow << " TOF readout windows";
 
-  int cache = 5000000;
+  int cache = 1024*1024; // 1 MB
   int verbosity = 0;
 
   o2::tof::raw::Encoder encoder;
