@@ -80,8 +80,8 @@ char *nextPage(void *current, int step);
   long mSize;
   Union_t* mUnion[72];
   Union_t* mStart[72];
-  DRMCommonHeader_t* mDRMCommonHeader[72];
-  DRMGlobalHeader_t* mDRMGlobalHeader[72];
+  TOFDataHeader_t* mTOFDataHeader[72];
+  DRMDataHeader_t* mDRMDataHeader[72];
   bool mNextWordStatus[72];
   
   bool mIsContinuous = true;

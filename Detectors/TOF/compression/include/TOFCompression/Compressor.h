@@ -106,7 +106,7 @@ class Compressor
   bool encoderOpen(std::string name);
   bool encoderWrite();
   bool encoderClose();
-  void encoderSPIDER();
+  void encoderSpider(int itrm);
   inline void encoderRewind() { mEncoderPointer = reinterpret_cast<uint32_t*>(mEncoderBuffer); };
   inline void encoderNext() { mEncoderPointer++; };
 
@@ -152,41 +152,37 @@ class Compressor
 
   /** summary data **/
 
-  struct RawSummary_t {
-    uint32_t DRMCommonHeader;
-    uint32_t DRMOrbitHeader;
-    uint32_t DRMGlobalHeader;
-    uint32_t DRMStatusHeader1;
-    uint32_t DRMStatusHeader2;
-    uint32_t DRMStatusHeader3;
-    uint32_t DRMStatusHeader4;
-    uint32_t DRMStatusHeader5;
-    uint32_t DRMGlobalTrailer;
-    uint32_t TRMGlobalHeader[10];
-    uint32_t TRMGlobalTrailer[10];
-    uint32_t TRMChainHeader[10][2];
-    uint32_t TRMChainTrailer[10][2];
-    uint32_t TDCUnpackedHit[2][15][256];
-    uint8_t nTDCUnpackedHits[2][15];
+  struct DecoderSummary_t {
+    uint32_t tofDataHeader;
+    uint32_t tofOrbit;
+    uint32_t drmDataHeader;
+    uint32_t drmHeadW1;
+    uint32_t drmHeadW2;
+    uint32_t drmHeadW3;
+    uint32_t drmHeadW4;
+    uint32_t drmHeadW5;
+    uint32_t drmDataTrailer;
+    uint32_t trmDataHeader[10];
+    uint32_t trmDataTrailer[10];
+    uint32_t trmChainHeader[10][2];
+    uint32_t trmChainTrailer[10][2];
+    uint32_t trmDataHit[2][15][256];
+    uint8_t trmDataHits[2][15];
+    bool hasHits[10][2];
+    bool hasErrors[10][2];
+    bool decodeError;
+  } mDecoderSummary = {0};
 
+  struct SpiderSummary_t {
     uint32_t FramePackedHit[256][256];
     uint8_t nFramePackedHits[256];
-    uint8_t FirstFilledFrame;
-    uint8_t LastFilledFrame;
+  } mSpiderSummary = {0};
 
-    // derived data
-    bool HasHits[10];
-    bool HasErrors[10][2];
-    // status
-    bool decodeError;
-
-    // checker data
-
+  struct CheckerSummary_t {
     uint32_t nDiagnosticWords;
     uint32_t DiagnosticWord[12];
+  } mCheckerSummary = {0};
 
-    uint32_t faultFlags;
-  } mRawSummary = {0};
 };
 
 } // namespace tof
