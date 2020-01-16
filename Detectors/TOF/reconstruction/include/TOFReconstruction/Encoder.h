@@ -47,6 +47,7 @@ class Encoder
   void encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t itrm, int& istart); // return next trm index
 
   void openRDH(int icrate);
+  void addPage(int icrate);
   void closeRDH(int icrate);
 
   bool flush();
@@ -58,6 +59,7 @@ char *nextPage(void *current, int step);
   int getSize(void *first,void *last);
 
   void nextWord(int icrate);
+  void nextWordNoEmpty(int icrate);
 
   void setContinuous(bool value) {mIsContinuous = value;}
   bool isContinuous() const {return mIsContinuous;}
@@ -68,11 +70,10 @@ char *nextPage(void *current, int step);
   double mIntegratedAllBytes = 0;
   double mIntegratedTime = 0.;
 
-  static const int NCRU = 4;
-  static const int NLINKSPERCRU = 72/NCRU;
+  static constexpr int NCRU = 4;
+  static constexpr int NLINKSPERCRU = 72/NCRU;
   std::ofstream mFileCRU[NCRU];
 
-  std::ofstream mFile[72];
   bool mVerbose = false;
 
   char* mBuffer[72];
@@ -89,6 +90,8 @@ char *nextPage(void *current, int step);
   o2::header::RAWDataHeader* mRDH[72];
   o2::utils::HBFUtils mHBFSampler;
   int mNRDH[72];
+
+  bool mStartRun = true;
 
   // temporary variable for encoding
   int                   mEventCounter; //!
