@@ -167,22 +167,20 @@ void Encoder::encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t i
   if(mVerbose) printf("Crate %d: encode TRM %d \n",icrate,itrm);
 
   // TRM HEADER
-  mUnion[icrate]->trmGlobalHeader.slotID = itrm;
-  mUnion[icrate]->trmGlobalHeader.eventWords = 0; // to be filled at the end
-  mUnion[icrate]->trmGlobalHeader.eventNumber = mEventCounter;
-  mUnion[icrate]->trmGlobalHeader.eBit = 0;
-  mUnion[icrate]->trmGlobalHeader.wordType = 4;
+  mUnion[icrate]->trmDataHeader.slotId = itrm;
+  mUnion[icrate]->trmDataHeader.eventWords = 0; // to be filled at the end
+  mUnion[icrate]->trmDataHeader.eventCnt = mEventCounter;
+  mUnion[icrate]->trmDataHeader.emptyBit = 0;
+  mUnion[icrate]->trmDataHeader.dataId = 4;
   nextWord(icrate);
 
   // LOOP OVER CHAINS
   for(int ichain=0;ichain < 2; ichain++){
     // CHAIN HEADER
-    mUnion[icrate]->trmChainHeader.slotID = itrm;
-    mUnion[icrate]->trmChainHeader.bunchID = mIR.bc;
-    mUnion[icrate]->trmChainHeader.pb24Temp = 0;
-    mUnion[icrate]->trmChainHeader.pb24ID = 0;
-    mUnion[icrate]->trmChainHeader.tsBit = 0;
-    mUnion[icrate]->trmChainHeader.wordType = 2*ichain;
+    mUnion[icrate]->trmChainHeader.slotId = itrm;
+    mUnion[icrate]->trmChainHeader.bunchCnt = mIR.bc;
+    mUnion[icrate]->trmChainHeader.mbz = 0;
+    mUnion[icrate]->trmChainHeader.dataId = 2*ichain;
     nextWord(icrate);
     
     while(istart < summary.size()){ // fill hits
@@ -197,21 +195,17 @@ void Encoder::encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t i
       int hittimeTDC = (summary[istart].getBC() - mEventCounter * Geo::BC_IN_WINDOW) * 1024 + summary[istart].getTDC(); // time in TDC bin within the TOF WINDOW
       
       // leading time
-      mUnion[icrate]->tdcUnpackedHit.hitTime = hittimeTDC;
-      mUnion[icrate]->tdcUnpackedHit.chan = summary[istart].getElChIndex();
-      mUnion[icrate]->tdcUnpackedHit.tdcID = summary[istart].getElTDCIndex();
-      mUnion[icrate]->tdcUnpackedHit.eBit = 0;
-      mUnion[icrate]->tdcUnpackedHit.psBits = 1;
-      mUnion[icrate]->tdcUnpackedHit.mustBeOne = 1;
+      mUnion[icrate]->trmDataHit.time = hittimeTDC;
+      mUnion[icrate]->trmDataHit.chanId = summary[istart].getElChIndex();
+      mUnion[icrate]->trmDataHit.tdcId = summary[istart].getElTDCIndex();
+      mUnion[icrate]->trmDataHit.dataId = 0xa;
       nextWord(icrate);
       
       // trailing time
-      mUnion[icrate]->tdcUnpackedHit.hitTime = hittimeTDC + summary[istart].getTOT()*Geo::RATIO_TOT_TDC_BIN;
-      mUnion[icrate]->tdcUnpackedHit.chan = summary[istart].getElChIndex();
-      mUnion[icrate]->tdcUnpackedHit.tdcID = summary[istart].getElTDCIndex();
-      mUnion[icrate]->tdcUnpackedHit.eBit = 0;
-      mUnion[icrate]->tdcUnpackedHit.psBits = 2;
-      mUnion[icrate]->tdcUnpackedHit.mustBeOne = 1;
+      mUnion[icrate]->trmDataHit.time = hittimeTDC + summary[istart].getTOT()*Geo::RATIO_TOT_TDC_BIN;
+      mUnion[icrate]->trmDataHit.chanId = summary[istart].getElChIndex();
+      mUnion[icrate]->trmDataHit.tdcId = summary[istart].getElTDCIndex();
+      mUnion[icrate]->trmDataHit.dataId = 0xc;
       nextWord(icrate);
       
       istart++;
@@ -219,21 +213,21 @@ void Encoder::encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t i
 
     // CHAIN TRAILER
     mUnion[icrate]->trmChainTrailer.status = 0;
-    mUnion[icrate]->trmChainTrailer.mustBeZero = 0;
-    mUnion[icrate]->trmChainTrailer.eventCounter = mEventCounter;
-    mUnion[icrate]->trmChainTrailer.wordType = 1 + 2*ichain;
+    mUnion[icrate]->trmChainTrailer.mbz = 0;
+    mUnion[icrate]->trmChainTrailer.eventCnt = mEventCounter;
+    mUnion[icrate]->trmChainTrailer.dataId = 1 + 2*ichain;
     nextWord(icrate);
   }
 
   // TRM TRAILER
-  mUnion[icrate]->trmGlobalTrailer.mustBeThree = 3;
-  mUnion[icrate]->trmGlobalTrailer.eventCRC = 0; // to be implemented
-  mUnion[icrate]->trmGlobalTrailer.temp = 0;
-  mUnion[icrate]->trmGlobalTrailer.sendAd = 0;
-  mUnion[icrate]->trmGlobalTrailer.chain = 0;
-  mUnion[icrate]->trmGlobalTrailer.tsBit = 0;
-  mUnion[icrate]->trmGlobalTrailer.lBit = 0;
-  mUnion[icrate]->trmGlobalTrailer.wordType = 5;
+  mUnion[icrate]->trmDataTrailer.trailerMark = 3;
+  mUnion[icrate]->trmDataTrailer.eventCRC = 0; // to be implemented
+  mUnion[icrate]->trmDataTrailer.tempValue = 0;
+  mUnion[icrate]->trmDataTrailer.tempAddress = 0;
+  mUnion[icrate]->trmDataTrailer.tempChain = 0;
+  mUnion[icrate]->trmDataTrailer.tempAck = 0;
+  mUnion[icrate]->trmDataTrailer.lutErrorBit = 0;
+  mUnion[icrate]->trmDataTrailer.dataId = 5;
   nextWord(icrate);
 }
 
@@ -288,55 +282,58 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
     int icurrentdigit = 0;
     // TOF data header
     for(int i=0;i < 72;i++){
-      mDRMCommonHeader[i] = reinterpret_cast<DRMCommonHeader_t*>(mUnion[i]);
-      mDRMCommonHeader[i]->payload=0; // event length in byte (to be filled later)
-      mDRMCommonHeader[i]->wordType=4;
+      mTOFDataHeader[i] = reinterpret_cast<TOFDataHeader_t*>(mUnion[i]);
+      mTOFDataHeader[i]->bytePayload=0; // event length in byte (to be filled later)
+      mTOFDataHeader[i]->mbz=0;
+      mTOFDataHeader[i]->dataId=4;
       nextWord(i);
 
-      mUnion[i]->drmOrbitHeader.orbit = mIR.orbit;
+      mUnion[i]->tofOrbit.orbit = mIR.orbit;
       nextWord(i);
 
-      mDRMGlobalHeader[i] = reinterpret_cast<DRMGlobalHeader_t*>(mUnion[i]);
-      mDRMGlobalHeader[i]->slotID =1;
-      mDRMGlobalHeader[i]->eventWords =0; // event length in word (to be filled later) --> word = byte/4
-      mDRMGlobalHeader[i]->drmID =i;
-      mDRMGlobalHeader[i]->wordType =4;
+      mDRMDataHeader[i] = reinterpret_cast<DRMDataHeader_t*>(mUnion[i]);
+      mDRMDataHeader[i]->slotId =1;
+      mDRMDataHeader[i]->eventWords =0; // event length in word (to be filled later) --> word = byte/4
+      mDRMDataHeader[i]->drmId =i;
+      mDRMDataHeader[i]->dataId =4;
       nextWord(i);
 
-      mUnion[i]->drmStatusHeader1.slotID = 1;
-      mUnion[i]->drmStatusHeader1.participatingSlotID = (i % 2 == 0 ? 0x7fc : 0x7fe);
-      mUnion[i]->drmStatusHeader1.cBit = 0;
-      mUnion[i]->drmStatusHeader1.versID = 0x11;
-      mUnion[i]->drmStatusHeader1.drmHSize = 5;
-      mUnion[i]->drmStatusHeader1.undefined = 0;
-      mUnion[i]->drmStatusHeader1.wordType = 4;
+      mUnion[i]->drmHeadW1.slotId = 1;
+      mUnion[i]->drmHeadW1.partSlotMask = (i % 2 == 0 ? 0x7fc : 0x7fe);
+      mUnion[i]->drmHeadW1.clockStatus = 0;
+      mUnion[i]->drmHeadW1.drmhVersion = 0x11;
+      mUnion[i]->drmHeadW1.drmHSize = 5;
+      mUnion[i]->drmHeadW1.mbz = 0;
+      mUnion[i]->drmHeadW1.dataId = 4;
       nextWord(i);
 
-      mUnion[i]->drmStatusHeader2.slotID = 1;
-      mUnion[i]->drmStatusHeader2.slotEnableMask =  (i % 2 == 0 ? 0x7fc : 0x7fe);
-      mUnion[i]->drmStatusHeader2.mustBeZero = 0;
-      mUnion[i]->drmStatusHeader2.faultID = 0;
-      mUnion[i]->drmStatusHeader2.rtoBit = 0;
-      mUnion[i]->drmStatusHeader2.wordType = 4;
+      mUnion[i]->drmHeadW2.slotId = 1;
+      mUnion[i]->drmHeadW2.enaSlotMask =  (i % 2 == 0 ? 0x7fc : 0x7fe);
+      mUnion[i]->drmHeadW2.mbz = 0;
+      mUnion[i]->drmHeadW2.faultSlotMask = 0;
+      mUnion[i]->drmHeadW2.readoutTimeOut = 0;
+      mUnion[i]->drmHeadW2.dataId = 4;
       nextWord(i);
 
-      mUnion[i]->drmStatusHeader3.slotID = 1;
-      mUnion[i]->drmStatusHeader3.l0BunchID = mIR.bc;
-      mUnion[i]->drmStatusHeader3.runTimeInfo = 0;
-      mUnion[i]->drmStatusHeader3.wordType = 4;
+      mUnion[i]->drmHeadW3.slotId = 1;
+      mUnion[i]->drmHeadW3.gbtBunchCnt = mIR.bc;
+      mUnion[i]->drmHeadW3.locBunchCnt = 0;
+      mUnion[i]->drmHeadW3.dataId = 4;
       nextWord(i);
 
-      mUnion[i]->drmStatusHeader4.slotID = 1;
-      mUnion[i]->drmStatusHeader4.temperature = 0;
-      mUnion[i]->drmStatusHeader4.mustBeZero1 = 0;
-      mUnion[i]->drmStatusHeader4.ackBit = 0;
-      mUnion[i]->drmStatusHeader4.sensAD = 0;
-      mUnion[i]->drmStatusHeader4.mustBeZero2 = 0;
-      mUnion[i]->drmStatusHeader4.undefined= 0;
-      mUnion[i]->drmStatusHeader4.wordType = 4;
+      mUnion[i]->drmHeadW4.slotId = 1;
+      mUnion[i]->drmHeadW4.tempValue = 0;
+      mUnion[i]->drmHeadW4.mbza = 0;
+      mUnion[i]->drmHeadW4.tempAddress = 0;
+      mUnion[i]->drmHeadW4.mbzb = 0;
+      mUnion[i]->drmHeadW4.dataId = 4;
       nextWord(i);
 
-      mUnion[i]->drmStatusHeader5.unknown = 0;
+      mUnion[i]->drmHeadW5.slotId = 1;
+      mUnion[i]->drmHeadW5.eventCRC = 0;
+      mUnion[i]->drmHeadW5.irq = 0;
+      mUnion[i]->drmHeadW5.mbz = 0;
+      mUnion[i]->drmHeadW5.dataId = 4;
       nextWord(i);
 
       int trm0 = 4 - (i%2);
@@ -344,16 +341,16 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
 	encodeTRM(summary,i,itrm,icurrentdigit);
       }
       
-      mUnion[i]->drmGlobalTrailer.slotID = 1;
-      mUnion[i]->drmGlobalTrailer.localEventCounter = mEventCounter;
-      mUnion[i]->drmGlobalTrailer.undefined = 0;
-      mUnion[i]->drmGlobalTrailer.wordType = 5;
+      mUnion[i]->drmDataTrailer.slotId = 1;
+      mUnion[i]->drmDataTrailer.locEvCnt = mEventCounter;
+      mUnion[i]->drmDataTrailer.mbz = 0;
+      mUnion[i]->drmDataTrailer.dataId = 5;
       nextWord(i);
       mUnion[i]->data = 0x70000000;
       nextWord(i);
 
-      mDRMCommonHeader[i]->payload = getSize(mDRMCommonHeader[i],mUnion[i]);
-      mDRMGlobalHeader[i]->eventWords = mDRMCommonHeader[i]->payload / 4;
+      mTOFDataHeader[i]->bytePayload = getSize(mTOFDataHeader[i],mUnion[i]);
+      mDRMDataHeader[i]->eventWords = mTOFDataHeader[i]->bytePayload / 4;
     }
     
     // check that all digits were used
