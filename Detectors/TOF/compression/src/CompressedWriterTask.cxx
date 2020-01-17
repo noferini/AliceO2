@@ -43,9 +43,9 @@ void CompressedWriterTask::init(InitContext& ic)
   }
 
   auto finishFunction = [this]() {
-			  LOG(INFO) << "CompressedWriter finish";
-			  mFile.close();
-			    };
+    LOG(INFO) << "CompressedWriter finish";
+    mFile.close();
+  };
   ic.services().get<CallbackService>().set(CallbackService::Id::Stop, finishFunction);
 }
 

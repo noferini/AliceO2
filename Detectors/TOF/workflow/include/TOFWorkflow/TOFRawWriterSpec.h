@@ -18,7 +18,7 @@
 #include "Framework/DataProcessorSpec.h"
 #include "Framework/Task.h"
 #include <string>
-#include "TOFReconstruction/Encoder.h" 
+#include "TOFReconstruction/Encoder.h"
 
 using namespace o2::framework;
 

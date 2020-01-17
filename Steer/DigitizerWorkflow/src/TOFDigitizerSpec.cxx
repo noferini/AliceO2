@@ -139,7 +139,7 @@ DataProcessorSpec getTOFDigitizerSpec(int channel, bool useCCDB)
         hits.clear();
         retrieveHits(*simChains.get(), "TOFHit", part.sourceID, part.entryID, &hits);
 
-        LOG(INFO) << "For collision " << collID << " eventID " << part.entryID << " found " << hits.size() << " hits ";
+        //        LOG(INFO) << "For collision " << collID << " eventID " << part.entryID << " found " << hits.size() << " hits ";
 
         // call actual digitization procedure
         labels->clear();
@@ -148,7 +148,7 @@ DataProcessorSpec getTOFDigitizerSpec(int channel, bool useCCDB)
         // copy digits into accumulator
         //std::copy(digits->begin(), digits->end(), std::back_inserter(*digitsAccum.get()));
         //labelAccum.mergeAtBack(*labels);
-        LOG(INFO) << "Have " << digits->size() << " digits ";
+        //        LOG(INFO) << "Have " << digits->size() << " digits ";
       }
     }
     if (digitizer->isContinuous()) {
@@ -223,7 +223,7 @@ DataProcessorSpec getTOFDigitizerSpec(int channel, bool useCCDB)
     "TOFDigitizer",
     inputs,
     Outputs{OutputSpec{"TOF", "DIGITS", 0, Lifetime::Timeframe},
-	    OutputSpec{"TOF", "READOUTWINDOW", 0, Lifetime::Timeframe},
+            OutputSpec{"TOF", "READOUTWINDOW", 0, Lifetime::Timeframe},
             OutputSpec{"TOF", "DIGITSMCTR", 0, Lifetime::Timeframe},
             OutputSpec{"TOF", "ROMode", 0, Lifetime::Timeframe}},
     AlgorithmSpec{initIt},

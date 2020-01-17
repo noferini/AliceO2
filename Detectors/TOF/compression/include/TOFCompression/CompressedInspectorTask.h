@@ -8,19 +8,21 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// @file   RawReaderSpec.h
+/// @file   CompressedInspectorTask.h
+/// @author Roberto Preghenella
+/// @since  2020-01-25
+/// @brief  TOF compressed data inspector task
 
-#ifndef O2_TOF_RAWREADER
-#define O2_TOF_RAWREADER
+#ifndef O2_TOF_COMPRESSEDINSPECTORTASK
+#define O2_TOF_COMPRESSEDINSPECTORTASK
 
-#include "TFile.h"
-
-#include "Framework/DataProcessorSpec.h"
 #include "Framework/Task.h"
-#include "TOFReconstruction/Decoder.h"
-#include "TOFBase/Digit.h"
-#include "SimulationDataFormat/MCCompLabel.h"
-#include "SimulationDataFormat/MCTruthContainer.h"
+#include "Framework/DataProcessorSpec.h"
+#include <fstream>
+
+class TFile;
+class TH1;
+class TH2;
 
 using namespace o2::framework;
 
@@ -29,25 +31,24 @@ namespace o2
 namespace tof
 {
 
-class RawReader : public Task
+class CompressedInspectorTask : public Task
 {
  public:
-  RawReader() {}
-  ~RawReader() override = default;
+  CompressedInspectorTask(){};
+  ~CompressedInspectorTask() override = default;
   void init(InitContext& ic) final;
   void run(ProcessingContext& pc) final;
 
- private:
-  int mState = 0;
-  std::string mFilename;
-  std::vector<std::vector<o2::tof::Digit>> mDigits;
-};
+  static DataProcessorSpec getSpec();
 
-/// create a processor spec
-/// read simulated TOF raws from a root file
-framework::DataProcessorSpec getRawReaderSpec();
+ private:
+  bool mStatus = false;
+  TFile* mFile = nullptr;
+  std::map<std::string, TH1*> mHistos1D;
+  std::map<std::string, TH1*> mHistos2D;
+};
 
 } // namespace tof
 } // namespace o2
 
-#endif /* O2_TOF_RAWREADER */
+#endif /* O2_TOF_COMPRESSEDINSPECTORTASK */

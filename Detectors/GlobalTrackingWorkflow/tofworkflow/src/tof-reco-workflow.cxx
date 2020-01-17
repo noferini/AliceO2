@@ -126,32 +126,31 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   auto useMC = !cfgc.options().get<bool>("disable-mc");
   auto useCCDB = cfgc.options().get<bool>("use-ccdb");
 
-  if(clusterinput){
+  if (clusterinput) {
     LOG(INFO) << "Insert TOF Cluster Reader";
     specs.emplace_back(o2::tof::getClusterReaderSpec(useMC));
-  }
-  else if (!rawinput) {
+  } else if (!rawinput) {
     // TOF clusterizer
     LOG(INFO) << "Insert TOF Digit reader from file";
     specs.emplace_back(o2::tof::getDigitReaderSpec(useMC));
 
-    if(writeraw){
+    if (writeraw) {
       LOG(INFO) << "Insert TOF Raw writer";
       specs.emplace_back(o2::tof::getTOFRawWriterSpec());
     }
   } else {
     LOG(INFO) << "Insert TOF Raw Reader";
     specs.emplace_back(o2::tof::getRawReaderSpec());
-    useMC=0;
+    useMC = 0;
 
-    if(writedigit){
+    if (writedigit) {
       // add TOF digit writer without mc labels
       LOG(INFO) << "Insert TOF Digit Writer";
       specs.emplace_back(o2::tof::getTOFDigitWriterSpec(0));
     }
   }
 
-  if(! clusterinput && writecluster){
+  if (!clusterinput && writecluster) {
     LOG(INFO) << "Insert TOF Clusterizer";
     specs.emplace_back(o2::tof::getTOFClusterizerSpec(useMC, useCCDB));
     if (writecluster) {

@@ -30,7 +30,7 @@ void RawReaderTask::init(InitContext& ic)
   LOG(INFO) << "RawReader init";
   auto filename = ic.options().get<std::string>("tof-raw-filename");
   mBuffer.reserve(1048576);
-  
+
   /** open file **/
   if (mFile.is_open()) {
     LOG(WARNING) << "a file was already open, closing";
@@ -73,7 +73,7 @@ void RawReaderTask::run(ProcessingContext& pc)
 
   auto freefct = [](void* data, void* hint) {}; // simply ignore the cleanup for the test
   pc.outputs().adoptChunk(Output{"TOF", "RAWDATAFRAME", 0, Lifetime::Timeframe}, mBuffer.data(), mBuffer.size(), freefct, nullptr);
-  
+
   /** check eof **/
   if (mFile.eof()) {
     LOG(WARNING) << "nothig else to read";
