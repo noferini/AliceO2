@@ -41,9 +41,9 @@ void CompressorTask::init(InitContext& ic)
   mCompressor.setCheckerVerbose(checkerVerbose);
 
   auto finishFunction = [this]() {
-    LOG(INFO) << "Compressor finish";
     mCompressor.checkSummary();
   };
+  
   ic.services().get<CallbackService>().set(CallbackService::Id::Stop, finishFunction);
 }
 
