@@ -362,14 +362,14 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
   for(int i=0;i < 72;i++){
     // adjust RDH open with the size
     mRDH[i]->memorySize = getSize(mRDH[i],mUnion[i]);
-    mRDH[icrate]->offsetToNext = mRDH[icrate]->memorySize;
-    mIntegratedBytes[i] += mRDH[icrate]->offsetToNext;
+    mRDH[i]->offsetToNext = mRDH[i]->memorySize;
+    mIntegratedBytes[i] += mRDH[i]->offsetToNext;
 
     // add RDH close
-    mRDH[i] = reinterpret_cast<o2::header::RAWDataHeader*>(nextPage(mRDH[i],mRDH[icrate]->offsetToNext));
+    mRDH[i] = reinterpret_cast<o2::header::RAWDataHeader*>(nextPage(mRDH[i],mRDH[i]->offsetToNext));
     closeRDH(i);
-    mIntegratedBytes[i] += mRDH[icrate]->offsetToNext;
-    mUnion[i] = reinterpret_cast<Union_t *>(nextPage(mRDH[i],mRDH[icrate]->offsetToNext));
+    mIntegratedBytes[i] += mRDH[i]->offsetToNext;
+    mUnion[i] = reinterpret_cast<Union_t *>(nextPage(mRDH[i],mRDH[i]->offsetToNext));
   }
 
   auto finish = std::chrono::high_resolution_clock::now();
