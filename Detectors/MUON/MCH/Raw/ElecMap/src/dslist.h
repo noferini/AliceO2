@@ -8,6 +8,12 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#include "VMCReplay/VMCReplay.h"
+#ifndef O2_MCH_RAW_ELECMAP_DSLIST_H
+#define O2_MCH_RAW_ELECMAP_DSLIST_H
 
-ClassImp(VMCReplay);
+#include <functional>
+#include <set>
+
+std::function<std::set<int>(int deId)> createDualSampaMapper();
+
+#endif

@@ -9,12 +9,4 @@
 # submit itself to any jurisdiction.
 
 
-o2_add_library(VMCReplay
-        SOURCES src/VMCReplay.cxx
-        PUBLIC_LINK_LIBRARIES MC::Geant3
-        )
-
-set(headers
-        include/VMCReplay/VMCReplay.h)
-
-o2_target_root_dictionary(VMCReplay HEADERS ${headers})
+install(PROGRAMS monitor-mem.sh DESTINATION share/scripts/)

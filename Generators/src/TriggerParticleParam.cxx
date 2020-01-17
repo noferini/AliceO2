@@ -8,17 +8,7 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#ifndef O2_VMCREPLAY_H
-#define O2_VMCREPLAY_H
+/// \author R+Preghenella - January 2020
 
-#include "TGeant3TGeo.h"
-
-class VMCReplay : public TGeant3TGeo
-{
- public:
-  using TGeant3TGeo::TGeant3TGeo;
-
-  ClassDef(VMCReplay, 1); // needed as long we inherit from TObject
-};
-
-#endif //O2_VMCREPLAY_H
+#include "Generators/TriggerParticleParam.h"
+O2ParamImpl(o2::eventgen::TriggerParticleParam);

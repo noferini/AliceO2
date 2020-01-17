@@ -8,12 +8,17 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#ifdef __CLING__
+///
+/// GENERATED CODE ! DO NOT EDIT !
+///
 
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
+#include <map>
+#include <cstdint>
+#include "MCHRawElecMap/DsElecId.h"
+#include "MCHRawElecMap/DsDetId.h"
+using namespace o2::mch::raw;
 
-#pragma link C++ class VMCReplay;
-
-#endif
+void fillElec2DetCH6L(std::map<uint16_t, uint32_t>& e2d)
+{
+}
+void fillSolar2CruLinkCH6L(std::map<uint16_t, uint32_t>& s2c) {}
