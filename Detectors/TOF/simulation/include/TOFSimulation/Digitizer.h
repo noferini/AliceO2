@@ -37,6 +37,21 @@ class Digitizer : public WindowFiller
 
   void process(const std::vector<HitType>* hits, std::vector<Digit>* digits);
 
+  void setCalibApi(CalibApi* calibApi) { mCalibApi = calibApi; }
+
+  void setMCTruthContainer(o2::dataformats::MCTruthContainer<o2::MCCompLabel>* truthcontainer)
+  {
+    mMCTruthOutputContainer = truthcontainer;
+  }
+
+  std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>* getMCTruthPerTimeFrame() { return &mMCTruthOutputContainerPerTimeFrame; }
+
+  void fillOutputContainer(std::vector<Digit>& digits);
+  void flushOutputContainer(std::vector<Digit>& digits); // flush all residual buffered data
+
+  // Method used for digitization
+  void initParameters();
+  void printParameters();
   Float_t getShowerTimeSmeared(Float_t time, Float_t charge);
   Float_t getDigitTimeSmeared(Float_t time, Float_t x, Float_t z, Float_t charge);
   Float_t getCharge(Float_t eDep);
@@ -52,22 +67,8 @@ class Digitizer : public WindowFiller
   void setEventID(Int_t id) { mEventID = id; }
   void setSrcID(Int_t id) { mSrcID = id; }
 
-  void setMCTruthContainer(o2::dataformats::MCTruthContainer<o2::MCCompLabel>* truthcontainer)
-  {
-    mMCTruthOutputContainer = truthcontainer;
-  }
-
-  void initParameters();
-  void printParameters();
-
   void test(const char* geo = "O2geometry.root");
   void testFromHits(const char* geo = "O2geometry.root", const char* hits = "AliceO2_TGeant3.tof.mc_10_event.root");
-  void fillOutputContainer(std::vector<Digit>& digits);
-  void flushOutputContainer(std::vector<Digit>& digits); // flush all residual buffered data
-
-  std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>* getMCTruthPerTimeFrame() { return &mMCTruthOutputContainerPerTimeFrame; }
-
-  void setCalibApi(CalibApi* calibApi) { mCalibApi = calibApi; }
 
  private:
   // parameters
@@ -88,15 +89,17 @@ class Digitizer : public WindowFiller
   Float_t mEffBoundary2;
   Float_t mEffBoundary3;
 
-  // info TOF timewindow
+  // info TOF timewindow for MC
   Int_t mEventID = 0;
   Int_t mSrcID = 0;
 
   // digit info
   //std::vector<Digit>* mDigits;
 
+  // final vector of tof readout window MC
   std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>> mMCTruthOutputContainerPerTimeFrame;
 
+  // temporary MC info in the current tof readout windows
   o2::dataformats::MCTruthContainer<o2::tof::MCLabel> mMCTruthContainer[MAXWINDOWS];
   o2::dataformats::MCTruthContainer<o2::tof::MCLabel>* mMCTruthContainerCurrent = &mMCTruthContainer[0]; ///< Array for MCTruth information associated to digits in mDigitsArrray.
   o2::dataformats::MCTruthContainer<o2::tof::MCLabel>* mMCTruthContainerNext[MAXWINDOWS - 1];            ///< Array for MCTruth information associated to digits in mDigitsArrray.

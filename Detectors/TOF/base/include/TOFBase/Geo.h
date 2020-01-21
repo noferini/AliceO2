@@ -117,6 +117,7 @@ class Geo
   static constexpr int NWINDOW_IN_ORBIT = 3;                //< Number of tof window in 1 orbit
   static constexpr Double_t READOUTWINDOW = o2::constants::lhc::LHCOrbitNS / NWINDOW_IN_ORBIT; // Readout window (ns) - time between two consecutive triggers = 1/3 orbit
   static constexpr int BC_IN_WINDOW = BC_IN_ORBIT / NWINDOW_IN_ORBIT;                         // N. bunch crossing in 1 tof window
+  static constexpr double BC_IN_WINDOW_INV = 1. / BC_IN_WINDOW;
   static constexpr Double_t READOUTWINDOW_INV = 1. / READOUTWINDOW;                           // Readout window (ns)
 
   static constexpr Int_t LATENCYWINDOW_IN_BC = 1400;                                                       // Latency window  in BC (larger than 1/3 orbit 1188 BC)

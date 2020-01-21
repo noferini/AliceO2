@@ -20,6 +20,8 @@
 #include "DataFormatsTOF/CompressedDataFormat.h"
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
+#include "TOFBase/Strip.h"
+#include "TOFBase/WindowFiller.h"
 #include <array>
 #include "Headers/RAWDataHeader.h"
 
@@ -32,7 +34,7 @@ namespace compressed
 /// \class Decoder
 /// \brief Decoder class for TOF
 ///
-class Decoder
+class Decoder : public WindowFiller
 {
 
  public:
@@ -43,35 +45,37 @@ class Decoder
 
   bool decode();
   void loadDigits(int window, std::vector<Digit> *digits);
-  void readTRM(std::vector<Digit>* digits, int icrate, int orbit, int bunchid);
+  void readTRM(std::vector<Digit>* digits, int icru, int icrate, int orbit, int bunchid);
 
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
 
   void printRDH() const;
-  void printCrateInfo(int icrate) const;
-  void printTRMInfo(int icrate) const;
-  void printCrateTrailerInfo(int icrate) const;
-  void printHitInfo(int icrate) const;
+  void printCrateInfo(int icru) const;
+  void printTRMInfo(int icru) const;
+  void printCrateTrailerInfo(int icru) const;
+  void printHitInfo(int icru) const;
 
   static void fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, std::array<int, 4>& digitInfo); // convert raw info in digit info (channel, tdc, tot, bc), tdc = packetHit.time + (frameHeader.frameID << 13)
 
   char *nextPage(void *current,int shift=8192);
 
  protected:
+  static const int NCRU = 4;
+
   // benchmarks
-  double mIntegratedBytes[72];
+  double mIntegratedBytes[NCRU];
   double mIntegratedTime = 0.;
 
-  std::ifstream mFile[72];
+  std::ifstream mFile[NCRU];
   bool mVerbose = false;
-  bool mCrateIn[72];
+  bool mCruIn[NCRU];
 
-  char* mBuffer[72];
+  char* mBuffer[NCRU];
   std::vector<char> mBufferLocal;
-  long mSize[72];
-  Union_t* mUnion[72];
-  Union_t* mUnionEnd[72];
+  long mSize[NCRU];
+  Union_t* mUnion[NCRU];
+  Union_t* mUnionEnd[NCRU];
 
   o2::header::RAWDataHeader* mRDH;
 

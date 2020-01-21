@@ -65,32 +65,24 @@ void RawReader::run(ProcessingContext& pc)
   decoder.open(mFilename.c_str());
   decoder.setVerbose(0);
 
-  mDigits.clear();
-
   // decode raw to digit here
   std::vector<o2::tof::Digit> digitsTemp;
-  int n_tof_window=0;
-  int n_orbits=0;
+
+  decoder.decode();
+
+  std::vector<std::vector<o2::tof::Digit>> *alldigits = decoder.getDigitPerTimeFrame();
+
+  int n_tof_window=alldigits->size();
+  int n_orbits=n_tof_window/3;
   int digit_size = 0;
-  int end_of_file = 0;
-  while(! end_of_file){
-    end_of_file=decoder.decode();
-    if(! end_of_file){
-      n_orbits++;
-      for(int window=0; window < Geo::NWINDOW_IN_ORBIT; window++){
-         digitsTemp.clear();
-         decoder.loadDigits(window,&digitsTemp);
-         digit_size += digitsTemp.size();
-         mDigits.push_back(digitsTemp);
-         n_tof_window++;
-      }
-    }
-  }
+  for(int i=0; i < n_tof_window; i++)
+    digit_size += alldigits[i].size();
+
 
   LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size<< " digits";
 
   // add digits in the output snapshot
-  pc.outputs().snapshot(Output{"TOF", "DIGITS", 0, Lifetime::Timeframe}, mDigits);
+  pc.outputs().snapshot(Output{"TOF", "DIGITS", 0, Lifetime::Timeframe}, *alldigits);
 
   static o2::parameters::GRPObject::ROMode roMode = o2::parameters::GRPObject::CONTINUOUS;
 
