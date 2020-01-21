@@ -120,8 +120,10 @@ class Geo
   static constexpr double BC_IN_WINDOW_INV = 1. / BC_IN_WINDOW;
   static constexpr Double_t READOUTWINDOW_INV = 1. / READOUTWINDOW;                           // Readout window (ns)
 
+  static constexpr Int_t READOUTWINDOW_IN_BC = BC_IN_ORBIT / NWINDOW_IN_ORBIT; // round down in case
   static constexpr Int_t LATENCYWINDOW_IN_BC = 1400;                                                       // Latency window  in BC (larger than 1/3 orbit 1188 BC)
   static constexpr Int_t MATCHINGWINDOW_IN_BC = 1200;                                                      // Latency window  in BC (larger than 1/3 orbit 1188 BC)
+  static constexpr Int_t OVERLAP_IN_BC = MATCHINGWINDOW_IN_BC - READOUTWINDOW_IN_BC;                        // overlap between two readout window in BC
   static constexpr Double_t LATENCYWINDOW = LATENCYWINDOW_IN_BC * o2::constants::lhc::LHCBunchSpacingNS;   // Latency window  in ns
   static constexpr Double_t MATCHINGWINDOW = MATCHINGWINDOW_IN_BC * o2::constants::lhc::LHCBunchSpacingNS; // Matching window  in ns
   static constexpr Double_t WINDOWOVERLAP = MATCHINGWINDOW - READOUTWINDOW;                                // overlap between two consecutive matchingwindow
