@@ -13,8 +13,8 @@
 
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
+#include "TOFBase/Strip.h"
 #include "TOFSimulation/Detector.h"
-#include "TOFSimulation/Strip.h"
 #include "SimulationDataFormat/MCTruthContainer.h"
 #include "TOFSimulation/MCLabel.h"
 #include "TOFCalibration/CalibTOFapi.h"
