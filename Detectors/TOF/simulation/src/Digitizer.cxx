@@ -74,7 +74,7 @@ void Digitizer::init()
       mStrips[j].emplace_back(i);
       if (j < MAXWINDOWS - 1) {
         mMCTruthContainerNext[j] = &(mMCTruthContainer[j + 1]);
-        mStripsNext[j] = &(mStrips[j + 1]);
+        // mStripsNext[j] = &(mStrips[j + 1]);
       }
     }
   }
