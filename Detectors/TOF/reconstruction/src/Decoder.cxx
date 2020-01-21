@@ -24,21 +24,21 @@ namespace tof
 namespace compressed
 {
 Decoder::Decoder(){
-  for(int i=0;i < 72;i++){
+  for(int i=0;i < NCRU;i++){
     mIntegratedBytes[i] = 0.;
     mBuffer[i] = nullptr;
-    mCrateIn[i] = false;
+    mCruIn[i] = false;
   }
 }
 
 bool Decoder::open(std::string name)
 {
-  int nfileopened = 72;
+  int nfileopened = NCRU;
 
   int fullsize = 0;
-  for(int i=0;i < 72;i++){
+  for(int i=0;i < NCRU;i++){
     std::string nametmp;
-    nametmp.append(Form("%02d",i));
+    nametmp.append(Form("cru%02d",i));
     nametmp.append(name);
 
     if (mFile[i].is_open()) {
@@ -50,7 +50,7 @@ bool Decoder::open(std::string name)
       std::cout << "Cannot open " << nametmp << std::endl;
       nfileopened--;
       mSize[i] = 0;
-      mCrateIn[i] = false;
+      mCruIn[i] = false;
     }
     else{
       mFile[i].seekg(0, mFile[i].end);
@@ -59,7 +59,7 @@ bool Decoder::open(std::string name)
 
       fullsize += mSize[i];
 
-      mCrateIn[i] = true;
+      mCruIn[i] = true;
     }
   }
 
@@ -73,8 +73,8 @@ bool Decoder::open(std::string name)
   printf("Full input buffer size = %d byte\n",fullsize);
 
   char* pos = mBufferLocal.data();
-  for(int i=0;i < 72;i++){
-    if(!mCrateIn[i]) continue;
+  for(int i=0;i < NCRU;i++){
+    if(!mCruIn[i]) continue;
 
     mBuffer[i] = pos;
       
@@ -87,7 +87,7 @@ bool Decoder::open(std::string name)
   }
 
 
-  printf("Number of TOF compressed streamers = %d/72\n",nfileopened);
+  printf("Number of TOF compressed streamers = %d/%d\n",nfileopened,NCRU);
 
   close();
 
@@ -96,22 +96,22 @@ bool Decoder::open(std::string name)
 
 bool Decoder::close()
 {
-  for(int i=0;i < 72;i++){
+  for(int i=0;i < NCRU;i++){
     if (mFile[i].is_open())
       mFile[i].close();
   }
   return false;
 }
 
-void Decoder::readTRM(std::vector<Digit>* digits, int icrate, int orbit, int bunchid)
+  void Decoder::readTRM(std::vector<Digit>* digits, int icru, int icrate, int orbit, int bunchid)
 {
   if (mVerbose)
-    printTRMInfo(icrate);
-  int nhits = mUnion[icrate]->frameHeader.numberOfHits;
-  int time_ext = mUnion[icrate]->frameHeader.frameID << 13;
-  int itrm = mUnion[icrate]->frameHeader.trmID;
-  mUnion[icrate]++;
-  mIntegratedBytes[icrate] += 4;
+    printTRMInfo(icru);
+  int nhits = mUnion[icru]->frameHeader.numberOfHits;
+  int time_ext = mUnion[icru]->frameHeader.frameID << 13;
+  int itrm = mUnion[icru]->frameHeader.trmID;
+  mUnion[icru]++;
+  mIntegratedBytes[icru] += 4;
 
   // read hits
   Int_t channel, echannel;
@@ -123,13 +123,29 @@ void Decoder::readTRM(std::vector<Digit>* digits, int icrate, int orbit, int bun
   std::array<int, 4> digitInfo;
 
   for (int i = 0; i < nhits; i++) {
-    fromRawHit2Digit(icrate, itrm, mUnion[icrate]->packedHit.tdcID, mUnion[icrate]->packedHit.chain, mUnion[icrate]->packedHit.channel, orbit, bunchid, time_ext + mUnion[icrate]->packedHit.time, mUnion[icrate]->packedHit.tot, digitInfo);
+    fromRawHit2Digit(icrate, itrm, mUnion[icru]->packedHit.tdcID, mUnion[icru]->packedHit.chain, mUnion[icru]->packedHit.channel, orbit, bunchid, time_ext + mUnion[icru]->packedHit.time, mUnion[icru]->packedHit.tot, digitInfo);
 
     if (mVerbose)
-      printHitInfo(icrate);
+      printHitInfo(icru);
     digits->emplace_back(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
-    mUnion[icrate]++;
-    mIntegratedBytes[icrate] += 4;
+
+    int isnext = digitInfo[3] * Geo::BC_IN_WINDOW_INV;
+
+    if(isnext >= MAXWINDOWS){ // accumulate all digits which are not in the first windows
+      mFutureDigits.emplace_back(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
+    }
+    else{
+      std::vector<Strip>* cstrip = mStripsCurrent; // first window
+      if(isnext) cstrip = mStripsNext[isnext-1]; // next window
+      
+      UInt_t istrip = digitInfo[0] / Geo::NPADS;
+      
+      // add digit
+      fillDigitsInStrip(cstrip, digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3], istrip);
+    }
+
+    mUnion[icru]++;
+    mIntegratedBytes[icru] += 4;
   }
 }
 
@@ -171,133 +187,119 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
 #endif
   auto start = std::chrono::high_resolution_clock::now();
 
-  //  reset windows of digits
-  for(int window = 0; window < Geo::NWINDOW_IN_ORBIT;window++)
-    mDigitWindow[window].clear();
+  // start from the beginning of the timeframe
+  mEventTime = 0;
+  
+  // loop over CRUs
+  for(int icru=0; icru < NCRU; icru++){
+    if(! mCruIn[icru]) continue; // no data stream available for this cru
 
-  int nread = 0;
-
-  for (int icrate = 0; icrate < 72; icrate++) {
-    if(! mCrateIn[icrate]) continue; // no data stream available for this crate/DRM
-    // read open RDH
-    mRDH = reinterpret_cast<o2::header::RAWDataHeader*>(mUnion[icrate]);
-    if (mVerbose)
-      printRDH();
-
-    // move after RDH
-    char* shift = reinterpret_cast<char*>(mRDH);
-    mUnion[icrate] = reinterpret_cast<Union_t*>(shift + mRDH->headerSize);
-    mIntegratedBytes[icrate] += mRDH->headerSize;
-
-    if(mUnion[icrate] >= mUnionEnd[icrate]) continue; // end of data stream reached for this crate/DRM
-//    printf("byte to be read = %d\n",int(mUnionEnd[icrate] - mUnion[icrate]));
-
-    // number of crates/DRM read
-    nread++;
-
-    for(int window=0; window < Geo::NWINDOW_IN_ORBIT; window++){
-      // read Crate Header
-      int bunchid = mUnion[icrate]->crateHeader.bunchID;
+    while(mUnion[icru] < mUnionEnd[icru]){ // read all the buffer
+      // read open RDH
+      mRDH = reinterpret_cast<o2::header::RAWDataHeader*>(mUnion[icru]);
       if (mVerbose)
-	printCrateInfo(icrate);
-      mUnion[icrate]++;
-      mIntegratedBytes[icrate] += 4;
+	printRDH();
+      
+      // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      // note that RDH continue is not yet considered as option (to be added)
+      // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      //read Orbit
-      int orbit = mUnion[icrate]->crateOrbit.orbitID;
-      if (mVerbose)
-	printf("orbit ID      = %d\n", orbit);
-      mUnion[icrate]++;
-      mIntegratedBytes[icrate] += 4;
+      // move after RDH
+      char* shift = reinterpret_cast<char*>(mRDH);
+      mUnion[icru] = reinterpret_cast<Union_t*>(shift + mRDH->headerSize);
+      mIntegratedBytes[icru] += mRDH->headerSize;
+      
+      if(mUnion[icru] >= mUnionEnd[icru]) continue; // end of data stream reac
+      for(int window=0; window < Geo::NWINDOW_IN_ORBIT; window++){
+	// read Crate Header
+	int bunchid = mUnion[icru]->crateHeader.bunchID;
+        int icrate = mUnion[icru]->crateHeader.drmID;
+	if (mVerbose)
+	  printCrateInfo(icru);
+	mUnion[icru]++;
+	mIntegratedBytes[icru] += 4;
 
-      while (!mUnion[icrate]->frameHeader.mustBeZero) {
-	readTRM(&(mDigitWindow[window]), icrate, orbit, bunchid);
+	//read Orbit
+	int orbit = mUnion[icru]->crateOrbit.orbitID;
+	if (mVerbose)
+	  printf("orbit ID      = %d\n", orbit);
+	mUnion[icru]++;
+	mIntegratedBytes[icru] += 4;
+	
+	while (!mUnion[icru]->frameHeader.mustBeZero) {
+	  readTRM(&(mDigitWindow[window]), icru, icrate, orbit, bunchid);
+	}
+
+	// read Crate Trailer
+	if (mVerbose)
+	  printCrateTrailerInfo(icru);
+	auto ndw = mUnion[icru]->crateTrailer.numberOfDiagnostics;
+	mUnion[icru]++;
+	mIntegratedBytes[icru] += 4;
+
+	// loop over number of diagnostic words
+	for (int idw = 0; idw < ndw; ++idw){
+	  mUnion[icru]++;
+	  mIntegratedBytes[icru] += 4;
+	}
       }
 
-      // read Crate Trailer
+      // read close RDH
+      mRDH = reinterpret_cast<o2::header::RAWDataHeader*>(nextPage(mRDH,mRDH->memorySize));
       if (mVerbose)
-	printCrateTrailerInfo(icrate);
-      auto ndw = mUnion[icrate]->crateTrailer.numberOfDiagnostics;
-      mUnion[icrate]++;
-      mIntegratedBytes[icrate] += 4;
-
-      // loop over number of diagnostic words
-      for (int idw = 0; idw < ndw; ++idw){
-	mUnion[icrate]++;
-	mIntegratedBytes[icrate] += 4;
-      }
+	printRDH();
+      mIntegratedBytes[icru] += mRDH->headerSize;
+      
+      // go to next page
+      mUnion[icru] = reinterpret_cast<Union_t*>(nextPage(mRDH,mRDH->memorySize));
     }
-
-    // read close RDH
-    mRDH = reinterpret_cast<o2::header::RAWDataHeader*>(nextPage(mRDH,mRDH->memorySize));
-    if (mVerbose)
-       printRDH();
-    mIntegratedBytes[icrate] += mRDH->headerSize;
-
-    // go to next page
-    mUnion[icrate] = reinterpret_cast<Union_t*>(nextPage(mRDH,mRDH->memorySize));
-
   }
 
-  auto finish = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = finish - start;
-  mIntegratedTime = elapsed.count();
+  // since digits are not yet divided in tof readout window we need to do it
+  // flushOutputContainer does the job
+  std::vector<Digit> digTemp;
+  flushOutputContainer(digTemp);
 
-#ifdef VERBOSE
-  if (mVerbose && mIntegratedTime){
-    double allbytes = 0;
-    for(int i=0; i < 72; i++) allbytes += mIntegratedBytes[i];
-    std::cout << "-------- END DECODE EVENT ------------------------------------------"
-              << " " << allbytes/4 << " words"
-              << " | " << 1.e3 * mIntegratedTime << " ms"
-              << " | " << 1.e-6 * allbytes / mIntegratedTime << " MB/s (average)"
-              << std::endl;
-  }
-#endif
-
-  if(! nread) return 1; // all buffers exausted
-
-  return 0;
 }
 
-void Decoder::printCrateInfo(int icrate) const
+void Decoder::printCrateInfo(int icru) const
 {
   printf("___CRATE HEADER____\n");
-  printf("DRM ID           = %d\n", mUnion[icrate]->crateHeader.drmID);
-  printf("Bunch ID         = %d\n", mUnion[icrate]->crateHeader.bunchID);
-  printf("Slot enable mask = %d\n", mUnion[icrate]->crateHeader.slotEnableMask);
-  printf("Must be ONE      = %d\n", mUnion[icrate]->crateHeader.mustBeOne);
+  printf("DRM ID           = %d\n", mUnion[icru]->crateHeader.drmID);
+  printf("Bunch ID         = %d\n", mUnion[icru]->crateHeader.bunchID);
+  printf("Slot enable mask = %d\n", mUnion[icru]->crateHeader.slotEnableMask);
+  printf("Must be ONE      = %d\n", mUnion[icru]->crateHeader.mustBeOne);
   printf("___________________\n");
 }
 
-void Decoder::printCrateTrailerInfo(int icrate) const
+void Decoder::printCrateTrailerInfo(int icru) const
 {
   printf("___CRATE TRAILER___\n");
-  printf("Event counter         = %d\n", mUnion[icrate]->crateTrailer.eventCounter);
-  printf("Number of diagnostics = %d\n", mUnion[icrate]->crateTrailer.numberOfDiagnostics);
-  printf("Must be ONE           = %d\n", mUnion[icrate]->crateTrailer.mustBeOne);
+  printf("Event counter         = %d\n", mUnion[icru]->crateTrailer.eventCounter);
+  printf("Number of diagnostics = %d\n", mUnion[icru]->crateTrailer.numberOfDiagnostics);
+  printf("Must be ONE           = %d\n", mUnion[icru]->crateTrailer.mustBeOne);
   printf("___________________\n");
 }
 
-void Decoder::printTRMInfo(int icrate) const
+void Decoder::printTRMInfo(int icru) const
 {
   printf("______TRM_INFO_____\n");
-  printf("TRM ID        = %d\n", mUnion[icrate]->frameHeader.trmID);
-  printf("Frame ID      = %d\n", mUnion[icrate]->frameHeader.frameID);
-  printf("N. hits       = %d\n", mUnion[icrate]->frameHeader.numberOfHits);
-  printf("DeltaBC       = %d\n", mUnion[icrate]->frameHeader.deltaBC);
-  printf("Must be Zero  = %d\n", mUnion[icrate]->frameHeader.mustBeZero);
+  printf("TRM ID        = %d\n", mUnion[icru]->frameHeader.trmID);
+  printf("Frame ID      = %d\n", mUnion[icru]->frameHeader.frameID);
+  printf("N. hits       = %d\n", mUnion[icru]->frameHeader.numberOfHits);
+  printf("DeltaBC       = %d\n", mUnion[icru]->frameHeader.deltaBC);
+  printf("Must be Zero  = %d\n", mUnion[icru]->frameHeader.mustBeZero);
   printf("___________________\n");
 }
 
-void Decoder::printHitInfo(int icrate) const
+void Decoder::printHitInfo(int icru) const
 {
   printf("______HIT_INFO_____\n");
-  printf("TDC ID        = %d\n", mUnion[icrate]->packedHit.tdcID);
-  printf("CHAIN ID      = %d\n", mUnion[icrate]->packedHit.chain);
-  printf("CHANNEL ID    = %d\n", mUnion[icrate]->packedHit.channel);
-  printf("TIME          = %d\n", mUnion[icrate]->packedHit.time);
-  printf("TOT           = %d\n", mUnion[icrate]->packedHit.tot);
+  printf("TDC ID        = %d\n", mUnion[icru]->packedHit.tdcID);
+  printf("CHAIN ID      = %d\n", mUnion[icru]->packedHit.chain);
+  printf("CHANNEL ID    = %d\n", mUnion[icru]->packedHit.channel);
+  printf("TIME          = %d\n", mUnion[icru]->packedHit.time);
+  printf("TOT           = %d\n", mUnion[icru]->packedHit.tot);
   printf("___________________\n");
 }
 
