@@ -40,16 +40,25 @@ Encoder::Encoder()
 }
 
 void Encoder::nextWord(int icrate){
-  // mUnion[icrate]++;
-  // mUnion[icrate]->data = 0;
   if(mNextWordStatus[icrate]){
-    mUnion[icrate]++;
+    nextWordNoEmpty(icrate);
     mUnion[icrate]->data = 0;
-    mUnion[icrate]++;
+    nextWordNoEmpty(icrate);
     mUnion[icrate]->data = 0;
   }
-  mUnion[icrate]++;
+  nextWordNoEmpty(icrate);
   mNextWordStatus[icrate] = !mNextWordStatus[icrate];
+}
+
+void Encoder::nextWordNoEmpty(int icrate){
+  mUnion[icrate]++;
+
+  // check if you went over the buffer size
+  int csize = getSize(mRDH[icrate],mUnion[icrate]);
+  if(csize >= Geo::RAW_PAGE_MAX_SIZE){
+    addPage(icrate);
+  } 
+
 }
 
 bool Encoder::open(std::string name)
@@ -73,27 +82,11 @@ bool Encoder::open(std::string name)
 
   }
 
-  for(int i=0;i < 72;i++){
-    std::string nametmp;
-    nametmp.append(Form("%02d",i));
-    nametmp.append(name);
-    printf("TOF Raw encoder: create stream to %s\n",nametmp.c_str());
-    if (mFile[i].is_open()) {
-      std::cout << "Warning: a file (" << i  << ") was already open, closing" << std::endl;
-      mFile[i].close();
-    }
-    mFile[i].open(nametmp.c_str(), std::fstream::out | std::fstream::binary);
-    if (!mFile[i].is_open()) {
-      std::cerr << "Cannot open " << nametmp << std::endl;
-      status = true;
-    }
-  }
   return status;
 }
 
 bool Encoder::flush(int icrate){
   if(mIntegratedBytes[icrate]){
-    mFile[icrate].write(mBuffer[icrate], mIntegratedBytes[icrate]);
     mIntegratedAllBytes += mIntegratedBytes[icrate];
     mIntegratedBytes[icrate] = 0;
     mUnion[icrate] = mStart[icrate];
@@ -119,20 +112,11 @@ bool Encoder::flush()
   
   memset(mBuffer[0], 0, mSize*72);
 
-  for(int i=0;i < 72;i++){
-    mIntegratedBytes[i] = 0;
-    mUnion[i] = mStart[i];
-  }
-
   return false;
 }
 
 bool Encoder::close()
 {
-  for(int i=0;i < 72;i++)
-    if (mFile[i].is_open())
-      mFile[i].close();
-
   for(int i=0;i < NCRU;i++)
     if (mFileCRU[i].is_open())
       mFileCRU[i].close();
@@ -268,6 +252,7 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
   for(int i=0;i < 72;i++){
     // add RDH open
     mRDH[i] = reinterpret_cast<o2::header::RAWDataHeader*>(mUnion[i]);
+    mNextWordStatus[i] = false;
     openRDH(i);
   }
 
@@ -372,6 +357,8 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
     mUnion[i] = reinterpret_cast<Union_t *>(nextPage(mRDH[i],mRDH[i]->offsetToNext));
   }
 
+  mStartRun = false;
+
   auto finish = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = finish - start;
   mIntegratedTime = elapsed.count();
@@ -391,9 +378,7 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
   return false;
 }
 
-void Encoder::openRDH(int icrate){
-  mNextWordStatus[icrate] = false;
-    
+void Encoder::openRDH(int icrate){    
   *mRDH[icrate] = mHBFSampler.createRDH<o2::header::RAWDataHeader>(mIR);
 
   // word1
@@ -412,7 +397,7 @@ void Encoder::openRDH(int icrate){
   mRDH[icrate]->triggerBC = 0; // to be checked (it should be constant)
   mRDH[icrate]->heartbeatBC = 0;
   mRDH[icrate]->triggerType = o2::trigger::HB|o2::trigger::ORBIT;
-  if(mNRDH[icrate]==0){
+  if(mStartRun){
     //    mRDH[icrate]->triggerType |= mIsContinuous ? o2::trigger::SOC : o2::trigger::SOT; 
     mRDH[icrate]->triggerType |= o2::trigger::SOT; 
   }
@@ -420,12 +405,26 @@ void Encoder::openRDH(int icrate){
     mRDH[icrate]->triggerType |= o2::trigger::TF; 
 
   // word6
-  mRDH[icrate]->pageCnt = 2*mEventCounter; // check vs packetCounter
+  mRDH[icrate]->pageCnt = mNRDH[icrate];
 
   char* shift = reinterpret_cast<char*>(mRDH[icrate]);
 
   mUnion[icrate] = reinterpret_cast<Union_t*>(shift + mRDH[icrate]->headerSize);
   mNRDH[icrate]++;
+}
+
+void Encoder::addPage(int icrate){   
+  // adjust RDH open with the size
+  mRDH[icrate]->memorySize = getSize(mRDH[icrate],mUnion[icrate]);
+  mRDH[icrate]->offsetToNext = mRDH[icrate]->memorySize;
+  mIntegratedBytes[icrate] += mRDH[icrate]->offsetToNext;
+
+  // printf("add page (crate = %d - current size = %d)\n",icrate,mRDH[icrate]->offsetToNext);
+
+  // move to next RDH
+  mRDH[icrate] = reinterpret_cast<o2::header::RAWDataHeader*>(nextPage(mRDH[icrate],mRDH[icrate]->offsetToNext));
+
+  openRDH(icrate);
 }
 
 void Encoder::closeRDH(int icrate){
@@ -449,7 +448,7 @@ void Encoder::closeRDH(int icrate){
   mRDH[icrate]->triggerBC = 0; // to be checked (it should be constant)
   mRDH[icrate]->heartbeatBC = 0;
   mRDH[icrate]->triggerType = o2::trigger::HB|o2::trigger::ORBIT;
-  if(mNRDH[icrate]==1){
+  if(mStartRun){
     //    mRDH[icrate]->triggerType |= mIsContinuous ? o2::trigger::SOC : o2::trigger::SOT; 
     mRDH[icrate]->triggerType |= o2::trigger::SOT; 
   }
@@ -457,7 +456,7 @@ void Encoder::closeRDH(int icrate){
     mRDH[icrate]->triggerType |= o2::trigger::TF; 
 
   // word6
-  mRDH[icrate]->pageCnt = 2*mEventCounter + 1; // check vs packetCounter
+  mRDH[icrate]->pageCnt = mNRDH[icrate];
   mNRDH[icrate]++;
 }
 

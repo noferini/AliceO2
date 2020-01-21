@@ -55,6 +55,8 @@ class Geo
     kNCh = 8      // Number of channels per Tdc
   };
 
+  static constexpr Int_t RAW_PAGE_MAX_SIZE = 8192;
+
   static constexpr Float_t BC_TIME = o2::constants::lhc::LHCBunchSpacingNS; // bunch crossing in ns
   static constexpr Float_t BC_TIME_INV = 1. / BC_TIME;                      // inv bunch crossing in ns
   static constexpr Float_t BC_TIME_INPS = BC_TIME * 1000;                   // bunch crossing in ps
