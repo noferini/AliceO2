@@ -156,27 +156,43 @@ void WindowFiller::checkIfReuseFutureDigits()
   // check if digits stored very far in future match the new readout windows currently available
   int idigit = mFutureDigits.size() - 1;
 
+  int bclimit = 999999; // if bc is larger than this value stop the search  in the next loop since bc are ordered in descending order
+
   for (std::vector<Digit>::reverse_iterator digit = mFutureDigits.rbegin(); digit != mFutureDigits.rend(); ++digit) {
-    double timestamp = digit->getBC() * 25 + digit->getTDC() * Geo::TDCBIN * 1E-3;        // in ns
+
+    if(digit->getBC() > bclimit) break;
+
+    double timestamp = digit->getBC() * Geo::BC_TIME + digit->getTDC() * Geo::TDCBIN * 1E-3;        // in ns
     int isnext = Int_t(timestamp * Geo::READOUTWINDOW_INV) - (mReadoutWindowCurrent + 1); // to be replaced with uncalibrated time
-    if (isnext < 0)                                                                       // we jump too ahead in future, digit will be not stored
+ 
+    if (isnext < 0){                                                           // we jump too ahead in future, digit will be not stored
       LOG(INFO) << "Digit lost because we jump too ahead in future. Current RO window=" << isnext << "\n";
+      
+      // remove digit from array in the future
+      int labelremoved = digit->getLabel();
+      mFutureDigits.erase(mFutureDigits.begin() + idigit);
+      
+      idigit--;
+      
+      continue;
+    }
+    
+    
     if (isnext < MAXWINDOWS - 1) { // move from digit buffer array to the proper window
-      if (isnext >= 0) {
-        std::vector<Strip>* strips = mStripsCurrent;
-        // o2::dataformats::MCTruthContainer<o2::tof::MCLabel>* mcTruthContainer = mMCTruthContainerCurrent;
+      std::vector<Strip>* strips = mStripsCurrent;
+      // o2::dataformats::MCTruthContainer<o2::tof::MCLabel>* mcTruthContainer = mMCTruthContainerCurrent;
 
-        if (isnext) {
-          strips = mStripsNext[isnext - 1];
-          // mcTruthContainer = mMCTruthContainerNext[isnext - 1];
-        }
-
-        // int trackID = mFutureItrackID[digit->getLabel()];
-        // int sourceID = mFutureIsource[digit->getLabel()];
-        // int eventID = mFutureIevent[digit->getLabel()];
-        // fillDigitsInStrip(strips, mcTruthContainer, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS, trackID, eventID, sourceID);
-        fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
+      if (isnext) {
+	strips = mStripsNext[isnext - 1];
+	// mcTruthContainer = mMCTruthContainerNext[isnext - 1];
       }
+
+      // int trackID = mFutureItrackID[digit->getLabel()];
+      // int sourceID = mFutureIsource[digit->getLabel()];
+      // int eventID = mFutureIevent[digit->getLabel()];
+      // fillDigitsInStrip(strips, mcTruthContainer, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS, trackID, eventID, sourceID);
+      fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
+      
       // // remove the element from the buffers
       // mFutureItrackID.erase(mFutureItrackID.begin() + digit->getLabel());
       // mFutureIsource.erase(mFutureIsource.begin() + digit->getLabel());
@@ -193,6 +209,9 @@ void WindowFiller::checkIfReuseFutureDigits()
       // }
       // remove also digit from buffer
       //      mFutureDigits.erase(mFutureDigits.begin() + idigit);
+    }
+    else{
+      bclimit = digit->getBC();
     }
     idigit--; // go back to the next position in the reverse iterator
   }           // close future digit loop

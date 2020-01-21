@@ -69,6 +69,13 @@ class WindowFiller
 
   void checkIfReuseFutureDigits();
 
+  void insertDigitInFuture(int digitInfo0, int digitInfo1, int digitInfo2, int digitInfo3, int lbl=0){
+    mFutureDigits.emplace_back(digitInfo0, digitInfo1, digitInfo2, digitInfo3, lbl);
+    // sort digit in descending BC order: kept last as first
+    std::sort(mFutureDigits.begin(), mFutureDigits.end(),
+	      [](o2::tof::Digit a, o2::tof::Digit b) { return a.getBC() > b.getBC(); });
+  }
+
   bool isMergable(Digit digit1, Digit digit2)
   {
     if (digit1.getChannel() != digit2.getChannel()) {
