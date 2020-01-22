@@ -132,7 +132,9 @@ bool Decoder::close()
     int isnext = digitInfo[3] * Geo::BC_IN_WINDOW_INV;
 
     if(isnext >= MAXWINDOWS){ // accumulate all digits which are not in the first windows
-      mFutureDigits.emplace_back(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
+
+
+      insertDigitInFuture(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
     }
     else{
       std::vector<Strip>* cstrip = mStripsCurrent; // first window
