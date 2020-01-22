@@ -33,7 +33,8 @@ class WindowFiller
   void setCurrentReadoutWindow(Double_t value) { mReadoutWindowCurrent = value; }
   void setEventTime(double value) { mEventTime = value; }
 
-  std::vector<std::vector<Digit>>* getDigitPerTimeFrame() { return &mDigitsPerTimeFrame; }
+  std::vector<Digit>* getDigitPerTimeFrame() { return &mDigitsPerTimeFrame; }
+  std::vector<ReadoutWindowData>* getReadoutWindowData() { return &mReadoutWindowData; }
 
   void fillOutputContainer(std::vector<Digit>& digits);
   void flushOutputContainer(std::vector<Digit>& digits); // flush all residual buffered data
@@ -52,7 +53,8 @@ class WindowFiller
 
   static const int MAXWINDOWS = 2; // how many readout windows we can buffer
 
-  std::vector<std::vector<Digit>> mDigitsPerTimeFrame;
+  std::vector<Digit> mDigitsPerTimeFrame;
+  std::vector<ReadoutWindowData> mReadoutWindowData;
 
   int mIcurrentReadoutWindow = 0;
 

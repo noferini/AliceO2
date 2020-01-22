@@ -98,7 +98,11 @@ void WindowFiller::fillOutputContainer(std::vector<Digit>& digits)
 
   if (mContinuous) {
     printf("%i) # TOF digits = %lu (%p)\n", mIcurrentReadoutWindow, digits.size(), mStripsCurrent);
-    mDigitsPerTimeFrame.push_back(digits);
+    int first = mDigitsPerTimeFrame.size();
+    int ne = digits.size();
+    ReadoutWindowData info(first,ne);
+    mDigitsPerTimeFrame.insert(mDigitsPerTimeFrame.end(), digits.begin(), digits.end());
+    mReadoutWindowData.push_back(info);
   }
 
   // copying the transient labels to the output labels (stripping the tdc information)
