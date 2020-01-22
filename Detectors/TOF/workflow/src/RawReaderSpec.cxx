@@ -70,19 +70,19 @@ void RawReader::run(ProcessingContext& pc)
 
   decoder.decode();
 
-  std::vector<std::vector<o2::tof::Digit>> *alldigits = decoder.getDigitPerTimeFrame();
+  std::vector<o2::tof::Digit> *alldigits = decoder.getDigitPerTimeFrame();
+  std::vector<o2::tof::ReadoutWindowData> *row = decoder.getReadoutWindowData();
 
-  int n_tof_window=alldigits->size();
+  int n_tof_window=row->size();
   int n_orbits=n_tof_window/3;
-  int digit_size = 0;
-  for(int i=0; i < n_tof_window; i++)
-    digit_size += alldigits[i].size();
+  int digit_size = alldigits->size();
 
 
   LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size<< " digits";
 
   // add digits in the output snapshot
   pc.outputs().snapshot(Output{"TOF", "DIGITS", 0, Lifetime::Timeframe}, *alldigits);
+  pc.outputs().snapshot(Output{"TOF", "READOUTWINDOW", 0, Lifetime::Timeframe}, *row);
 
   static o2::parameters::GRPObject::ROMode roMode = o2::parameters::GRPObject::CONTINUOUS;
 
@@ -97,6 +97,7 @@ DataProcessorSpec getRawReaderSpec()
 {
   std::vector<OutputSpec> outputs;
   outputs.emplace_back("TOF", "DIGITS", 0, Lifetime::Timeframe);
+  outputs.emplace_back("TOF", "READOUTWINDOW", 0, Lifetime::Timeframe);
   outputs.emplace_back("TOF", "ROMode", 0, Lifetime::Timeframe);
 
   return DataProcessorSpec{
