@@ -285,7 +285,7 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
 
       mUnion[i]->drmHeadW1.slotId = 1;
       mUnion[i]->drmHeadW1.partSlotMask = (i % 2 == 0 ? 0x7fc : 0x7fe);
-      mUnion[i]->drmHeadW1.clockStatus = 0;
+      mUnion[i]->drmHeadW1.clockStatus = 2;
       mUnion[i]->drmHeadW1.drmhVersion = 0x11;
       mUnion[i]->drmHeadW1.drmHSize = 5;
       mUnion[i]->drmHeadW1.mbz = 0;
