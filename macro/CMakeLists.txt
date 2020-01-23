@@ -214,7 +214,8 @@ o2_add_test_root_macro(run_clus_mftSA.C
 
 # FIXME: move to subsystem dir
 o2_add_test_root_macro(run_clus_tof.C
-                       PUBLIC_LINK_LIBRARIES O2::TOFReconstruction
+                       PUBLIC_LINK_LIBRARIES O2::TOFReconstruction O2::Framework O2::TOFBase 
+                                             O2::SimulationDataFormat O2::TOFCalibration O2::DataFormatsTOF
                        LABELS tof)
 
 # FIXME: move to subsystem dir

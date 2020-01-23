@@ -28,29 +28,19 @@ void run_rawdecoding_tof(std::string outName = "tofdigitDecoded.root", // name o
   TFile* f = new TFile(outName.c_str(), "RECREATE");
   TTree* t = new TTree("o2sim", "o2sim");
 
-  std::vector<std::vector<o2::tof::Digit>> digits, *pDigits = &digits;
-  std::vector<o2::tof::Digit> digitsTemp;
-
-  t->Branch("TOFDigit", &pDigits);
-
   o2::tof::compressed::Decoder decoder;
   decoder.open(inpName.c_str());
   decoder.setVerbose(verbosity);
+  decoder.decode();
 
-  int n_tof_window = 0;
-  int end_of_file = 0;
-  while (!end_of_file) {
-    digitsTemp.clear();
+  std::vector<o2::tof::Digit> *alldigits = decoder.getDigitPerTimeFrame();
+  std::vector<o2::tof::ReadoutWindowData> *row = decoder.getReadoutWindowData();
 
-    end_of_file = decoder.decode(&digitsTemp);
-    if (!end_of_file) {
-      digits.push_back(digitsTemp);
-      n_tof_window++;
-    }
-  }
 
-  printf("N tof window decoded= %d\n", n_tof_window);
+  printf("N tof window decoded= %d\n", row->size());
 
+  t->Branch("TOFDigit", &alldigits);
+  t->Branch("TOFReadoutWindow", &row);
   t->Fill();
   t->Write();
   f->Close();
