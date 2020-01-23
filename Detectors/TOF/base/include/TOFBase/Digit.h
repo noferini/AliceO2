@@ -104,6 +104,7 @@ struct ReadoutWindowData {
   gsl::span<const Digit> getBunchChannelData(const gsl::span<const Digit> tfdata) const
   {
     // extract the span of channel data for this readout window from the whole TF data
+    if(!nEntries) return gsl::span<const Digit>(nullptr, nEntries);
     return gsl::span<const Digit>(&tfdata[firstEntry], nEntries);
   }
 
