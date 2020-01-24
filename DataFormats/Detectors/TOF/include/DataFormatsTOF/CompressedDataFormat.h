@@ -61,7 +61,7 @@ struct PackedHit_t {
 struct CrateTrailer_t {
   uint32_t numberOfDiagnostics : 4;
   uint32_t eventCounter : 12;
-  uint32_t undefined : 3;
+  uint32_t undefined : 15;
   uint32_t mustBeOne : 1;
 };
 

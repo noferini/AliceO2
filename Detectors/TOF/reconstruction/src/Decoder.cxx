@@ -196,11 +196,15 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
   for(int icru=0; icru < NCRU; icru++){
     if(! mCruIn[icru]) continue; // no data stream available for this cru
 
+    printf("decoding cru %d\n",icru);
+
     while(mUnion[icru] < mUnionEnd[icru]){ // read all the buffer
       // read open RDH
       mRDH = reinterpret_cast<o2::header::RAWDataHeader*>(mUnion[icru]);
       if (mVerbose)
 	printRDH();
+
+      //      printf("read bytes = %d\n",mIntegratedBytes[icru]);
       
       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       // note that RDH continue is not yet considered as option (to be added)

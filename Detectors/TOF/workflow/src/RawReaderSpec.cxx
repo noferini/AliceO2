@@ -68,7 +68,9 @@ void RawReader::run(ProcessingContext& pc)
   // decode raw to digit here
   std::vector<o2::tof::Digit> digitsTemp;
 
+  printf("start decoding raw\n");
   decoder.decode();
+  printf("end decoding raw\n");
 
   std::vector<o2::tof::Digit> *alldigits = decoder.getDigitPerTimeFrame();
   std::vector<o2::tof::ReadoutWindowData> *row = decoder.getReadoutWindowData();
