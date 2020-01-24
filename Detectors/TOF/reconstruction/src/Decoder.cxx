@@ -68,11 +68,11 @@ bool Decoder::open(std::string name)
     return true;
   }
 
-  mBufferLocal.resize(fullsize);
-
+  //  mBufferLocal.resize(fullsize);
+  
   printf("Full input buffer size = %d byte\n",fullsize);
 
-  char* pos = mBufferLocal.data();
+  char* pos = new char[fullsize];//mBufferLocal.data();
   for(int i=0;i < NCRU;i++){
     if(!mCruIn[i]) continue;
 
@@ -103,7 +103,7 @@ bool Decoder::close()
   return false;
 }
 
-  void Decoder::readTRM(std::vector<Digit>* digits, int icru, int icrate, int orbit, int bunchid)
+  void Decoder::readTRM(int icru, int icrate, int orbit, int bunchid)
 {
   if (mVerbose)
     printTRMInfo(icru);
@@ -127,14 +127,13 @@ bool Decoder::close()
 
     if (mVerbose)
       printHitInfo(icru);
-    digits->emplace_back(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
 
     int isnext = digitInfo[3] * Geo::BC_IN_WINDOW_INV;
 
     if(isnext >= MAXWINDOWS){ // accumulate all digits which are not in the first windows
 
 
-      insertDigitInFuture(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
+      insertDigitInFutureNoSorting(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
     }
     else{
       std::vector<Strip>* cstrip = mStripsCurrent; // first window
@@ -167,13 +166,6 @@ void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int c
   digitInfo[1] = tdc % 1024;
 }
 
-void Decoder::loadDigits(int window, std::vector<Digit> *digits){
-  if(window < Geo::NWINDOW_IN_ORBIT)
-    *digits = mDigitWindow[window];
-  else
-    std::cout << "You tried to get more window (" << window<< ") than expected in one orbit (" << Geo::NWINDOW_IN_ORBIT << ")" << std::endl;
-}
-
   char *Decoder::nextPage(void *current, int shift){
   char *point = reinterpret_cast<char *>(current);
   point += shift;
@@ -203,8 +195,6 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
       mRDH = reinterpret_cast<o2::header::RAWDataHeader*>(mUnion[icru]);
       if (mVerbose)
 	printRDH();
-
-      //      printf("read bytes = %d\n",mIntegratedBytes[icru]);
       
       // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       // note that RDH continue is not yet considered as option (to be added)
@@ -233,7 +223,7 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
 	mIntegratedBytes[icru] += 4;
 	
 	while (!mUnion[icru]->frameHeader.mustBeZero) {
-	  readTRM(&(mDigitWindow[window]), icru, icrate, orbit, bunchid);
+	  readTRM(icru, icrate, orbit, bunchid);
 	}
 
 	// read Crate Trailer
