@@ -41,6 +41,8 @@ class WindowFiller
   void setContinuous(bool value=true) {mContinuous=value;}
   bool isContinuous() const {return mContinuous;}
 
+  void resizeVectorFutureDigit(int size) {mFutureDigits.resize(size);}
+
  protected:
   // info TOF timewindow
   Int_t mReadoutWindowCurrent = 0;
@@ -76,6 +78,10 @@ class WindowFiller
     // sort digit in descending BC order: kept last as first
     std::sort(mFutureDigits.begin(), mFutureDigits.end(),
 	      [](o2::tof::Digit a, o2::tof::Digit b) { return a.getBC() > b.getBC(); });
+  }
+
+  void insertDigitInFutureNoSorting(int digitInfo0, int digitInfo1, int digitInfo2, int digitInfo3, int lbl=0){
+    mFutureDigits.emplace_back(digitInfo0, digitInfo1, digitInfo2, digitInfo3, lbl);
   }
 
   bool isMergable(Digit digit1, Digit digit2)

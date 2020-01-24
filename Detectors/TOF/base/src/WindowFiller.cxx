@@ -137,6 +137,12 @@ void WindowFiller::fillOutputContainer(std::vector<Digit>& digits)
 void WindowFiller::flushOutputContainer(std::vector<Digit>& digits)
 { // flush all residual buffered data
   // TO be implemented
+
+  printf("sorting future digits array\n");
+  // sort digit in descending BC order: kept last as first
+  std::sort(mFutureDigits.begin(), mFutureDigits.end(),
+	    [](o2::tof::Digit a, o2::tof::Digit b) { return a.getBC() > b.getBC(); });
+
   printf("flushOutputContainer\n");
   if (!mContinuous)
     fillOutputContainer(digits);

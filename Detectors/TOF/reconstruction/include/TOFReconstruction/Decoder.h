@@ -44,8 +44,7 @@ class Decoder : public WindowFiller
   bool open(std::string name);
 
   bool decode();
-  void loadDigits(int window, std::vector<Digit> *digits);
-  void readTRM(std::vector<Digit>* digits, int icru, int icrate, int orbit, int bunchid);
+  void readTRM(int icru, int icrate, int orbit, int bunchid);
 
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
@@ -78,8 +77,6 @@ class Decoder : public WindowFiller
   Union_t* mUnionEnd[NCRU];
 
   o2::header::RAWDataHeader* mRDH;
-
-  std::vector<Digit> mDigitWindow[Geo::NWINDOW_IN_ORBIT];
 };
 
 } // namespace compressed
