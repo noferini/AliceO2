@@ -64,7 +64,7 @@ class Decoder : public WindowFiller
   static const int NCRU = 4;
 
   // benchmarks
-  double mIntegratedBytes[NCRU];
+  int mIntegratedBytes[NCRU];
   double mIntegratedTime = 0.;
 
   std::ifstream mFile[NCRU];
