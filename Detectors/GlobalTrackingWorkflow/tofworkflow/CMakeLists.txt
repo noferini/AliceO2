@@ -13,7 +13,8 @@ o2_add_library(TOFWorkflow
 		       src/TOFMatchedWriterSpec.cxx
   		       src/TOFCalibWriterSpec.cxx
                PUBLIC_LINK_LIBRARIES O2::Framework O2::TOFBase O2::DataFormatsTOF O2::TOFReconstruction 
-                                     O2::GlobalTracking O2::GlobalTrackingWorkflow O2::TOFWorkflowUtils)
+                                     O2::GlobalTracking O2::GlobalTrackingWorkflow O2::TOFWorkflowUtils
+                                     O2::TOFCalibration)
 
 o2_add_executable(reco-workflow
                   COMPONENT_NAME tof

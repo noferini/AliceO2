@@ -17,7 +17,7 @@
 #include "DataFormatsParameters/GRPObject.h"
 #include "ReconstructionDataFormats/PID.h"
 
-#include "GlobalTracking/CalibTOF.h"
+#include "TOFCalibration/CalibTOF.h"
 
 #include "CommonConstants/LHCConstants.h"
 
