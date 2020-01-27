@@ -36,10 +36,10 @@ void run_cmp2digit_tof(std::string inName = "cmptof.bin",     // name of the out
   decoder.decode();
 
   std::vector<o2::tof::Digit> *alldigits = decoder.getDigitPerTimeFrame();
-  printf("N digits -> %d\n",alldigits->size());
+  printf("N digits -> %d\n",int(alldigits->size()));
 
   std::vector<o2::tof::ReadoutWindowData> *row = decoder.getReadoutWindowData();
-  printf("N readout window -> %d\n",row->size());
+  printf("N readout window -> %d\n",int(row->size()));
 
   int n_tof_window=row->size();
   int n_orbits=n_tof_window/3;
