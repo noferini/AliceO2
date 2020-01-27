@@ -133,7 +133,7 @@ bool Decoder::close()
     if(isnext >= MAXWINDOWS){ // accumulate all digits which are not in the first windows
 
 
-      insertDigitInFutureNoSorting(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
+      insertDigitInFuture(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
     }
     else{
       std::vector<Strip>* cstrip = mStripsCurrent; // first window
@@ -255,7 +255,7 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
   // flushOutputContainer does the job
   std::vector<Digit> digTemp;
   flushOutputContainer(digTemp);
-
+  printf("here we are \n");
 }
 
 void Decoder::printCrateInfo(int icru) const

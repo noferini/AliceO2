@@ -44,6 +44,7 @@ install(FILES CheckClusters_mft.C
               run_digi_mft.C
               run_digi_tof.C
               run_digi2raw_tof.C
+              run_cmp2digit_tof.C
               run_match_TPCITS.C
               run_match_tof.C
               run_primary_vertexer_ITS.C
@@ -265,6 +266,11 @@ o2_add_test_root_macro(run_digi_tof.C
 
 o2_add_test_root_macro(run_digi2raw_tof.C
                        PUBLIC_LINK_LIBRARIES O2::TOFSimulation
+                                             O2::TOFReconstruction
+                       LABELS tof)
+
+o2_add_test_root_macro(run_cmp2digit_tof.C
+                       PUBLIC_LINK_LIBRARIES O2::TOFBase
                                              O2::TOFReconstruction
                        LABELS tof)
 
