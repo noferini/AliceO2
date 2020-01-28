@@ -105,6 +105,13 @@ bool Decoder::close()
 
   void Decoder::readTRM(int icru, int icrate, int orbit, int bunchid)
 {
+
+  if(orbit < mFirstOrbit || (orbit == mFirstOrbit && bunchid < mFirstBunch)){
+    mFirstOrbit = orbit;
+    mFirstBunch = bunchid;
+  }
+
+
   if (mVerbose)
     printTRMInfo(icru);
   int nhits = mUnion[icru]->frameHeader.numberOfHits;
@@ -120,10 +127,12 @@ bool Decoder::close()
   Int_t bc;
   Int_t time;
 
-  std::array<int, 4> digitInfo;
+  std::array<int, 6> digitInfo;
 
   for (int i = 0; i < nhits; i++) {
     fromRawHit2Digit(icrate, itrm, mUnion[icru]->packedHit.tdcID, mUnion[icru]->packedHit.chain, mUnion[icru]->packedHit.channel, orbit, bunchid, time_ext + mUnion[icru]->packedHit.time, mUnion[icru]->packedHit.tot, digitInfo);
+
+    mHitDecoded++;
 
     if (mVerbose)
       printHitInfo(icru);
@@ -133,7 +142,7 @@ bool Decoder::close()
     if(isnext >= MAXWINDOWS){ // accumulate all digits which are not in the first windows
 
 
-      insertDigitInFuture(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3]);
+      insertDigitInFuture(digitInfo[0], digitInfo[1], digitInfo[2], digitInfo[3], 0, digitInfo[4], digitInfo[5]);
     }
     else{
       std::vector<Strip>* cstrip = mStripsCurrent; // first window
@@ -150,7 +159,7 @@ bool Decoder::close()
   }
 }
 
-void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, std::array<int, 4>& digitInfo)
+void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, std::array<int, 6>& digitInfo)
 {
   // convert raw info in digit info (channel, tdc, tot, bc)
   // tdc = packetHit.time + (frameHeader.frameID << 13)
@@ -164,9 +173,12 @@ void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int c
   digitInfo[3] += bunchid;
   digitInfo[3] += tdc / 1024;
   digitInfo[1] = tdc % 1024;
+
+  digitInfo[4] = orbit;
+  digitInfo[5] = bunchid;
 }
 
-  char *Decoder::nextPage(void *current, int shift){
+char *Decoder::nextPage(void *current, int shift){
   char *point = reinterpret_cast<char *>(current);
   point += shift;
 
@@ -175,6 +187,10 @@ void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int c
 
 bool Decoder::decode() // return a vector of digits in a TOF readout window
 { 
+  mReadoutWindowCurrent = 0;
+  mFirstOrbit = 0;
+  mFirstBunch = 0;
+
 #ifdef VERBOSE
   if (mVerbose)
     std::cout << "-------- START DECODE EVENTS IN THE HB ----------------------------------------" << std::endl;
@@ -255,7 +271,7 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
   // flushOutputContainer does the job
   std::vector<Digit> digTemp;
   flushOutputContainer(digTemp);
-  printf("here we are \n");
+  printf("hit decoded = %d (digits not filled = %d)\n", mHitDecoded, mFutureDigits.size());
 }
 
 void Decoder::printCrateInfo(int icru) const

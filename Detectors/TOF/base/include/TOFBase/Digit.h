@@ -30,7 +30,7 @@ class Digit
  public:
   Digit() = default;
 
-  Digit(Int_t channel, Int_t tdc, Int_t tot, Int_t bc, Int_t label = -1);
+  Digit(Int_t channel, Int_t tdc, Int_t tot, Int_t bc, Int_t label = -1, Int_t triggerorbit=0, Int_t triggerbunch=0);
   ~Digit() = default;
 
   /// Get global ordering key made of
@@ -78,6 +78,12 @@ class Digit
   void setIsProblematic(bool flag) { mIsProblematic = flag; }
   bool isProblematic() const { return mIsProblematic; }
 
+  void setTriggerOrbit(int value) {mTriggerOrbit = value;}
+  int getTriggerOrbit() const {return mTriggerOrbit;}
+  void setTriggerBunch(int value) {mTriggerBunch = value;}
+  int getTriggerBunch() const {return mTriggerBunch;}
+
+
  private:
   friend class boost::serialization::access;
 
@@ -90,6 +96,8 @@ class Digit
   Int_t mElectronIndex;    //!/< index in electronic format
   Double_t mCalibratedTime;      //!< time of the digits after calibration (not persistent; it will be filled during clusterization)
   Bool_t mIsProblematic = false; //!< flag to tell whether the channel of the digit was problemati; not persistent; default = ok
+  Int_t mTriggerOrbit = 0;     //!< orbit id of trigger event
+  Int_t mTriggerBunch = 0;     //!< bunch id of trigger event
 
   ClassDefNV(Digit, 1);
 };
