@@ -74,10 +74,7 @@ class Compressor
 
  protected:
 
-  bool processSave();
   bool processHBF();
-  bool processHBFsave();
-  bool processRDH();
   bool processDRM();
 
   /** decoder private functions and data members **/

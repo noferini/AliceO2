@@ -5,11 +5,11 @@
 #include <cstring>
 #include <iostream>
 
-//#define DECODER_PARANOID
-//#define DECODER_VERBOSE
-//#define ENCODER_VERBOSE
-//#define CHECKER_VERBOSE
-//#define CHECKER_COUNTER
+#define DECODER_PARANOID
+#define DECODER_VERBOSE
+#define ENCODER_VERBOSE
+#define CHECKER_VERBOSE
+#define CHECKER_COUNTER
 
 #ifdef DECODER_PARANOID
 #warning "Building code with DecoderParanoid option. This may limit the speed."
@@ -378,9 +378,12 @@ bool Compressor::processHBF()
 
   /** copy RDH close to encoder buffer **/
   /** CAREFUL WITH THE PAGE COUNTER **/
-  std::memcpy(mEncoderPointer, rdh, rdh->headerSize);
+  mEncoderRDH = reinterpret_cast<o2::header::RAWDataHeader*>(mEncoderPointer);
+  std::memcpy(mEncoderRDH, rdh, rdh->headerSize);
+  mEncoderRDH->memorySize = rdh->headerSize;
+  mEncoderRDH->offsetToNext = mEncoderRDH->memorySize;
   mEncoderPointer = reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(mEncoderPointer) + rdh->headerSize);
-  
+
 #ifdef DECODER_VERBOSE
   if (mDecoderVerbose) {
     std::cout << colorBlue
