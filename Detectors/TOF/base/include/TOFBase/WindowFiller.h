@@ -46,6 +46,8 @@ class WindowFiller
  protected:
   // info TOF timewindow
   Int_t mReadoutWindowCurrent = 0;
+  Int_t mFirstOrbit = 0;
+  Int_t mFirstBunch = 0;
   Double_t mEventTime;
 
   bool mContinuous = true;
@@ -69,13 +71,14 @@ class WindowFiller
   // arrays with digit and MCLabels out of the current readout windows (stored to fill future readout window)
   std::vector<Digit> mFutureDigits;
 
-  void fillDigitsInStrip(std::vector<Strip>* strips, int channel, int tdc, int tot, int nbc, UInt_t istrip);
+  void fillDigitsInStrip(std::vector<Strip>* strips, int channel, int tdc, int tot, int nbc, UInt_t istrip, Int_t triggerorbit=0, Int_t triggerbunch=0);
   //  void fillDigitsInStrip(std::vector<Strip>* strips, o2::dataformats::MCTruthContainer<o2::tof::MCLabel>* mcTruthContainer, int channel, int tdc, int tot, int nbc, UInt_t istrip, Int_t trackID, Int_t eventID, Int_t sourceID);
 
   void checkIfReuseFutureDigits();
+  void checkIfReuseFutureDigitsRO();
 
-  void insertDigitInFuture(int digitInfo0, int digitInfo1, int digitInfo2, int digitInfo3, int lbl=0){
-    mFutureDigits.emplace_back(digitInfo0, digitInfo1, digitInfo2, digitInfo3, lbl);
+  void insertDigitInFuture(int digitInfo0, int digitInfo1, int digitInfo2, int digitInfo3, int lbl=0, int digitInfo4=0, int digitInfo5=0){
+    mFutureDigits.emplace_back(digitInfo0, digitInfo1, digitInfo2, digitInfo3, lbl, digitInfo4, digitInfo5);
     mFutureToBeSorted=true;
   }
 

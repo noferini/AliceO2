@@ -94,7 +94,7 @@ void Digitizer::process(const std::vector<HitType>* hits, std::vector<Digit>* di
   if (mContinuous && readoutwindow > mReadoutWindowCurrent) { // if we are moving in future readout windows flush previous ones (only for continuous readout mode)
     digits->clear();
 
-    for (; mReadoutWindowCurrent < readoutwindow; mReadoutWindowCurrent++) {
+    for (; mReadoutWindowCurrent < readoutwindow;) { // mReadoutWindowCurrent incremented in fillOutputContainer!!!!
       fillOutputContainer(*digits); // fill all windows which are before (not yet stored) of the new current one
       checkIfReuseFutureDigits();
     } // close loop readout window
@@ -817,6 +817,7 @@ void Digitizer::fillOutputContainer(std::vector<Digit>& digits)
     mStripsNext[i] = &(mStrips[k]);
     k++;
   }
+  mReadoutWindowCurrent++;
 }
 //______________________________________________________________________
 void Digitizer::flushOutputContainer(std::vector<Digit>& digits)
@@ -829,14 +830,17 @@ void Digitizer::flushOutputContainer(std::vector<Digit>& digits)
     for (Int_t i = 0; i < MAXWINDOWS; i++) {
       fillOutputContainer(digits); // fill all windows which are before (not yet stored) of the new current one
       checkIfReuseFutureDigits();
-      mReadoutWindowCurrent++;
     }
     
     while (mFutureDigits.size()) {
       fillOutputContainer(digits); // fill all windows which are before (not yet stored) of the new current one
       checkIfReuseFutureDigits();
-      mReadoutWindowCurrent++;
     }
+
+    for (Int_t i = 0; i < MAXWINDOWS; i++) {
+      fillOutputContainer(digits); // fill last readout windows
+    }
+
   }
 
   // clear vector of label in future
