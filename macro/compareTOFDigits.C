@@ -59,7 +59,7 @@ bool compareTOFDigits(std::string inpName1 = "tofdigits.root",std::string inpNam
   printf("N readout windows = %d\n",nro1);
 
   for(int i=0; i < nro1; i++){
-    if(row1[i].size() != row1[i].size()){
+    if(row1[i].size() != row2[i].size()){
       printf("Readout window %d)  different number of digits in this window!!!! %d != %d \n",i,int(row1[i].size()),int(row2[i].size()));
       status = false;
       return status;

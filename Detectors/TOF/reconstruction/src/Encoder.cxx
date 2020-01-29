@@ -178,6 +178,10 @@ void Encoder::encodeTRM(const std::vector<Digit>& summary, Int_t icrate, Int_t i
       
       int hittimeTDC = (summary[istart].getBC() - mEventCounter * Geo::BC_IN_WINDOW) * 1024 + summary[istart].getTDC(); // time in TDC bin within the TOF WINDOW
       
+      if(hittimeTDC < 0){
+	LOG(ERROR) << "Negative hit encoded " << hittimeTDC << ", something went wrong in filling readout window";
+	printf("%d %d %d\n",summary[istart].getBC(), mEventCounter * Geo::BC_IN_WINDOW,summary[istart].getTDC());
+      }
       // leading time
       mUnion[icrate]->trmDataHit.time = hittimeTDC;
       mUnion[icrate]->trmDataHit.chanId = summary[istart].getElChIndex();
