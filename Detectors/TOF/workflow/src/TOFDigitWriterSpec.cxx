@@ -91,9 +91,9 @@ DataProcessorSpec getTOFDigitWriterSpec(bool useMC)
       // retrieve labels from the input
       if(useMC){
         auto labeldata = pc.inputs().get<std::vector<o2::dataformats::MCTruthContainer<o2::MCCompLabel>>*>("tofdigitlabels");
-        for (int i = 0; i < labeldata->size(); i++) {
-          LOG(INFO) << "TOF GOT " << labeldata->at(i).getNElements() << " LABELS ";
-        }
+//        for (int i = 0; i < labeldata->size(); i++) {
+//          LOG(INFO) << "TOF GOT " << labeldata->at(i).getNElements() << " LABELS ";
+//        }
         auto labeldataraw = labeldata.get();
         // connect this to a particular branch
         auto labelbr = getOrMakeBranch(*outputtree.get(), "TOFDigitMCTruth", &labeldataraw);

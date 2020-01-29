@@ -117,6 +117,9 @@ bool Decoder::close()
   int nhits = mUnion[icru]->frameHeader.numberOfHits;
   int time_ext = mUnion[icru]->frameHeader.frameID << 13;
   int itrm = mUnion[icru]->frameHeader.trmID;
+  int deltaBC = mUnion[icru]->frameHeader.deltaBC;
+
+  if(deltaBC != 0) printf("DeltaBC = %d\n",deltaBC);
   mUnion[icru]++;
   mIntegratedBytes[icru] += 4;
 
@@ -167,8 +170,6 @@ void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int c
   digitInfo[0] = Geo::getCHFromECH(echannel);
   digitInfo[2] = tot;
 
-//  printf("crate=%d, trm=%d, chain=%d, tdc=%d, ch=%d ---- echannel = %d ---- channel = %d - tot=%d\n",icrate, itrm, ichain, itdc, channel,echannel,digitInfo[0],tot);
-
   digitInfo[3] = int(orbit * o2::tof::Geo::BC_IN_ORBIT);
   digitInfo[3] += bunchid;
   digitInfo[3] += tdc / 1024;
@@ -176,6 +177,7 @@ void Decoder::fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int c
 
   digitInfo[4] = orbit;
   digitInfo[5] = bunchid;
+  
 }
 
 char *Decoder::nextPage(void *current, int shift){
