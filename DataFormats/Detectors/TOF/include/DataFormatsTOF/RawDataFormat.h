@@ -65,9 +65,9 @@ Word 1  |                                     LHC Orbit                         
 */
 // TDH - TOF Data Header
 typedef struct {
-  uint32_t bytePayload    : 18;                
-  uint32_t mbz            :  8;               
-  uint32_t  dataId        :  4;
+  uint32_t bytePayload : 18;
+  uint32_t mbz : 8;
+  uint32_t dataId : 4;
 } __attribute__((__packed__)) TOFDataHeader_t;
 
 typedef struct {
