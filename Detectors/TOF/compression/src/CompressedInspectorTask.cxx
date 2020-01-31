@@ -20,7 +20,7 @@
 
 #include "Headers/RAWDataHeader.h"
 #include "DataFormatsTOF/CompressedDataFormat.h"
-#include "CommonUtils/HBFUtils.h"
+#include "DetectorsRaw/HBFUtils.h"
 
 #include "TFile.h"
 #include "TH1F.h"
@@ -94,7 +94,7 @@ void CompressedInspectorTask::run(ProcessingContext& pc)
     if (rdh->stop) {
 #ifdef VERBOSE
       std::cout << "--- RDH close detected" << std::endl;
-      o2::utils::HBFUtils::printRDH(*rdh);
+      o2::raw::HBFUtils::printRDH(*rdh);
 #endif
       pointer += rdh->offsetToNext;
       continue;
@@ -102,7 +102,7 @@ void CompressedInspectorTask::run(ProcessingContext& pc)
 
 #ifdef VERBOSE
     std::cout << "--- RDH open detected" << std::endl;
-    o2::utils::HBFUtils::printRDH(*rdh);
+    o2::raw::HBFUtils::printRDH(*rdh);
 #endif
 
     pointer += rdh->headerSize;

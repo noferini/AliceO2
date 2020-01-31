@@ -1,6 +1,6 @@
 #include "TOFCompression/Compressor.h"
 #include "TOFBase/Geo.h"
-#include "CommonUtils/HBFUtils.h"
+#include "DetectorsRaw/HBFUtils.h"
 
 #include <cstring>
 #include <iostream>
@@ -315,7 +315,7 @@ bool Compressor::processHBF()
                 << "--- RDH open/continue detected"
                 << colorReset
                 << std::endl;
-      o2::utils::HBFUtils::printRDH(*rdh);
+      o2::raw::HBFUtils::printRDH(*rdh);
     }
 #endif
 
@@ -345,7 +345,7 @@ bool Compressor::processHBF()
               << "--- RDH close detected"
               << colorReset
               << std::endl;
-    o2::utils::HBFUtils::printRDH(*rdh);
+    o2::raw::HBFUtils::printRDH(*rdh);
   }
 #endif
 

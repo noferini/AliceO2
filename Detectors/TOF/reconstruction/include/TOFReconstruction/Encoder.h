@@ -21,7 +21,7 @@
 #include "TOFBase/Geo.h"
 #include "TOFBase/Digit.h"
 #include "Headers/RAWDataHeader.h"
-#include "CommonUtils/HBFUtils.h"
+#include "DetectorsRaw/HBFUtils.h"
 
 namespace o2
 {
@@ -88,7 +88,7 @@ class Encoder
   bool mIsContinuous = true;
 
   o2::header::RAWDataHeader* mRDH[72];
-  o2::utils::HBFUtils mHBFSampler;
+  o2::raw::HBFUtils mHBFSampler;
   int mNRDH[72];
 
   bool mStartRun = true;
