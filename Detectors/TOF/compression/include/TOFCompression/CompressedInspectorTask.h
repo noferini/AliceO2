@@ -43,7 +43,7 @@ class CompressedInspectorTask : public Task
 
  private:
   bool mStatus = false;
-  TFile *mFile = nullptr;
+  TFile* mFile = nullptr;
   std::map<std::string, TH1*> mHistos1D;
   std::map<std::string, TH1*> mHistos2D;
 };

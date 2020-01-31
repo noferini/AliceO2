@@ -39,7 +39,7 @@ void RawWriter::run(ProcessingContext& pc)
   int nwindow = row->size();
   LOG(INFO) << "Encoding " << nwindow << " TOF readout windows";
 
-  int cache = 1024*1024; // 1 MB
+  int cache = 1024 * 1024; // 1 MB
   int verbosity = 0;
 
   o2::tof::raw::Encoder encoder;
@@ -49,33 +49,33 @@ void RawWriter::run(ProcessingContext& pc)
   encoder.alloc(cache);
 
   int nwindowperorbit = Geo::NWINDOW_IN_ORBIT;
-  int nwindowintimeframe = 256*nwindowperorbit;
-  
+  int nwindowintimeframe = 256 * nwindowperorbit;
+
   std::vector<o2::tof::Digit> emptyWindow;
 
   std::vector<o2::tof::Digit> digitRO;
 
   std::vector<std::vector<o2::tof::Digit>> digitWindows;
 
-  for(int i=0;i < nwindowintimeframe;i+=nwindowperorbit){ // encode 3 tof windows (1 orbit)
-    if(verbosity) printf("----------\nwindow = %d - %d\n----------\n",i,i+nwindowperorbit-1);
+  for (int i = 0; i < nwindowintimeframe; i += nwindowperorbit) { // encode 3 tof windows (1 orbit)
+    if (verbosity)
+      printf("----------\nwindow = %d - %d\n----------\n", i, i + nwindowperorbit - 1);
 
     digitWindows.clear();
 
     // push all windows in the current orbit in the structure
-    for(int j=i;j < i+nwindowperorbit;j++){
-      if(j < nwindow){
-	digitRO.clear();
-	for(int id=0; id < row->at(j).size(); id++)
-	  digitRO.push_back((*digits)[row->at(j).first() + id]);
-	digitWindows.push_back(digitRO);
-      }
-      else{
-	digitWindows.push_back(emptyWindow);
+    for (int j = i; j < i + nwindowperorbit; j++) {
+      if (j < nwindow) {
+        digitRO.clear();
+        for (int id = 0; id < row->at(j).size(); id++)
+          digitRO.push_back((*digits)[row->at(j).first() + id]);
+        digitWindows.push_back(digitRO);
+      } else {
+        digitWindows.push_back(emptyWindow);
       }
     }
 
-    encoder.encode(digitWindows,i);
+    encoder.encode(digitWindows, i);
   }
 
   encoder.flush();

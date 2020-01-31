@@ -97,8 +97,8 @@ void WindowFiller::fillOutputContainer(std::vector<Digit>& digits)
   if (mContinuous) {
     int first = mDigitsPerTimeFrame.size();
     int ne = digits.size();
-    ReadoutWindowData info(first,ne);
-    if(digits.size())
+    ReadoutWindowData info(first, ne);
+    if (digits.size())
       mDigitsPerTimeFrame.insert(mDigitsPerTimeFrame.end(), digits.begin(), digits.end());
     mReadoutWindowData.push_back(info);
   }
@@ -122,14 +122,14 @@ void WindowFiller::fillOutputContainer(std::vector<Digit>& digits)
 void WindowFiller::flushOutputContainer(std::vector<Digit>& digits)
 { // flush all residual buffered data
   // TO be implemented
-  
+
   printf("flushOutputContainer\n");
-  for (Int_t i = 0; i < MAXWINDOWS; i++){
-    int n=0;
-    for(int j=0; j < mStrips[i].size();j++)
+  for (Int_t i = 0; i < MAXWINDOWS; i++) {
+    int n = 0;
+    for (int j = 0; j < mStrips[i].size(); j++)
       n += ((mStrips[i])[j]).getNumberOfDigits();
 
-    printf("ro #%d: digits = %d\n",i,n);
+    printf("ro #%d: digits = %d\n", i, n);
   }
 
   printf("Future digits = %d\n", mFutureDigits.size());
@@ -152,20 +152,20 @@ void WindowFiller::flushOutputContainer(std::vector<Digit>& digits)
     for (Int_t i = 0; i < MAXWINDOWS; i++) {
       fillOutputContainer(digits); // fill last readout windows
     }
-
   }
 }
 //______________________________________________________________________
 void WindowFiller::checkIfReuseFutureDigits()
 {
-  if(! mFutureDigits.size()) return;
+  if (!mFutureDigits.size())
+    return;
 
   // check if digits stored very far in future match the new readout windows currently available
-  if(mFutureToBeSorted){
+  if (mFutureToBeSorted) {
     // sort digit in descending BC order: kept last as first
     std::sort(mFutureDigits.begin(), mFutureDigits.end(),
-	      [](o2::tof::Digit a, o2::tof::Digit b) {return a.getBC() > b.getBC();});
-    mFutureToBeSorted=false;
+              [](o2::tof::Digit a, o2::tof::Digit b) { return a.getBC() > b.getBC(); });
+    mFutureToBeSorted = false;
   }
 
   int idigit = mFutureDigits.size() - 1;
@@ -174,38 +174,37 @@ void WindowFiller::checkIfReuseFutureDigits()
 
   for (std::vector<Digit>::reverse_iterator digit = mFutureDigits.rbegin(); digit != mFutureDigits.rend(); ++digit) {
 
-    if(digit->getBC() > bclimit) break;
+    if (digit->getBC() > bclimit)
+      break;
 
-    double timestamp = digit->getBC() * Geo::BC_TIME + digit->getTDC() * Geo::TDCBIN * 1E-3;        // in ns
-    int isnext = Int_t(timestamp * Geo::READOUTWINDOW_INV) - (mReadoutWindowCurrent + 1); // to be replaced with uncalibrated time
- 
-    if (isnext < 0){                                                           // we jump too ahead in future, digit will be not stored
+    double timestamp = digit->getBC() * Geo::BC_TIME + digit->getTDC() * Geo::TDCBIN * 1E-3; // in ns
+    int isnext = Int_t(timestamp * Geo::READOUTWINDOW_INV) - (mReadoutWindowCurrent + 1);    // to be replaced with uncalibrated time
+
+    if (isnext < 0) { // we jump too ahead in future, digit will be not stored
       LOG(INFO) << "Digit lost because we jump too ahead in future. Current RO window=" << isnext << "\n";
-      
+
       // remove digit from array in the future
       int labelremoved = digit->getLabel();
       mFutureDigits.erase(mFutureDigits.begin() + idigit);
-      
+
       idigit--;
-      
+
       continue;
     }
-   
-    
+
     if (isnext < MAXWINDOWS - 1) { // move from digit buffer array to the proper window
       std::vector<Strip>* strips = mStripsCurrent;
 
       if (isnext) {
-	strips = mStripsNext[isnext - 1];
+        strips = mStripsNext[isnext - 1];
       }
 
       fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
-      
+
       // int labelremoved = digit->getLabel();
       mFutureDigits.erase(mFutureDigits.begin() + idigit);
 
-    }
-    else{
+    } else {
       bclimit = digit->getBC();
     }
     idigit--; // go back to the next position in the reverse iterator
@@ -214,18 +213,21 @@ void WindowFiller::checkIfReuseFutureDigits()
 //______________________________________________________________________
 void WindowFiller::checkIfReuseFutureDigitsRO() // the same but using readout info information from raw
 {
-  if(! mFutureDigits.size()) return;
+  if (!mFutureDigits.size())
+    return;
 
   // check if digits stored very far in future match the new readout windows currently available
-  if(mFutureToBeSorted){
+  if (mFutureToBeSorted) {
     // sort digit in descending BC order: kept last as first
     std::sort(mFutureDigits.begin(), mFutureDigits.end(),
-	      [](o2::tof::Digit a, o2::tof::Digit b) {
-		if(a.getTriggerOrbit() != b.getTriggerOrbit()) return a.getTriggerOrbit() > b.getTriggerOrbit();
-		if(a.getTriggerBunch() != b.getTriggerBunch()) return a.getTriggerBunch() > b.getTriggerBunch();
-		return a.getBC() > b.getBC();
-	      });
-    mFutureToBeSorted=false;
+              [](o2::tof::Digit a, o2::tof::Digit b) {
+                if (a.getTriggerOrbit() != b.getTriggerOrbit())
+                  return a.getTriggerOrbit() > b.getTriggerOrbit();
+                if (a.getTriggerBunch() != b.getTriggerBunch())
+                  return a.getTriggerBunch() > b.getTriggerBunch();
+                return a.getBC() > b.getBC();
+              });
+    mFutureToBeSorted = false;
   }
 
   int idigit = mFutureDigits.size() - 1;
@@ -234,40 +236,39 @@ void WindowFiller::checkIfReuseFutureDigitsRO() // the same but using readout in
 
   for (std::vector<Digit>::reverse_iterator digit = mFutureDigits.rbegin(); digit != mFutureDigits.rend(); ++digit) {
 
-    int row = (digit->getTriggerOrbit() - mFirstOrbit) *Geo::BC_IN_ORBIT + (digit->getTriggerBunch() - mFirstBunch) + 100; // N bunch id of the trigger from timeframe start + 100 bunches 
+    int row = (digit->getTriggerOrbit() - mFirstOrbit) * Geo::BC_IN_ORBIT + (digit->getTriggerBunch() - mFirstBunch) + 100; // N bunch id of the trigger from timeframe start + 100 bunches
 
     row *= Geo::BC_IN_WINDOW_INV;
 
-    if(row > rolimit) break;
+    if (row > rolimit)
+      break;
 
     int isnext = row - mReadoutWindowCurrent;
- 
-    if (isnext < 0){                                                           // we jump too ahead in future, digit will be not stored
+
+    if (isnext < 0) { // we jump too ahead in future, digit will be not stored
       LOG(INFO) << "Digit lost because we jump too ahead in future. Current RO window=" << isnext << "\n";
-      
+
       // remove digit from array in the future
       int labelremoved = digit->getLabel();
       mFutureDigits.erase(mFutureDigits.begin() + idigit);
- 
+
       idigit--;
-      
+
       continue;
     }
-   
-    
+
     if (isnext < MAXWINDOWS - 1) { // move from digit buffer array to the proper window
       std::vector<Strip>* strips = mStripsCurrent;
 
       if (isnext) {
-	strips = mStripsNext[isnext - 1];
+        strips = mStripsNext[isnext - 1];
       }
 
       fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
-      
+
       // int labelremoved = digit->getLabel();
       mFutureDigits.erase(mFutureDigits.begin() + idigit);
-    }
-    else{
+    } else {
       rolimit = row;
     }
     idigit--; // go back to the next position in the reverse iterator

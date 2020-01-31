@@ -19,7 +19,7 @@
 #include "TOFWorkflow/RawReaderSpec.h"
 #include "DataFormatsParameters/GRPObject.h"
 #include "TOFBase/Geo.h"
-#include <fstream> 
+#include <fstream>
 
 using namespace o2::framework;
 using namespace o2::tof;
@@ -35,7 +35,7 @@ void RawReader::init(InitContext& ic)
   mFilename = ic.options().get<std::string>("tof-raw-infile");
   mState = 1;
 
-/*
+  /*
   std::ifstream f(mFilename.c_str(), std::ifstream::in);
 
   if(f.good()){
@@ -72,15 +72,14 @@ void RawReader::run(ProcessingContext& pc)
   decoder.decode();
   printf("end decoding raw\n");
 
-  std::vector<o2::tof::Digit> *alldigits = decoder.getDigitPerTimeFrame();
-  std::vector<o2::tof::ReadoutWindowData> *row = decoder.getReadoutWindowData();
+  std::vector<o2::tof::Digit>* alldigits = decoder.getDigitPerTimeFrame();
+  std::vector<o2::tof::ReadoutWindowData>* row = decoder.getReadoutWindowData();
 
-  int n_tof_window=row->size();
-  int n_orbits=n_tof_window/3;
+  int n_tof_window = row->size();
+  int n_orbits = n_tof_window / 3;
   int digit_size = alldigits->size();
 
-
-  LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size<< " digits";
+  LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size << " digits";
 
   // add digits in the output snapshot
   pc.outputs().snapshot(Output{"TOF", "DIGITS", 0, Lifetime::Timeframe}, *alldigits);

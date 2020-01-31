@@ -17,8 +17,8 @@
 
 #include "Framework/DataProcessorSpec.h"
 #include "Framework/Task.h"
-#include "TOFReconstruction/Decoder.h" 
-#include "TOFBase/Digit.h" 
+#include "TOFReconstruction/Decoder.h"
+#include "TOFBase/Digit.h"
 #include "SimulationDataFormat/MCCompLabel.h"
 #include "SimulationDataFormat/MCTruthContainer.h"
 
