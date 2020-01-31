@@ -57,7 +57,7 @@ class Decoder : public WindowFiller
 
   static void fromRawHit2Digit(int icrate, int itrm, int itdc, int ichain, int channel, int orbit, int bunchid, int tdc, int tot, std::array<int, 6>& digitInfo); // convert raw info in digit info (channel, tdc, tot, bc), tdc = packetHit.time + (frameHeader.frameID << 13)
 
-  char *nextPage(void *current,int shift=8192);
+  char* nextPage(void* current, int shift = 8192);
 
  protected:
   static const int NCRU = 4;

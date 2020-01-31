@@ -43,7 +43,6 @@ class CompressorTask : public Task
   Compressor mCompressor;
   int mTicks = 0;
   RawDataFrame mDataFrame;
-
 };
 
 } // namespace tof

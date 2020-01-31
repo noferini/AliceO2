@@ -30,7 +30,7 @@ class Digit
  public:
   Digit() = default;
 
-  Digit(Int_t channel, Int_t tdc, Int_t tot, Int_t bc, Int_t label = -1, Int_t triggerorbit=0, Int_t triggerbunch=0);
+  Digit(Int_t channel, Int_t tdc, Int_t tot, Int_t bc, Int_t label = -1, Int_t triggerorbit = 0, Int_t triggerbunch = 0);
   ~Digit() = default;
 
   /// Get global ordering key made of
@@ -78,11 +78,10 @@ class Digit
   void setIsProblematic(bool flag) { mIsProblematic = flag; }
   bool isProblematic() const { return mIsProblematic; }
 
-  void setTriggerOrbit(int value) {mTriggerOrbit = value;}
-  int getTriggerOrbit() const {return mTriggerOrbit;}
-  void setTriggerBunch(int value) {mTriggerBunch = value;}
-  int getTriggerBunch() const {return mTriggerBunch;}
-
+  void setTriggerOrbit(int value) { mTriggerOrbit = value; }
+  int getTriggerOrbit() const { return mTriggerOrbit; }
+  void setTriggerBunch(int value) { mTriggerBunch = value; }
+  int getTriggerBunch() const { return mTriggerBunch; }
 
  private:
   friend class boost::serialization::access;
@@ -96,8 +95,8 @@ class Digit
   Int_t mElectronIndex;    //!/< index in electronic format
   Double_t mCalibratedTime;      //!< time of the digits after calibration (not persistent; it will be filled during clusterization)
   Bool_t mIsProblematic = false; //!< flag to tell whether the channel of the digit was problemati; not persistent; default = ok
-  Int_t mTriggerOrbit = 0;     //!< orbit id of trigger event
-  Int_t mTriggerBunch = 0;     //!< bunch id of trigger event
+  Int_t mTriggerOrbit = 0;       //!< orbit id of trigger event
+  Int_t mTriggerBunch = 0;       //!< bunch id of trigger event
 
   ClassDefNV(Digit, 1);
 };
@@ -105,14 +104,15 @@ class Digit
 std::ostream& operator<<(std::ostream& stream, const Digit& dig);
 
 struct ReadoutWindowData {
-  // 1st entry and number of entries in the full vector of digits 
+  // 1st entry and number of entries in the full vector of digits
   // for given trigger (or BC or RO frame)
   int firstEntry;
   int nEntries;
   gsl::span<const Digit> getBunchChannelData(const gsl::span<const Digit> tfdata) const
   {
     // extract the span of channel data for this readout window from the whole TF data
-    if(!nEntries) return gsl::span<const Digit>(nullptr, nEntries);
+    if (!nEntries)
+      return gsl::span<const Digit>(nullptr, nEntries);
     return gsl::span<const Digit>(&tfdata[firstEntry], nEntries);
   }
 
@@ -120,11 +120,11 @@ struct ReadoutWindowData {
   ReadoutWindowData(int first, int ne)
   {
     firstEntry = first;
-    nEntries = ne ;
+    nEntries = ne;
   }
 
-  int first() const {return firstEntry;}
-  int size() const {return nEntries;}
+  int first() const { return firstEntry; }
+  int size() const { return nEntries; }
 
   ClassDefNV(ReadoutWindowData, 1);
 };

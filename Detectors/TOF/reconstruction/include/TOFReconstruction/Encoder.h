@@ -55,14 +55,14 @@ class Encoder
   bool close();
   void setVerbose(bool val) { mVerbose = val; };
 
-char *nextPage(void *current, int step);
-  int getSize(void *first,void *last);
+  char* nextPage(void* current, int step);
+  int getSize(void* first, void* last);
 
   void nextWord(int icrate);
   void nextWordNoEmpty(int icrate);
 
-  void setContinuous(bool value) {mIsContinuous = value;}
-  bool isContinuous() const {return mIsContinuous;}
+  void setContinuous(bool value) { mIsContinuous = value; }
+  bool isContinuous() const { return mIsContinuous; }
 
  protected:
   // benchmarks
@@ -71,7 +71,7 @@ char *nextPage(void *current, int step);
   double mIntegratedTime = 0.;
 
   static constexpr int NCRU = 4;
-  static constexpr int NLINKSPERCRU = 72/NCRU;
+  static constexpr int NLINKSPERCRU = 72 / NCRU;
   std::ofstream mFileCRU[NCRU];
 
   bool mVerbose = false;
@@ -84,7 +84,7 @@ char *nextPage(void *current, int step);
   TOFDataHeader_t* mTOFDataHeader[72];
   DRMDataHeader_t* mDRMDataHeader[72];
   bool mNextWordStatus[72];
-  
+
   bool mIsContinuous = true;
 
   o2::header::RAWDataHeader* mRDH[72];
@@ -94,8 +94,8 @@ char *nextPage(void *current, int step);
   bool mStartRun = true;
 
   // temporary variable for encoding
-  int                   mEventCounter; //!
-  o2::InteractionRecord mIR;           //!
+  int mEventCounter;         //!
+  o2::InteractionRecord mIR; //!
 };
 
 } // namespace compressed
