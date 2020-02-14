@@ -10,8 +10,14 @@
 
 o2_add_library(TOFCalibration
                SOURCES src/CalibTOFapi.cxx
+                       src/LHCClockCalibrator.cxx
                PUBLIC_LINK_LIBRARIES O2::DataFormatsTOF 
-                                     O2::CCDB)
+                                     O2::CCDB
+	                             O2::DetectorsCalibration
+	                             ms_gsl::ms_gsl)
 
+				  
+				   
 o2_target_root_dictionary(TOFCalibration
-                          HEADERS include/TOFCalibration/CalibTOFapi.h)
+                          HEADERS include/TOFCalibration/CalibTOFapi.h
+                                  include/TOFCalibration/LHCClockCalibrator.h)
