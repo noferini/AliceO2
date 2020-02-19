@@ -9,3 +9,8 @@
 # submit itself to any jurisdiction.
 
 o2_add_header_only_library(DetectorsCalibration)
+
+o2_add_executable(data-generator-workflow
+                  COMPONENT_NAME calibration
+                  SOURCES testWorkflow/data-generator-workflow.cxx
+                  PUBLIC_LINK_LIBRARIES O2::Framework)
