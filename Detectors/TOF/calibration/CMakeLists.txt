@@ -21,3 +21,9 @@ o2_add_library(TOFCalibration
 o2_target_root_dictionary(TOFCalibration
                           HEADERS include/TOFCalibration/CalibTOFapi.h
                                   include/TOFCalibration/LHCClockCalibrator.h)
+
+
+o2_add_executable(data-generator-workflow
+                  COMPONENT_NAME calibration
+                  SOURCES testWorkflow/data-generator-workflow.cxx
+                  PUBLIC_LINK_LIBRARIES O2::Framework)
