@@ -41,11 +41,19 @@ bool compareTOFDigits(std::string inpName1 = "tofdigits.root", std::string inpNa
   t2->SetBranchAddress("TOFDigit", &pDigits2);
   t2->SetBranchAddress("TOFReadoutWindow", &pRow2);
 
+  int ntf = t2->GetEntries() - 1;
+
   t1->GetEvent(0);
-  t2->GetEvent(0);
+  t2->GetEvent(ntf);
 
   int nro1 = row1.size();
   int nro2 = row2.size();
+
+  int ctf = 0;
+  t2->GetEvent(ctf);
+
+  for (int i = 0; i < t2->GetEntries() - 1; i++)
+    nro2 += 256 * 0;
 
   while (row1[nro1 - 1].size() == 0 && nro1 > 0)
     nro1--;
@@ -57,10 +65,15 @@ bool compareTOFDigits(std::string inpName1 = "tofdigits.root", std::string inpNa
     status = false;
     return status;
   }
-
   printf("N readout windows = %d\n", nro1);
 
   for (int i = 0; i < nro1; i++) {
+    if (i >= row2.size()) {
+      ctf++;
+      t2->GetEvent(ctf);
+      printf("RO=%d TF=%d RO size=%lu\n", i, ctf, row2.size());
+    }
+
     if (row1[i].size() != row2[i].size()) {
       printf("Readout window %d)  different number of digits in this window!!!! %d != %d \n", i, int(row1[i].size()), int(row2[i].size()));
       status = false;
@@ -69,6 +82,8 @@ bool compareTOFDigits(std::string inpName1 = "tofdigits.root", std::string inpNa
 
     auto digitsRO1 = row1.at(i).getBunchChannelData(digits1);
     auto digitsRO2 = row2.at(i).getBunchChannelData(digits2);
+
+    // printf("size = %d - ctf = %d -- i = %d\n",row2.size(),ctf,i);
 
     for (int j = 0; j < row1[i].size(); j++) {
       bool digitstatus = true;
