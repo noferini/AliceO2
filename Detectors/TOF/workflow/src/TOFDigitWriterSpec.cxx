@@ -47,7 +47,6 @@ DataProcessorSpec getTOFDigitWriterSpec(bool useMC)
     (*nCalls)++;
   };
   auto logger = [nCalls](OutputType const& indata) {
-    LOG(INFO) << "Call " << *nCalls;
     LOG(INFO) << "RECEIVED DIGITS SIZE " << indata.size();
   };
   auto loggerROW = [nCalls](ReadoutWinType const& row) {

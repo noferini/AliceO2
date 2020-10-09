@@ -82,7 +82,7 @@ void CompressedDecodingTask::postData(ProcessingContext& pc)
   int n_orbits = n_tof_window / 3;
   int digit_size = alldigits->size();
 
-  LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size << " digits";
+  // LOG(INFO) << "TOF: N tof window decoded = " << n_tof_window << "(orbits = " << n_orbits << ") with " << digit_size << " digits";
 
   // add digits in the output snapshot
   pc.outputs().snapshot(Output{o2::header::gDataOriginTOF, "DIGITS", 0, Lifetime::Timeframe}, *alldigits);
@@ -106,8 +106,6 @@ void CompressedDecodingTask::postData(ProcessingContext& pc)
 
   mDecoder.clear();
 
-  LOG(INFO) << "TOF: TF = " << mNTF << " - Crate in " << mNCrateOpenTF;
-
   mNTF++;
   mNCrateOpenTF = 0;
   mNCrateCloseTF = 0;
@@ -115,10 +113,9 @@ void CompressedDecodingTask::postData(ProcessingContext& pc)
 
 void CompressedDecodingTask::run(ProcessingContext& pc)
 {
-  LOG(INFO) << "CompressedDecoding run";
   mTimer.Start(false);
 
-  if (pc.inputs().getNofParts(0)) {
+  if (pc.inputs().getNofParts(0) && !mConetMode) {
     //RS set the 1st orbit of the TF from the O2 header, relying on rdhHandler is not good (in fact, the RDH might be eliminated in the derived data)
     const auto* dh = o2::header::get<o2::header::DataHeader*>(pc.inputs().getByPos(0).header);
     mInitOrbit = dh->firstTForbit;
@@ -133,7 +130,6 @@ void CompressedDecodingTask::run(ProcessingContext& pc)
 
     /** loop over input parts **/
     for (auto const& ref : iit) {
-
       const auto* headerIn = DataRefUtils::getHeader<o2::header::DataHeader*>(ref);
       auto payloadIn = ref.payload;
       auto payloadInSize = headerIn->payloadSize;
@@ -144,7 +140,7 @@ void CompressedDecodingTask::run(ProcessingContext& pc)
     }
   }
 
-  if (mNCrateOpenTF == 72 && mNCrateOpenTF == mNCrateCloseTF)
+  if ((mNCrateOpenTF == 72 || mConetMode) && mNCrateOpenTF == mNCrateCloseTF)
     mHasToBePosted = true;
 
   if (mHasToBePosted) {
@@ -157,6 +153,26 @@ void CompressedDecodingTask::endOfStream(EndOfStreamContext& ec)
 {
   LOGF(INFO, "TOF CompressedDecoding total timing: Cpu: %.3e Real: %.3e s in %d slots",
        mTimer.CpuTime(), mTimer.RealTime(), mTimer.Counter() - 1);
+}
+
+void CompressedDecodingTask::headerHandler(const CrateHeader_t* crateHeader, const CrateOrbit_t* crateOrbit)
+{
+  if (mConetMode) {
+    LOG(DEBUG) << "Crate found";
+
+    mInitOrbit = crateOrbit->orbitID;
+
+    mNCrateOpenTF++;
+  }
+}
+void CompressedDecodingTask::trailerHandler(const CrateHeader_t* crateHeader, const CrateOrbit_t* crateOrbit,
+                                            const CrateTrailer_t* crateTrailer, const Diagnostic_t* diagnostics,
+                                            const Error_t* errors)
+{
+  if (mConetMode) {
+    LOG(DEBUG) << "Crate closed";
+    mNCrateCloseTF++;
+  }
 }
 
 void CompressedDecodingTask::rdhHandler(const o2::header::RAWDataHeader* rdh)
@@ -187,7 +203,7 @@ void CompressedDecodingTask::frameHandler(const CrateHeader_t* crateHeader, cons
   }
 };
 
-DataProcessorSpec getCompressedDecodingSpec(const std::string& inputDesc)
+DataProcessorSpec getCompressedDecodingSpec(const std::string& inputDesc, bool conet)
 {
   std::vector<OutputSpec> outputs;
   outputs.emplace_back(o2::header::gDataOriginTOF, "DIGITS", 0, Lifetime::Timeframe);
@@ -198,7 +214,7 @@ DataProcessorSpec getCompressedDecodingSpec(const std::string& inputDesc)
     "tof-compressed-decoder",
     select(std::string("x:TOF/" + inputDesc).c_str()),
     outputs,
-    AlgorithmSpec{adaptFromTask<CompressedDecodingTask>()},
+    AlgorithmSpec{adaptFromTask<CompressedDecodingTask>(conet)},
     Options{}};
 }
 

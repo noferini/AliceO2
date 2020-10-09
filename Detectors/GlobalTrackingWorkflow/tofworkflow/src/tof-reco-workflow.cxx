@@ -58,6 +58,7 @@ void customize(std::vector<o2::framework::ConfigParamSpec>& workflowOptions)
   workflowOptions.push_back(ConfigParamSpec{"input-desc", o2::framework::VariantType::String, "CRAWDATA", {"Input specs description string"}});
   workflowOptions.push_back(ConfigParamSpec{"disable-root-input", o2::framework::VariantType::Bool, false, {"disable root-files input readers"}});
   workflowOptions.push_back(ConfigParamSpec{"disable-root-output", o2::framework::VariantType::Bool, false, {"disable root-files output writers"}});
+  workflowOptions.push_back(ConfigParamSpec{"conet-mode", o2::framework::VariantType::Bool, false, {"enable conet mode"}});
   workflowOptions.push_back(ConfigParamSpec{"configKeyValues", o2::framework::VariantType::String, "", {"Semicolon separated key=value strings ..."}});
 }
 
@@ -84,13 +85,6 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   WorkflowSpec specs;
 
   if (!cfgc.helpOnCommandLine()) {
-    std::string inputGRP = o2::base::NameConf::getGRPFileName();
-    o2::base::Propagator::initFieldFromGRP(inputGRP);
-    const auto grp = o2::parameters::GRPObject::loadFrom(inputGRP);
-    if (!grp) {
-      LOG(ERROR) << "This workflow needs a valid GRP file to start";
-      return specs;
-    }
     o2::conf::ConfigurableParam::updateFromString(cfgc.options().get<std::string>("configKeyValues"));
     //  o2::conf::ConfigurableParam::writeINI("o2tofrecoflow_configuration.ini");
   }
@@ -135,11 +129,25 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
     ctfinput = 1;
   }
 
+  if (ctfinput || rawinput) {
+  } else {
+    if (!cfgc.helpOnCommandLine()) {
+      std::string inputGRP = o2::base::NameConf::getGRPFileName();
+      o2::base::Propagator::initFieldFromGRP(inputGRP);
+      const auto grp = o2::parameters::GRPObject::loadFrom(inputGRP);
+      if (!grp) {
+        LOG(ERROR) << "This workflow needs a valid GRP file to start";
+        return specs;
+      }
+    }
+  }
+
   auto useMC = !cfgc.options().get<bool>("disable-mc");
   auto useCCDB = cfgc.options().get<bool>("use-ccdb");
   auto useFIT = cfgc.options().get<bool>("use-fit");
   bool disableRootInput = cfgc.options().get<bool>("disable-root-input") || rawinput;
   bool disableRootOutput = cfgc.options().get<bool>("disable-root-output");
+  bool conetmode = cfgc.options().get<bool>("conet-mode");
 
   LOG(INFO) << "TOF RECO WORKFLOW configuration";
   LOG(INFO) << "TOF input = " << cfgc.options().get<std::string>("input-type");
@@ -151,6 +159,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   LOG(INFO) << "TOF use-fit = " << cfgc.options().get<std::string>("use-fit");
   LOG(INFO) << "TOF disable-root-input = " << disableRootInput;
   LOG(INFO) << "TOF disable-root-output = " << disableRootOutput;
+  LOG(INFO) << "TOF conet-mode = " << conetmode;
 
   if (clusterinput) {
     LOG(INFO) << "Insert TOF Cluster Reader";
@@ -167,7 +176,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   } else if (rawinput) {
     LOG(INFO) << "Insert TOF Compressed Raw Decoder";
     auto inputDesc = cfgc.options().get<std::string>("input-desc");
-    specs.emplace_back(o2::tof::getCompressedDecodingSpec(inputDesc));
+    specs.emplace_back(o2::tof::getCompressedDecodingSpec(inputDesc, conetmode));
     useMC = 0;
 
     if (writedigit && !disableRootOutput) {
