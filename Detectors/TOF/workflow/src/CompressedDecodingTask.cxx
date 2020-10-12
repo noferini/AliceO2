@@ -39,6 +39,12 @@ void CompressedDecodingTask::init(InitContext& ic)
 {
   LOG(INFO) << "CompressedDecoding init";
 
+  mMaskNoise = ic.options().get<bool>("mask-noise");
+  mNoiseRate = ic.options().get<int>("noise-rate");
+
+  if (mMaskNoise)
+    mDecoder.maskNoiseRate(mNoiseRate);
+
   auto finishFunction = [this]() {
     LOG(INFO) << "CompressedDecoding finish";
   };
@@ -215,7 +221,9 @@ DataProcessorSpec getCompressedDecodingSpec(const std::string& inputDesc, bool c
     select(std::string("x:TOF/" + inputDesc).c_str()),
     outputs,
     AlgorithmSpec{adaptFromTask<CompressedDecodingTask>(conet)},
-    Options{}};
+    Options{
+      {"mask-noise", VariantType::Bool, false, {"Flag to mask noisy digits"}},
+      {"noise-rate", VariantType::Int, 1000, {"Rate threshold to mask noisy digits (Hz)"}}}};
 }
 
 } // namespace tof

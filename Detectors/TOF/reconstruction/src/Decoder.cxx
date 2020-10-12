@@ -34,6 +34,7 @@ Decoder::Decoder()
     mBuffer[i] = nullptr;
     mCruIn[i] = false;
   }
+  clearCounts();
 }
 
 bool Decoder::open(const std::string name)
@@ -110,6 +111,8 @@ bool Decoder::close()
 void Decoder::clear()
 {
   reset();
+  if (mMaskNoiseRate > 0)
+    clearCounts();
 }
 
 void Decoder::InsertDigit(int icrate, int itrm, int itdc, int ichain, int channel, uint32_t orbit, uint16_t bunchid, int time_ext, int tdc, int tot)
@@ -117,6 +120,8 @@ void Decoder::InsertDigit(int icrate, int itrm, int itdc, int ichain, int channe
   DigitInfo digitInfo;
 
   fromRawHit2Digit(icrate, itrm, itdc, ichain, channel, orbit, bunchid, time_ext + tdc, tot, digitInfo);
+  if (mMaskNoiseRate > 0)
+    mChannelCounts[digitInfo.channel]++;
 
   mHitDecoded++;
 
@@ -162,6 +167,8 @@ void Decoder::readTRM(int icru, int icrate, uint32_t orbit, uint16_t bunchid)
   for (int i = 0; i < nhits; i++) {
     fromRawHit2Digit(icrate, itrm, mUnion[icru]->packedHit.tdcID, mUnion[icru]->packedHit.chain, mUnion[icru]->packedHit.channel, orbit, bunchid,
                      time_ext + mUnion[icru]->packedHit.time, mUnion[icru]->packedHit.tot, digitInfo);
+    if (mMaskNoiseRate > 0)
+      mChannelCounts[digitInfo.channel]++;
 
     mHitDecoded++;
 

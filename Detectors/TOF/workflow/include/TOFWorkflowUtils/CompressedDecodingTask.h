@@ -66,6 +66,8 @@ class CompressedDecodingTask : public DecoderBase, public Task
   bool mHasToBePosted = false;
   bool mConetMode = false;
   uint32_t mInitOrbit = 0;
+  bool mMaskNoise = false;
+  int mNoiseRate = 1000;
   TStopwatch mTimer;
 };
 

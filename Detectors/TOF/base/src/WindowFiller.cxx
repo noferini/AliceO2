@@ -260,6 +260,10 @@ void WindowFiller::checkIfReuseFutureDigitsRO() // the same but using readout in
     mFutureToBeSorted = false;
   }
 
+  float threshold = 9999999999;
+  if (mMaskNoiseRate > 0)
+    threshold = mMaskNoiseRate * 0.02; // for the moment assuming TF = 0.02 s
+
   int idigit = mFutureDigits.size() - 1;
 
   int rolimit = 999999; // if bc is larger than this value stop the search  in the next loop since bc are ordered in descending order
@@ -294,7 +298,8 @@ void WindowFiller::checkIfReuseFutureDigitsRO() // the same but using readout in
         strips = mStripsNext[isnext - 1];
       }
 
-      fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
+      if (mMaskNoiseRate < 0 || mChannelCounts[digit->getChannel()] < threshold)
+        fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
 
       // int labelremoved = digit->getLabel();
       mFutureDigits.erase(mFutureDigits.begin() + idigit);

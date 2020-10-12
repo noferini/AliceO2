@@ -52,6 +52,14 @@ class WindowFiller
 
   void setFirstIR(const o2::InteractionRecord& ir) { mFirstIR = ir; }
 
+  void maskNoiseRate(int val) { mMaskNoiseRate = val; }
+
+  void clearCounts()
+  {
+    for (int i = 0; i < o2::tof::Geo::NCHANNELS; i++)
+      mChannelCounts[i] = 0;
+  }
+
  protected:
   // info TOF timewindow
   Int_t mReadoutWindowCurrent = 0;
@@ -60,6 +68,10 @@ class WindowFiller
 
   bool mContinuous = true;
   bool mFutureToBeSorted = false;
+
+  // only needed from Decoder
+  int mMaskNoiseRate = -1;
+  int mChannelCounts[o2::tof::Geo::NCHANNELS]; // count of channel hits in the current TF (if MaskNoiseRate enabled)
 
   // digit info
   //std::vector<Digit>* mDigits;
