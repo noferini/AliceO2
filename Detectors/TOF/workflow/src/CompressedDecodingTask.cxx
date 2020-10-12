@@ -40,7 +40,8 @@ void CompressedDecodingTask::init(InitContext& ic)
   LOG(INFO) << "CompressedDecoding init";
 
   mMaskNoise = ic.options().get<bool>("mask-noise");
-  mNoiseRate = ic.options().get<int>("noise-rate");
+  mNoiseRate = ic.options().get<int>("noise-counts");
+  mRowFilter = ic.options().get<bool>("row-filter");
 
   if (mMaskNoise)
     mDecoder.maskNoiseRate(mNoiseRate);
@@ -61,6 +62,8 @@ void CompressedDecodingTask::postData(ProcessingContext& pc)
   // send output message
   std::vector<o2::tof::Digit>* alldigits = mDecoder.getDigitPerTimeFrame();
   std::vector<o2::tof::ReadoutWindowData>* row = mDecoder.getReadoutWindowData();
+  if (mRowFilter)
+    row = mDecoder.getReadoutWindowDataFiltered();
 
   ReadoutWindowData* last = nullptr;
   o2::InteractionRecord lastIR;
@@ -222,8 +225,9 @@ DataProcessorSpec getCompressedDecodingSpec(const std::string& inputDesc, bool c
     outputs,
     AlgorithmSpec{adaptFromTask<CompressedDecodingTask>(conet)},
     Options{
+      {"row-filter", VariantType::Bool, false, {"Filter empty row"}},
       {"mask-noise", VariantType::Bool, false, {"Flag to mask noisy digits"}},
-      {"noise-rate", VariantType::Int, 1000, {"Rate threshold to mask noisy digits (Hz)"}}}};
+      {"noise-counts", VariantType::Int, 1000, {"Counts in a single (TF) payload"}}}};
 }
 
 } // namespace tof

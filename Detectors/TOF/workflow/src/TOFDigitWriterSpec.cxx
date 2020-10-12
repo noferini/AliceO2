@@ -47,13 +47,13 @@ DataProcessorSpec getTOFDigitWriterSpec(bool useMC)
     (*nCalls)++;
   };
   auto logger = [nCalls](OutputType const& indata) {
-    LOG(INFO) << "RECEIVED DIGITS SIZE " << indata.size();
+    //    LOG(INFO) << "RECEIVED DIGITS SIZE " << indata.size();
   };
   auto loggerROW = [nCalls](ReadoutWinType const& row) {
-    LOG(INFO) << "RECEIVED READOUT WINDOWS " << row.size();
+    //    LOG(INFO) << "RECEIVED READOUT WINDOWS " << row.size();
   };
   auto loggerPatterns = [nCalls](PatternType const& patterns) {
-    LOG(INFO) << "RECEIVED PATTERNS " << patterns.size();
+    //    LOG(INFO) << "RECEIVED PATTERNS " << patterns.size();
   };
   return MakeRootTreeWriterSpec("TOFDigitWriter",
                                 "tofdigits.root",

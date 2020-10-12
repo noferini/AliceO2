@@ -42,6 +42,7 @@ class WindowFiller
 
   std::vector<Digit>* getDigitPerTimeFrame() { return &mDigitsPerTimeFrame; }
   std::vector<ReadoutWindowData>* getReadoutWindowData() { return &mReadoutWindowData; }
+  std::vector<ReadoutWindowData>* getReadoutWindowDataFiltered() { return &mReadoutWindowDataFiltered; }
 
   void fillOutputContainer(std::vector<Digit>& digits);
   void flushOutputContainer(std::vector<Digit>& digits); // flush all residual buffered data
@@ -80,6 +81,7 @@ class WindowFiller
 
   std::vector<Digit> mDigitsPerTimeFrame;
   std::vector<ReadoutWindowData> mReadoutWindowData;
+  std::vector<ReadoutWindowData> mReadoutWindowDataFiltered;
 
   int mIcurrentReadoutWindow = 0;
 

@@ -60,6 +60,7 @@ void customize(std::vector<o2::framework::ConfigParamSpec>& workflowOptions)
   workflowOptions.push_back(ConfigParamSpec{"disable-root-output", o2::framework::VariantType::Bool, false, {"disable root-files output writers"}});
   workflowOptions.push_back(ConfigParamSpec{"conet-mode", o2::framework::VariantType::Bool, false, {"enable conet mode"}});
   workflowOptions.push_back(ConfigParamSpec{"configKeyValues", o2::framework::VariantType::String, "", {"Semicolon separated key=value strings ..."}});
+  workflowOptions.push_back(ConfigParamSpec{"disable-row-writing", o2::framework::VariantType::Bool, false, {"disable ROW in Digit writing"}});
 }
 
 #include "Framework/runDataProcessing.h" // the main driver
@@ -148,6 +149,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   bool disableRootInput = cfgc.options().get<bool>("disable-root-input") || rawinput;
   bool disableRootOutput = cfgc.options().get<bool>("disable-root-output");
   bool conetmode = cfgc.options().get<bool>("conet-mode");
+  bool disableROWwriting = cfgc.options().get<bool>("disable-row-writing");
 
   LOG(INFO) << "TOF RECO WORKFLOW configuration";
   LOG(INFO) << "TOF input = " << cfgc.options().get<std::string>("input-type");
@@ -160,6 +162,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   LOG(INFO) << "TOF disable-root-input = " << disableRootInput;
   LOG(INFO) << "TOF disable-root-output = " << disableRootOutput;
   LOG(INFO) << "TOF conet-mode = " << conetmode;
+  LOG(INFO) << "TOF disable-row-writing = " << disableROWwriting;
 
   if (clusterinput) {
     LOG(INFO) << "Insert TOF Cluster Reader";

@@ -268,7 +268,7 @@ bool Decoder::decode() // return a vector of digits in a TOF readout window
         //read Orbit
         int orbit = mUnion[icru]->crateOrbit.orbitID;
         if (mVerbose)
-          printf("orbit ID      = %d\n", orbit);
+          printf("%d) orbit ID      = %d -- bunch ID = %d\n", icrate, orbit, bunchid);
         mUnion[icru]++;
         mIntegratedBytes[icru] += 4;
 

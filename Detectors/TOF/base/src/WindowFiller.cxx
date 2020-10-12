@@ -95,6 +95,7 @@ void WindowFiller::reset()
 
   mDigitsPerTimeFrame.clear();
   mReadoutWindowData.clear();
+  mReadoutWindowDataFiltered.clear();
 
   mFirstIR.bc = 0;
   mFirstIR.orbit = 0;
@@ -124,8 +125,10 @@ void WindowFiller::fillOutputContainer(std::vector<Digit>& digits)
     int orbit_shift = mReadoutWindowData.size() / 3;
     int bc_shift = (mReadoutWindowData.size() % 3) * Geo::BC_IN_WINDOW;
     info.setBCData(mFirstIR.orbit + orbit_shift, mFirstIR.bc + bc_shift);
-    if (digits.size())
+    if (digits.size()) {
       mDigitsPerTimeFrame.insert(mDigitsPerTimeFrame.end(), digits.begin(), digits.end());
+      mReadoutWindowDataFiltered.push_back(info);
+    }
     mReadoutWindowData.push_back(info);
   }
 
@@ -260,10 +263,6 @@ void WindowFiller::checkIfReuseFutureDigitsRO() // the same but using readout in
     mFutureToBeSorted = false;
   }
 
-  float threshold = 9999999999;
-  if (mMaskNoiseRate > 0)
-    threshold = mMaskNoiseRate * 0.02; // for the moment assuming TF = 0.02 s
-
   int idigit = mFutureDigits.size() - 1;
 
   int rolimit = 999999; // if bc is larger than this value stop the search  in the next loop since bc are ordered in descending order
@@ -298,7 +297,7 @@ void WindowFiller::checkIfReuseFutureDigitsRO() // the same but using readout in
         strips = mStripsNext[isnext - 1];
       }
 
-      if (mMaskNoiseRate < 0 || mChannelCounts[digit->getChannel()] < threshold)
+      if (mMaskNoiseRate < 0 || mChannelCounts[digit->getChannel()] < mMaskNoiseRate)
         fillDigitsInStrip(strips, digit->getChannel(), digit->getTDC(), digit->getTOT(), digit->getBC(), digit->getChannel() / Geo::NPADS);
 
       // int labelremoved = digit->getLabel();
