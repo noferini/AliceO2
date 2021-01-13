@@ -421,7 +421,7 @@ bool Compressor<RDH, verbose>::processDRM()
 #if ENCODE_TDC_ERRORS
       *mEncoderPointer |= (mCheckerSummary.nTDCErrors << 16);
 #endif
-      
+
       if (verbose && mEncoderVerbose) {
         auto CrateTrailer = reinterpret_cast<compressed::CrateTrailer_t*>(mEncoderPointer);
         auto EventCounter = CrateTrailer->eventCounter;
