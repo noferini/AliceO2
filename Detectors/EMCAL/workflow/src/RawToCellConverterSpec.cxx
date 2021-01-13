@@ -13,6 +13,7 @@
 
 #include "CommonDataFormat/InteractionRecord.h"
 #include "Framework/ConfigParamRegistry.h"
+#include "Framework/InputRecordWalker.h"
 #include "Framework/ControlService.h"
 #include "Framework/WorkflowSpec.h"
 #include "DataFormatsEMCAL/EMCALBlockHeader.h"
@@ -66,10 +67,10 @@ void RawToCellConverterSpec::run(framework::ProcessingContext& ctx)
 
   // Cache cells from for bunch crossings as the component reads timeframes from many links consecutively
   std::map<o2::InteractionRecord, std::shared_ptr<std::vector<o2::emcal::Cell>>> cellBuffer; // Internal cell buffer
+  std::map<o2::InteractionRecord, uint32_t> triggerBuffer;
 
   int firstEntry = 0;
-  for (const auto& rawData : ctx.inputs()) {
-
+  for (const auto& rawData : framework::InputRecordWalker(ctx.inputs())) {
     //o2::emcal::RawReaderMemory<o2::header::RAWDataHeaderV4> rawreader(gsl::span(rawData.payload, o2::framework::DataRefUtils::getPayloadSize(rawData)));
 
     o2::emcal::RawReaderMemory rawreader(o2::framework::DataRefUtils::as<const char>(rawData));
@@ -83,6 +84,7 @@ void RawToCellConverterSpec::run(framework::ProcessingContext& ctx)
       auto triggerBC = o2::raw::RDHUtils::getTriggerBC(header);
       auto triggerOrbit = o2::raw::RDHUtils::getTriggerOrbit(header);
       auto feeID = o2::raw::RDHUtils::getFEEID(header);
+      auto triggerbits = o2::raw::RDHUtils::getTriggerType(header);
 
       o2::InteractionRecord currentIR(triggerBC, triggerOrbit);
       std::shared_ptr<std::vector<o2::emcal::Cell>> currentCellContainer;
@@ -90,6 +92,8 @@ void RawToCellConverterSpec::run(framework::ProcessingContext& ctx)
       if (found == cellBuffer.end()) {
         currentCellContainer = std::make_shared<std::vector<o2::emcal::Cell>>();
         cellBuffer[currentIR] = currentCellContainer;
+        // also add trigger bits
+        triggerBuffer[currentIR] = triggerbits;
       } else {
         currentCellContainer = found->second;
       }
@@ -104,7 +108,7 @@ void RawToCellConverterSpec::run(framework::ProcessingContext& ctx)
       o2::emcal::AltroDecoder decoder(rawreader);
       decoder.decode();
 
-      std::cout << decoder.getRCUTrailer() << std::endl;
+      LOG(DEBUG) << decoder.getRCUTrailer();
 
       o2::emcal::Mapper map = mMapper->getMappingForDDL(feeID);
       int iSM = feeID / 2;
@@ -143,7 +147,7 @@ void RawToCellConverterSpec::run(framework::ProcessingContext& ctx)
   mOutputCells.clear();
   mOutputTriggerRecords.clear();
   for (auto [bc, cells] : cellBuffer) {
-    mOutputTriggerRecords.emplace_back(bc, mOutputCells.size(), cells->size());
+    mOutputTriggerRecords.emplace_back(bc, triggerBuffer[bc], mOutputCells.size(), cells->size());
     if (cells->size()) {
       // Sort cells according to cell ID
       std::sort(cells->begin(), cells->end(), [](o2::emcal::Cell& lhs, o2::emcal::Cell& rhs) { return lhs.getTower() < rhs.getTower(); });

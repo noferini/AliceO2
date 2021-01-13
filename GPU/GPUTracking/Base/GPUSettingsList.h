@@ -50,6 +50,9 @@ AddOptionRTC(tpcTubeMaxSize2, float, 2.5f * 2.5f, "", 0, "Square of max tube siz
 AddOptionRTC(trdMinTrackPt, float, .5f, "", 0, "Min Pt for tracks to be propagated through the TRD")
 AddOptionRTC(trdMaxChi2, float, 15.f, "", 0, "Max chi2 for TRD tracklets to be matched to a track")
 AddOptionRTC(trdPenaltyChi2, float, 12.f, "", 0, "Chi2 penalty for no available TRD tracklet (effective chi2 cut value)")
+AddOptionRTC(noisyPadsQuickCheck, unsigned char, 1, "", 0, "Only check first fragment for noisy pads instead of all fragments (when test is enabled).")
+AddOptionRTC(maxTimeBinAboveThresholdIn1000Bin, unsigned short, 500, "", 0, "Except pad from cluster finding if total number of charges in a fragment is above this baseline (disable = 0)")
+AddOptionRTC(maxConsecTimeBinAboveThreshold, unsigned short, 200, "", 0, "Except pad from cluster finding if number of consecutive charges in a fragment is above this baseline (disable = 0)")
 AddOptionRTC(tpcCFqmaxCutoff, unsigned char, 3, "", 0, "Cluster Finder rejects cluster with qmax below this threshold")
 AddOptionRTC(tpcCFqtotCutoff, unsigned char, 0, "", 0, "Cluster Finder rejects cluster with qtot below this threshold")
 AddOptionRTC(tpcCFinnerThreshold, unsigned char, 0, "", 0, "Cluster Finder extends cluster if inner charge above this threshold")
@@ -82,8 +85,9 @@ AddOptionRTC(loopInterpolationInExtraPass, char, -1, "", 0, "Perform loop interp
 AddOptionRTC(mergerReadFromTrackerDirectly, char, 1, "", 0, "Forward data directly from tracker to merger on GPU")
 AddOptionRTC(useMatLUT, char, 0, "", 0, "Use material lookup table for TPC refit")
 AddOptionRTC(trdStopTrkAfterNMissLy, unsigned char, 6, "", 0, "Abandon track following after N layers without a TRD match")
+AddOptionRTC(trackingRefitGPUModel, char, 1, "", 0, "Use GPU track model for the Global Track Refit")
 AddCustomCPP(void SetMinTrackPt(float v) { MaxTrackQPt = v > 0.001 ? (1. / v) : (1. / 0.001); })
-AddVariable(dummyRTC, float, 0.f) // Ensure non empty struct and proper alignment even if all normal members are constexpr
+AddVariable(dummyRTC, void*, nullptr) // Ensure non empty struct and proper alignment even if all normal members are constexpr
 AddHelp("help", 'h')
 EndConfig()
 
@@ -108,7 +112,7 @@ AddOption(tpccfGatherKernel, bool, true, "", 0, "Use a kernel instead of the DMA
 AddOption(doublePipelineClusterizer, bool, true, "", 0, "Include the input data of the clusterizer in the double-pipeline")
 AddOption(deviceNum, int, -1, "gpuDevice", 0, "Set GPU device to use (-1: automatic, -2: for round-robin usage in timeslice-pipeline)")
 AddOption(globalInitMutex, bool, false, "", 0, "Use global mutex to synchronize initialization of multiple GPU instances")
-AddOption(ompThreads, int, -1, "omp", 't', "Number of OMP threads to run (-1: all)", min(-1), message("Using %d OMP threads"))
+AddOption(ompThreads, int, -1, "omp", 't', "Number of OMP threads to run (-1: all)", min(-1), message("Using %s OMP threads"))
 AddOption(nDeviceHelperThreads, int, 1, "", 0, "Number of CPU helper threads for CPU processing")
 AddOption(nStreams, int, 8, "", 0, "Number of GPU streams / command queues")
 AddOption(trackletConstructorInPipeline, int, -1, "", 0, "Run tracklet constructor in the pipeline")
@@ -117,12 +121,12 @@ AddOption(mergerSortTracks, int, -1, "", 0, "Sort track indizes for GPU track fi
 AddOption(tpcCompressionGatherMode, int, -1, "", 0, "TPC Compressed Clusters Gather Mode (0: DMA transfer gather gpu to host, 1: serial DMA to host and gather by copy on CPU, 2. gather via GPU kernal DMA access, 3. gather on GPU via kernel, dma afterwards")
 AddOption(tpcCompressionGatherModeKernel, int, -1, "", 0, "TPC Compressed Clusters Gather Mode Kernel (0: unbufferd, 1-3: buffered, 4: multi-block)")
 AddOption(runMC, bool, false, "", 0, "Process MC labels")
-AddOption(ompKernels, bool, true, "", 0, "Parallelize with OMP inside kernels instead of over slices")
+AddOption(ompKernels, unsigned char, 2, "", 0, "Parallelize with OMP inside kernels instead of over slices, 2 for nested parallelization over TPC sectors and inside kernels")
 AddOption(doublePipeline, bool, false, "", 0, "Double pipeline mode")
 AddOption(prefetchTPCpageScan, int, 0, "", 0, "Prefetch Data for TPC page scan in CPU cache")
 AddOption(debugLevel, int, -1, "debug", 'd', "Set debug level (-1 = silend)")
 AddOption(allocDebugLevel, int, 0, "allocDebug", 0, "Some debug output for memory allocations (without messing with normal debug level)")
-AddOption(runQA, int, 0, "qa", 'q', "Enable tracking QA (negative number to provide bitmask for QA tasks)", message("Running QA: %d"), def(1))
+AddOption(runQA, int, 0, "qa", 'q', "Enable tracking QA (negative number to provide bitmask for QA tasks)", message("Running QA: %s"), def(1))
 AddOption(runCompressionStatistics, bool, false, "compressionStat", 0, "Run statistics and verification for cluster compression")
 AddOption(forceMemoryPoolSize, unsigned long, 1, "memSize", 0, "Force size of allocated GPU / page locked host memory", min(0ul))
 AddOption(forceHostMemoryPoolSize, unsigned long, 0, "hostMemSize", 0, "Force size of allocated host page locked host memory (overriding memSize)", min(0ul))
@@ -263,8 +267,8 @@ AddOption(EventsDir, const char*, "pp", "events", 'e', "Directory with events to
 AddOption(eventDisplay, int, 0, "display", 'd', "Show standalone event display", def(1)) //1: default display (Windows / X11), 2: glut, 3: glfw
 AddOption(eventGenerator, bool, false, "", 0, "Run event generator")
 AddOption(cont, bool, false, "", 0, "Process continuous timeframe data")
-AddOption(outputcontrolmem, unsigned long, 0, "outputMemory", 0, "Use predefined output buffer of this size", min(0ul), message("Using %lld bytes as output memory"))
-AddOption(inputcontrolmem, unsigned long, 0, "inputMemory", 0, "Use predefined input buffer of this size", min(0ul), message("Using %lld bytes as input memory"))
+AddOption(outputcontrolmem, unsigned long, 0, "outputMemory", 0, "Use predefined output buffer of this size", min(0ul), message("Using %s bytes as output memory"))
+AddOption(inputcontrolmem, unsigned long, 0, "inputMemory", 0, "Use predefined input buffer of this size", min(0ul), message("Using %s bytes as input memory"))
 AddOption(cpuAffinity, int, -1, "", 0, "Pin CPU affinity to this CPU core", min(-1))
 AddOption(fifoScheduler, bool, false, "", 0, "Use FIFO realtime scheduler", message("Setting FIFO scheduler: %s"))
 AddOption(fpe, bool, true, "", 0, "Trap on floating point exceptions")
@@ -339,7 +343,7 @@ AddVariableRTC(dodEdx, char, 0)              // Do dEdx computation
 AddVariableRTC(earlyTpcTransform, char, 0)   // do Early TPC transformation
 AddVariableRTC(debugLevel, char, 0)          // Debug level
 AddVariableRTC(continuousMaxTimeBin, int, 0) // Max time bin for continuous tracking
-AddVariable(dummyRTC, float, 0.f)            // Ensure non empty struct and proper alignment even if all normal members are constexpr
+AddVariable(dummyRTC, void*, nullptr)        // Ensure non empty struct and proper alignment even if all normal members are constexpr
 EndConfig()
 
 EndNamespace() // gpu

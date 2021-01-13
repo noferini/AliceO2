@@ -53,10 +53,11 @@ int GPUTPCO2Interface::Initialize(const GPUO2InterfaceConfiguration& config)
   }
   mRec->SetSettings(&mConfig->configEvent, &mConfig->configReconstruction, &mConfig->configProcessing, &mConfig->configWorkflow);
   mChain->SetTPCFastTransform(mConfig->configCalib.fastTransform);
-  mChain->SetTPCCFCalibration(mConfig->configCalib.tpcCalibration);
+  mChain->SetTPCPadGainCalib(mConfig->configCalib.tpcPadGain);
   mChain->SetdEdxSplines(mConfig->configCalib.dEdxSplines);
   mChain->SetMatLUT(mConfig->configCalib.matLUT);
   mChain->SetTRDGeometry(mConfig->configCalib.trdGeometry);
+  mChain->SetO2Propagator(mConfig->configCalib.o2Propagator);
   if (mConfig->configInterface.outputToExternalBuffers) {
     mOutputCompressedClusters.reset(new GPUOutputControl);
     mChain->SetOutputControlCompressedClusters(mOutputCompressedClusters.get());
@@ -98,8 +99,8 @@ int GPUTPCO2Interface::RunTracking(GPUTrackingInOutPointers* data, GPUInterfaceO
   if (!mInitialized) {
     return (1);
   }
-  static int nEvent = 0;
   if (mConfig->configInterface.dumpEvents) {
+    static int nEvent = 0;
     mChain->ClearIOPointers();
     mChain->mIOPtrs.clustersNative = data->clustersNative;
     mChain->mIOPtrs.tpcPackedDigits = data->tpcPackedDigits;
@@ -111,6 +112,7 @@ int GPUTPCO2Interface::RunTracking(GPUTrackingInOutPointers* data, GPUInterfaceO
     if (nEvent == 0) {
       mRec->DumpSettings();
     }
+    nEvent++;
     if (mConfig->configInterface.dumpEvents >= 2) {
       return 0;
     }
@@ -167,7 +169,6 @@ int GPUTPCO2Interface::RunTracking(GPUTrackingInOutPointers* data, GPUInterfaceO
   }
   *data = mChain->mIOPtrs;
 
-  nEvent++;
   return 0;
 }
 

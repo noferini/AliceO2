@@ -14,11 +14,11 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
 #include "Framework/ASoAHelpers.h"
-#include "Analysis/ReducedInfoTables.h"
-#include "Analysis/VarManager.h"
-#include "Analysis/HistogramManager.h"
-#include "Analysis/AnalysisCut.h"
-#include "Analysis/AnalysisCompositeCut.h"
+#include "AnalysisDataModel/ReducedInfoTables.h"
+#include "AnalysisCore/VarManager.h"
+#include "AnalysisCore/HistogramManager.h"
+#include "AnalysisCore/AnalysisCut.h"
+#include "AnalysisCore/AnalysisCompositeCut.h"
 #include <TH1F.h>
 #include <TMath.h>
 #include <THashList.h>
@@ -580,17 +580,6 @@ void DefineHistograms(HistogramManager* histMan, TString histClasses)
         histMan->AddHistogram(classStr.Data(), "Chi2", "", false, 100, 0.0, 200.0, VarManager::kMuonChi2);
         histMan->AddHistogram(classStr.Data(), "Chi2MatchTrigger", "", false, 100, 0.0, 20.0, VarManager::kMuonChi2MatchTrigger);
       }
-    }
-
-    if (classStr.Contains("DileptonsSelected")) {
-      histMan->AddHistClass(classStr.Data());
-      histMan->AddHistogram(classStr.Data(), "Mass_Pt", "", false, 100, 0.0, 5.0, VarManager::kMass, 100, 0.0, 20.0, VarManager::kPt);
-    }
-
-    if (classStr.Contains("HadronsSelected")) {
-      histMan->AddHistClass(classStr.Data());
-      histMan->AddHistogram(classStr.Data(), "Eta_Pt", "", false, 20, -1.0, 1.0, VarManager::kEta, 100, 0.0, 20.0, VarManager::kPt);
-      histMan->AddHistogram(classStr.Data(), "Eta_Phi", "", false, 20, -1.0, 1.0, VarManager::kEta, 100, -8.0, 8.0, VarManager::kPhi);
     }
 
     if (classStr.Contains("DileptonsSelected")) {

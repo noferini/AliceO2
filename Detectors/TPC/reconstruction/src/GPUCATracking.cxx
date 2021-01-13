@@ -150,13 +150,14 @@ int GPUCATracking::runTracking(GPUO2InterfaceIOPtrs* data, GPUInterfaceOutputs* 
     data->clusters = ptrs.clustersNative;
   }
   data->compressedClusters = ptrs.tpcCompressedClusters;
+
+  if (retVal || mTrackingCAO2Interface->getConfig().configInterface.dumpEvents >= 2) {
+    return retVal;
+  }
+
   const GPUTPCGMMergedTrack* tracks = ptrs.mergedTracks;
   int nTracks = ptrs.nMergedTracks;
   const GPUTPCGMMergedTrackHit* trackClusters = ptrs.mergedTrackHits;
-
-  if (retVal) {
-    return retVal;
-  }
 
   std::vector<std::pair<int, float>> trackSort(nTracks);
   int tmp = 0, tmp2 = 0;
@@ -164,6 +165,16 @@ int GPUCATracking::runTracking(GPUO2InterfaceIOPtrs* data, GPUInterfaceOutputs* 
   for (char cside = 0; cside < 2; cside++) {
     for (int i = 0; i < nTracks; i++) {
       if (tracks[i].OK() && tracks[i].CSide() == cside) {
+        bool hasCl = false;
+        for (int j = 0; j < tracks[i].NClusters(); j++) {
+          if (!((trackClusters[tracks[i].FirstClusterRef() + j].state & flagsReject) || (ptrs.mergedTrackHitAttachment[trackClusters[tracks[i].FirstClusterRef() + j].num] & flagsRequired) != flagsRequired)) {
+            hasCl = true;
+            break;
+          }
+        }
+        if (!hasCl) {
+          continue;
+        }
         trackSort[tmp++] = {i, tracks[i].GetParam().GetTZOffset()};
         auto ncl = tracks[i].NClusters();
         clBuff += ncl + (ncl + 1) / 2; // actual N clusters to store will be less
@@ -192,15 +203,13 @@ int GPUCATracking::runTracking(GPUO2InterfaceIOPtrs* data, GPUInterfaceOutputs* 
     const int i = trackSort[iTmp].first;
     labelAssigner->reset();
 
-    oTrack =
-      TrackTPC(tracks[i].GetParam().GetX(), tracks[i].GetAlpha(),
-               {tracks[i].GetParam().GetY(), tracks[i].GetParam().GetZ(), tracks[i].GetParam().GetSinPhi(),
-                tracks[i].GetParam().GetDzDs(), tracks[i].GetParam().GetQPt()},
-               {tracks[i].GetParam().GetCov(0), tracks[i].GetParam().GetCov(1), tracks[i].GetParam().GetCov(2),
+    oTrack.set(tracks[i].GetParam().GetX(), tracks[i].GetAlpha(),
+               {tracks[i].GetParam().GetY(), tracks[i].GetParam().GetZ(), tracks[i].GetParam().GetSinPhi(), tracks[i].GetParam().GetDzDs(), tracks[i].GetParam().GetQPt()},
+               {tracks[i].GetParam().GetCov(0),
+                tracks[i].GetParam().GetCov(1), tracks[i].GetParam().GetCov(2),
                 tracks[i].GetParam().GetCov(3), tracks[i].GetParam().GetCov(4), tracks[i].GetParam().GetCov(5),
-                tracks[i].GetParam().GetCov(6), tracks[i].GetParam().GetCov(7), tracks[i].GetParam().GetCov(8),
-                tracks[i].GetParam().GetCov(9), tracks[i].GetParam().GetCov(10), tracks[i].GetParam().GetCov(11),
-                tracks[i].GetParam().GetCov(12), tracks[i].GetParam().GetCov(13), tracks[i].GetParam().GetCov(14)});
+                tracks[i].GetParam().GetCov(6), tracks[i].GetParam().GetCov(7), tracks[i].GetParam().GetCov(8), tracks[i].GetParam().GetCov(9),
+                tracks[i].GetParam().GetCov(10), tracks[i].GetParam().GetCov(11), tracks[i].GetParam().GetCov(12), tracks[i].GetParam().GetCov(13), tracks[i].GetParam().GetCov(14)});
 
     oTrack.setChi2(tracks[i].GetParam().GetChi2());
     auto& outerPar = tracks[i].OuterParam();

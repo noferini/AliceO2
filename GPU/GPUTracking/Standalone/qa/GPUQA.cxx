@@ -60,6 +60,7 @@
 #include "SimulationDataFormat/DigitizationContext.h"
 #include "DetectorsCommonDataFormats/DetID.h"
 #include "DetectorsCommonDataFormats/NameConf.h"
+#include "Steer/MCKinematicsReader.h"
 #include "TPDGCode.h"
 #include "TParticlePDG.h"
 #include "TDatabasePDG.h"
@@ -587,17 +588,8 @@ int GPUQA::InitQA(int tasks)
 #ifdef GPUCA_O2_LIB
   static constexpr float PRIM_MAX_T = 0.01f;
 
-  TFile fileSim(o2::base::NameConf::getMCKinematicsFileName("o2sim").c_str());
-  TTree* treeSim = (TTree*)fileSim.Get("o2sim");
-  std::vector<o2::MCTrack>* tracksX;
-  std::vector<o2::TrackReference>* trackRefsX;
-  if (treeSim == nullptr) {
-    throw std::runtime_error("Error reading o2sim tree");
-  }
-  treeSim->SetBranchAddress("MCTrack", &tracksX);
-  treeSim->SetBranchAddress("TrackRefs", &trackRefsX);
-
-  int nSimEvents = treeSim->GetEntries();
+  o2::steer::MCKinematicsReader mcReader("collisioncontext.root");
+  int nSimEvents = mcReader.getNEvents(0);
   mTrackMCLabelsReverse.resize(nSimEvents);
   mRecTracks.resize(nSimEvents);
   mFakeTracks.resize(nSimEvents);
@@ -614,9 +606,8 @@ int GPUQA::InitQA(int tasks)
     auto ir0 = o2::raw::HBFUtils::Instance().getFirstIRofTF(ir);
     float timebin = (float)ir.differenceInBC(ir0) / o2::tpc::constants::LHCBCPERTIMEBIN;
 
-    treeSim->GetEntry(i);
-    const std::vector<o2::MCTrack>& tracks = *tracksX;
-    const std::vector<o2::TrackReference>& trackRefs = *trackRefsX;
+    const std::vector<o2::MCTrack>& tracks = mcReader.getTracks(0, i);
+    const std::vector<o2::TrackReference>& trackRefs = mcReader.getTrackRefsByEvent(0, i);
 
     refId.resize(tracks.size());
     std::fill(refId.begin(), refId.end(), -1);
@@ -679,8 +670,6 @@ int GPUQA::InitQA(int tasks)
       }
     }
   }
-
-  fileSim.Close();
 #endif
 
   if (mConfig.matchMCLabels.size()) {
@@ -821,7 +810,7 @@ void GPUQA::RunQA(bool matchOnly, const std::vector<o2::tpc::TrackTPC>* tracksEx
         int maxcount;
         auto maxLabel = acc.computeLabel(&maxweight, &sumweight, &maxcount);
         mTrackMCLabels[i] = maxLabel;
-        if (QA_DEBUG && track.OK() && GetNMCTracks(maxLabel.getEventID()) > maxLabel.getTrackID()) {
+        if (QA_DEBUG && track.OK() && GetNMCTracks(maxLabel.getEventID()) > (unsigned int)maxLabel.getTrackID()) {
           const mcInfo_t& mc = GetMCTrack(maxLabel);
           GPUInfo("Track %d label %d (fake %d) weight %f clusters %d (fitted %d) (%f%% %f%%) Pt %f", i, maxLabel.getTrackID(), (int)(maxLabel.isFake()), maxweight, nClusters, track.NClustersFitted(), 100.f * maxweight / sumweight, 100.f * (float)maxcount / (float)nClusters,
                   std::sqrt(mc.pX * mc.pX + mc.pY * mc.pY));
@@ -1198,7 +1187,7 @@ void GPUQA::RunQA(bool matchOnly, const std::vector<o2::tpc::TrackTPC>* tracksEx
           continue;
         }
 
-        auto getdz = [this, &mclocal, &param, &mc1, &side]() {
+        auto getdz = [this, &param, &mc1, &side]() {
           if (!mTracking->GetParam().par.continuousMaxTimeBin) {
             return param.Z() - mc1.z;
           }

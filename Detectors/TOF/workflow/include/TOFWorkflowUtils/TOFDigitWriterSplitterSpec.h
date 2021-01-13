@@ -140,7 +140,7 @@ class TOFDigitWriterSplitter : public Task
 namespace framework
 {
 
-DataProcessorSpec getTOFCalibCollectorWriterSpec(int nTF, bool storeErr = false)
+DataProcessorSpec getTOFDigitWriterSplitterSpec(int nTF, bool storeErr = false)
 {
   std::vector<InputSpec> inputs;
   inputs.emplace_back("header", o2::header::gDataOriginTOF, "DIGITHEADER");

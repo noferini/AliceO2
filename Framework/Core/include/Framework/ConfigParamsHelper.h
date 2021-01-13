@@ -34,7 +34,7 @@ struct ConfigParamsHelper {
   /// all options which are found in the vetos are skipped
   static bool dpl2BoostOptions(const std::vector<ConfigParamSpec>& spec,
                                options_description& options,
-                               options_description vetos = options_description());
+                               boost::program_options::options_description vetos = options_description());
 
   /// populate boost program options for a complete workflow
   template <typename ContainerType>
@@ -118,7 +118,11 @@ struct ConfigParamsHelper {
     } else if constexpr (V == VariantType::ArrayInt ||
                          V == VariantType::ArrayFloat ||
                          V == VariantType::ArrayDouble ||
-                         V == VariantType::ArrayBool) {
+                         V == VariantType::ArrayBool ||
+                         V == VariantType::ArrayString ||
+                         V == VariantType::MatrixInt ||
+                         V == VariantType::MatrixFloat ||
+                         V == VariantType::MatrixDouble) {
       auto value = boost::program_options::value<std::string>();
       value = value->default_value(spec.defaultValue.asString());
       if constexpr (V != VariantType::String) {

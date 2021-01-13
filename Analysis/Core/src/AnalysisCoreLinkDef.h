@@ -20,3 +20,4 @@
 #pragma link C++ class HistogramManager + ;
 #pragma link C++ class AnalysisCut + ;
 #pragma link C++ class AnalysisCompositeCut + ;
+#pragma link C++ class HFTrackIndexSkimsCreatorConfigs + ;

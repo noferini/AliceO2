@@ -14,11 +14,11 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
 #include "Framework/ASoAHelpers.h"
-#include "Analysis/ReducedInfoTables.h"
-#include "Analysis/VarManager.h"
-#include "Analysis/HistogramManager.h"
-#include "Analysis/AnalysisCut.h"
-#include "Analysis/AnalysisCompositeCut.h"
+#include "AnalysisDataModel/ReducedInfoTables.h"
+#include "AnalysisCore/VarManager.h"
+#include "AnalysisCore/HistogramManager.h"
+#include "AnalysisCore/AnalysisCut.h"
+#include "AnalysisCore/AnalysisCompositeCut.h"
 #include <TH1F.h>
 #include <TMath.h>
 #include <THashList.h>
@@ -116,7 +116,7 @@ struct EventSelection {
 
     AnalysisCut* varCut = new AnalysisCut();
     varCut->AddCut(VarManager::kVtxZ, -10.0, 10.0);
-    varCut->AddCut(VarManager::kIsMuonSingleLowPt7, 0.5, 1.5);
+    varCut->AddCut(VarManager::kIsMuonUnlikeLowPt7, 0.5, 1.5);
 
     fEventCut->AddCut(varCut);
     // TODO: Add more cuts, also enable cuts which are not easily possible via the VarManager (e.g. trigger selections)
@@ -265,14 +265,14 @@ struct DileptonMuMu {
     for (auto& tpos : posMuons) {
       for (auto& tneg : negMuons) {
         //dileptonList(event, VarManager::fgValues[VarManager::kMass], VarManager::fgValues[VarManager::kPt], VarManager::fgValues[VarManager::kEta], VarManager::fgValues[VarManager::kPhi], 1);
-        VarManager::FillPair(tpos, tneg);
+        VarManager::FillPair(tpos, tneg, nullptr, VarManager::kJpsiToMuMu);
         if (!fDiMuonCut->IsSelected(VarManager::fgValues)) {
           return;
         }
         fHistMan->FillHistClass("PairsMuonULS", VarManager::fgValues);
       }
       for (auto tpos2 = tpos + 1; tpos2 != posMuons.end(); ++tpos2) { // ++ pairs
-        VarManager::FillPair(tpos, tpos2);
+        VarManager::FillPair(tpos, tpos2, nullptr, VarManager::kJpsiToMuMu);
         if (!fDiMuonCut->IsSelected(VarManager::fgValues)) {
           return;
         }
@@ -281,7 +281,7 @@ struct DileptonMuMu {
     }
     for (auto tneg : negMuons) { // -- pairs
       for (auto tneg2 = tneg + 1; tneg2 != negMuons.end(); ++tneg2) {
-        VarManager::FillPair(tneg, tneg2);
+        VarManager::FillPair(tneg, tneg2, nullptr, VarManager::kJpsiToMuMu);
         if (!fDiMuonCut->IsSelected(VarManager::fgValues)) {
           return;
         }

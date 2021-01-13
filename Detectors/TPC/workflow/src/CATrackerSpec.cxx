@@ -39,11 +39,14 @@
 #include "TPCdEdxCalibrationSplines.h"
 #include "DPLUtils/DPLRawParser.h"
 #include "DetectorsBase/MatLayerCylSet.h"
+#include "DetectorsBase/Propagator.h"
+#include "DetectorsBase/GeometryManager.h"
+#include "DetectorsCommonDataFormats/NameConf.h"
 #include "DetectorsRaw/HBFUtils.h"
 #include "TPCBase/RDHUtils.h"
 #include "GPUO2InterfaceConfiguration.h"
 #include "GPUO2InterfaceQA.h"
-#include "TPCCFCalibration.h"
+#include "TPCPadGainCalib.h"
 #include "GPUDisplayBackend.h"
 #ifdef GPUCA_BUILD_EVENT_DISPLAY
 #include "GPUDisplayBackendGlfw.h"
@@ -100,7 +103,7 @@ DataProcessorSpec getCATrackerSpec(CompletionPolicyData* policyData, ca::Config 
     std::unique_ptr<GPUDisplayBackend> displayBackend;
     std::unique_ptr<TPCFastTransform> fastTransform;
     std::unique_ptr<TPCdEdxCalibrationSplines> dEdxSplines;
-    std::unique_ptr<TPCCFCalibration> tpcCalibration;
+    std::unique_ptr<TPCPadGainCalib> tpcPadGainCalib;
     std::unique_ptr<GPUSettingsQA> qaConfig;
     int qaTaskMask = 0;
     std::unique_ptr<GPUO2InterfaceQA> qa;
@@ -127,7 +130,9 @@ DataProcessorSpec getCATrackerSpec(CompletionPolicyData* policyData, ca::Config 
       tracker = std::make_unique<GPUCATracking>();
 
       // Create configuration object and fill settings
-      const auto grp = o2::parameters::GRPObject::loadFrom("o2sim_grp.root");
+      const auto grp = o2::parameters::GRPObject::loadFrom(o2::base::NameConf::getGRPFileName());
+      o2::base::GeometryManager::loadGeometry();
+      o2::base::Propagator::initFieldFromGRP(o2::base::NameConf::getGRPFileName());
       if (grp) {
         config.configEvent.solenoidBz = 5.00668f * grp->getL3Current() / 30000.;
         config.configEvent.continuousMaxTimeBin = grp->isDetContinuousReadOut(o2::detectors::DetID::TPC) ? -1 : 0; // Number of timebins in timeframe if continuous, 0 otherwise
@@ -216,32 +221,34 @@ DataProcessorSpec getCATrackerSpec(CompletionPolicyData* policyData, ca::Config 
       if (config.configCalib.fastTransform == nullptr) {
         throw std::invalid_argument("GPUCATracking: initialization of the TPC transformation failed");
       }
+
       if (confParam.matLUTFile.size()) {
         config.configCalib.matLUT = o2::base::MatLayerCylSet::loadFromFile(confParam.matLUTFile.c_str(), "MatBud");
       }
+
       if (confParam.dEdxFile.size()) {
         processAttributes->dEdxSplines.reset(new TPCdEdxCalibrationSplines(confParam.dEdxFile.c_str()));
       } else {
         processAttributes->dEdxSplines.reset(new TPCdEdxCalibrationSplines);
       }
-
       config.configCalib.dEdxSplines = processAttributes->dEdxSplines.get();
 
       if (boost::filesystem::exists(confParam.gainCalibFile)) {
         LOG(INFO) << "Loading tpc gain correction from file " << confParam.gainCalibFile;
         const auto* gainMap = o2::tpc::utils::readCalPads(confParam.gainCalibFile, "GainMap")[0];
-        processAttributes->tpcCalibration.reset(new TPCCFCalibration{*gainMap});
+        processAttributes->tpcPadGainCalib.reset(new TPCPadGainCalib{*gainMap});
       } else {
         if (not confParam.gainCalibFile.empty()) {
           LOG(WARN) << "Couldn't find tpc gain correction file " << confParam.gainCalibFile << ". Not applying any gain correction.";
         }
-        processAttributes->tpcCalibration.reset(new TPCCFCalibration{});
+        processAttributes->tpcPadGainCalib.reset(new TPCPadGainCalib{});
       }
-      config.configCalib.tpcCalibration = processAttributes->tpcCalibration.get();
+      config.configCalib.tpcPadGain = processAttributes->tpcPadGainCalib.get();
+
+      config.configCalib.o2Propagator = Propagator::Instance();
 
       // Sample code what needs to be done for the TRD Geometry, when we extend this to TRD tracking.
-      /*o2::base::GeometryManager::loadGeometry();
-      o2::trd::Geometry gm;
+      /* o2::trd::Geometry gm;
       gm.createPadPlaneArray();
       gm.createClusterMatrixArray();
       std::unique_ptr<o2::trd::GeometryFlat> gf(gm);
@@ -295,6 +302,7 @@ DataProcessorSpec getCATrackerSpec(CompletionPolicyData* policyData, ca::Config 
       if (processAttributes->readyToQuit) {
         return;
       }
+      printf("RUN PROCESSING\n");
       auto cput = timer.CpuTime();
       timer.Start(false);
       auto& parser = processAttributes->parser;
@@ -626,6 +634,7 @@ DataProcessorSpec getCATrackerSpec(CompletionPolicyData* policyData, ca::Config 
         outputRegions.clusterLabels.allocator = [&clustersMCBuffer](size_t size) -> void* { return &clustersMCBuffer; };
       }
 
+      printf("RUN TRACKING\n");
       int retVal = tracker->runTracking(&ptrs, &outputRegions);
       if (processAttributes->suppressOutput) {
         return;

@@ -31,17 +31,17 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
 #include "Framework/ASoAHelpers.h"
-#include "Analysis/HFSecondaryVertex.h"
+#include "AnalysisDataModel/HFSecondaryVertex.h"
 #include "DetectorsVertexing/DCAFitterN.h"
 #include "ReconstructionDataFormats/Track.h"
-#include "Analysis/RecoDecay.h"
-#include "Analysis/trackUtilities.h"
-#include "PID/PIDResponse.h"
-#include "Analysis/StrangenessTables.h"
-#include "Analysis/TrackSelection.h"
-#include "Analysis/TrackSelectionTables.h"
-#include "Analysis/EventSelection.h"
-#include "Analysis/Centrality.h"
+#include "AnalysisCore/RecoDecay.h"
+#include "AnalysisCore/trackUtilities.h"
+#include "AnalysisDataModel/PID/PIDResponse.h"
+#include "AnalysisDataModel/StrangenessTables.h"
+#include "AnalysisCore/TrackSelection.h"
+#include "AnalysisDataModel/TrackSelectionTables.h"
+#include "AnalysisDataModel/EventSelection.h"
+#include "AnalysisDataModel/Centrality.h"
 
 #include <TFile.h>
 #include <TLorentzVector.h>
@@ -120,7 +120,7 @@ struct cascadeprefilter {
                aod::V0DataExt const& V0s)
   {
     for (auto& t0 : goodPosTracks) {
-      if (!(t0.flags() & 0x40)) {
+      if (!(t0.trackType() & o2::aod::track::TPCrefit)) {
         continue; //TPC refit
       }
       if (t0.tpcNClsCrossedRows() < mincrossedrows) {
@@ -129,7 +129,7 @@ struct cascadeprefilter {
       cascGoodPosTracks(t0.globalIndex(), t0.collisionId(), t0.dcaXY());
     }
     for (auto& t0 : goodNegTracks) {
-      if (!(t0.flags() & 0x40)) {
+      if (!(t0.trackType() & o2::aod::track::TPCrefit)) {
         continue; //TPC refit
       }
       if (t0.tpcNClsCrossedRows() < mincrossedrows) {

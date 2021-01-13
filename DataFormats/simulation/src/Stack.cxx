@@ -22,6 +22,8 @@
 #include "FairLogger.h"   // for FairLogger
 #include "FairRootManager.h"
 #include "SimulationDataFormat/BaseHits.h"
+#include "SimulationDataFormat/StackParam.h"
+#include "CommonUtils/ConfigurationMacroHelper.h"
 
 #include "TLorentzVector.h" // for TLorentzVector
 #include "TParticle.h"      // for TParticle
@@ -75,8 +77,40 @@ Stack::Stack(Int_t size)
     mIsG4Like(false)
 {
   auto vmc = TVirtualMC::GetMC();
-  if (vmc && strcmp(vmc->GetName(), "TGeant4") == 0) {
-    mIsG4Like = true;
+  if (vmc) {
+    mIsG4Like = !(vmc->SecondariesAreOrdered());
+  }
+
+  auto& param = o2::sim::StackParam::Instance();
+  LOG(INFO) << param;
+  TransportFcn transportPrimary;
+  if (param.transportPrimary.compare("none") == 0) {
+    transportPrimary = [](const TParticle& p, const std::vector<TParticle>& particles) {
+      return false;
+    };
+  } else if (param.transportPrimary.compare("all") == 0) {
+    transportPrimary = [](const TParticle& p, const std::vector<TParticle>& particles) {
+      return true;
+    };
+  } else if (param.transportPrimary.compare("barrel") == 0) {
+    transportPrimary = [](const TParticle& p, const std::vector<TParticle>& particles) {
+      return (std::fabs(p.Eta()) < 2.0);
+    };
+  } else if (param.transportPrimary.compare("external") == 0) {
+    transportPrimary = o2::conf::GetFromMacro<o2::data::Stack::TransportFcn>(param.transportPrimaryFileName,
+                                                                             param.transportPrimaryFuncName,
+                                                                             "o2::data::Stack::TransportFcn", "stack_transport_primary");
+    if (!mTransportPrimary) {
+      LOG(FATAL) << "Failed to retrieve external \'transportPrimary\' function: problem with configuration ";
+    }
+  } else {
+    LOG(FATAL) << "unsupported \'trasportPrimary\' mode: " << param.transportPrimary;
+  }
+
+  if (param.transportPrimaryInvert) {
+    mTransportPrimary = [transportPrimary](const TParticle& p, const std::vector<TParticle>& particles) { return !transportPrimary; };
+  } else {
+    mTransportPrimary = transportPrimary;
   }
 }
 
@@ -149,6 +183,13 @@ void Stack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode, Double_t px
                       Double_t vx, Double_t vy, Double_t vz, Double_t time, Double_t polx, Double_t poly, Double_t polz,
                       TMCProcess proc, Int_t& ntr, Double_t weight, Int_t is, Int_t secondparentId)
 {
+  PushTrack(toBeDone, parentId, pdgCode, px, py, pz, e, vx, vy, vz, time, polx, poly, polz, proc, ntr, weight, is, secondparentId, -1, -1);
+}
+
+void Stack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode, Double_t px, Double_t py, Double_t pz, Double_t e,
+                      Double_t vx, Double_t vy, Double_t vz, Double_t time, Double_t polx, Double_t poly, Double_t polz,
+                      TMCProcess proc, Int_t& ntr, Double_t weight, Int_t is, Int_t secondparentId, Int_t daughter1Id, Int_t daughter2Id)
+{
   //  printf("Pushing %s toBeDone %5d parentId %5d pdgCode %5d is %5d entries %5d \n",
   //	 proc == kPPrimary ? "Primary:   " : "Secondary: ",
   //	 toBeDone, parentId, pdgCode, is, mNumberOfEntriesInParticles);
@@ -166,8 +207,8 @@ void Stack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode, Double_t px
   Int_t trackId = mNumberOfEntriesInParticles;
   // Set track variable
   ntr = trackId;
-  Int_t daughter1Id = -1;
-  Int_t daughter2Id = -1;
+  //  Int_t daughter1Id = -1;
+  //  Int_t daughter2Id = -1;
   Int_t iStatus = (proc == kPPrimary) ? is : trackId;
   TParticle p(pdgCode, iStatus, parentId, secondparentId, daughter1Id, daughter2Id, px, py, pz, e, vx, vy, vz, time);
   p.SetPolarisation(polx, poly, polz);
@@ -189,8 +230,13 @@ void Stack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode, Double_t px
     p.SetBit(ParticleStatus::kKeep);
     p.SetBit(ParticleStatus::kPrimary);
     if (toBeDone == 1) {
-      p.SetBit(ParticleStatus::kToBeDone, 1);
-      mNumberOfPrimariesforTracking++;
+      if (mTransportPrimary(p, mPrimaryParticles)) {
+        p.SetBit(ParticleStatus::kToBeDone, 1);
+        mNumberOfPrimariesforTracking++;
+      } else {
+        p.SetBit(ParticleStatus::kToBeDone, 0);
+        p.SetBit(ParticleStatus::kInhibited, 1);
+      }
     } else {
       p.SetBit(ParticleStatus::kToBeDone, 0);
     }
