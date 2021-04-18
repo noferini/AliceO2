@@ -14,6 +14,7 @@
 #include "DetectorsCalibration/TimeSlotCalibration.h"
 #include "DetectorsCalibration/TimeSlot.h"
 #include "DataFormatsTOF/CalibInfoTOF.h"
+#include "DataFormatsTOF/CalibInfoCluster.h"
 #include "DataFormatsTOF/CalibLHCphaseTOF.h"
 #include "TOFBase/Geo.h"
 #include "CCDB/CcdbObjectInfo.h"
@@ -61,6 +62,7 @@ class TOFChannelData
   void print(int isect) const;
   void printEntries() const;
   void fill(const gsl::span<const o2::dataformats::CalibInfoTOF> data);
+  void fill(const gsl::span<const o2::tof::CalibInfoCluster> data);
   void merge(const TOFChannelData* prev);
   int findBin(float v) const;
   float integral(int chmin, int chmax, float binmin, float binmax) const;

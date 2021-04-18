@@ -57,6 +57,45 @@ void TOFChannelData::fill(const gsl::span<const o2::dataformats::CalibInfoTOF> d
 }
 
 //_____________________________________________
+void TOFChannelData::fill(const gsl::span<const o2::tof::CalibInfoCluster> data)
+{
+  // fill container
+  for (int i = data.size(); i--;) {
+    auto ch = data[i].getCH();
+    auto dch = data[i].getDCH();
+    auto dt = data[i].getDT();
+    auto tot1 = data[i].getTOT1();
+    auto tot2 = data[i].getTOT2();
+
+    if(dch > 0){
+      ch += dch;
+      dt = -dt;
+      dch = -dch;
+      float inv = tot1;
+      tot1 = tot2;
+      tot2 = inv;
+    }
+    
+    int shift = 0; // left
+    if(dch == -1) shift = 0; // left 
+    if(dch == -48) shift = 1; //bottom
+    else continue;
+    int chL = ch%96;
+    int comb = 96*shift + chL;
+
+    auto corr1 = mCalibTOFapi->getTimeCalibration(ch, tot1); // we take into account LHCphase, offsets and time slewing
+    auto corr2 = mCalibTOFapi->getTimeCalibration(ch+dch, tot2); // we take into account LHCphase, offsets and time slewing
+    LOG(DEBUG) << "inserting in channel " << ch << ", " << ch+dch << ": dt = " << dt << ", tot1 = " << tot1 <<", tot2 = " << tot2 << ", corr1 = " << corr1 << ", corr2 = " << corr2 << ", corrected dt = " << dt - corr1 + corr2;
+
+    dt -= corr1 - corr2;
+
+    // FILL HISTOS
+    //    mHisto[sector](dt, chInSect); // we pass the calibrated time
+    //    mEntries[ch] += 1;
+  }
+}
+
+//_____________________________________________
 void TOFChannelData::merge(const TOFChannelData* prev)
 {
   // merge data of 2 slots
