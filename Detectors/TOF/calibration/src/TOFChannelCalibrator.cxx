@@ -10,13 +10,6 @@
 
 #include "TOFCalibration/TOFChannelCalibrator.h"
 #include "Framework/Logger.h"
-#include "MathUtils/fit.h"
-#include "CommonUtils/MemFileHelper.h"
-#include "CCDB/CcdbApi.h"
-#include "DetectorsCalibration/Utils.h"
-#include <boost/histogram.hpp>
-#include <boost/histogram/ostream.hpp>
-#include <boost/format.hpp>
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -31,7 +24,6 @@ using Slot = o2::calibration::TimeSlot<o2::tof::TOFChannelData>;
 using TimeSlewing = o2::dataformats::CalibTimeSlewingParamTOF;
 using clbUtils = o2::calibration::Utils;
 using boost::histogram::indexed;
-using o2::math_utils::fitGaus;
 using namespace o2::tof;
 //using boost::histogram::algorithm; // not sure why it does not work...
 
@@ -70,7 +62,7 @@ void TOFChannelData::fill(const gsl::span<const o2::tof::CalibInfoCluster> data)
 
     // we order them so that the channel number of the first cluster is smaller than
     // the one of the second cluster
-    if (dch < 0){
+    if (dch < 0) {
       ch += dch;
       dt = -dt;
       dch = -dch;
@@ -78,25 +70,28 @@ void TOFChannelData::fill(const gsl::span<const o2::tof::CalibInfoCluster> data)
       tot1 = tot2;
       tot2 = inv;
     }
-    
-    int sector = ch / Geo::NPADSXSECTOR;
-    int absoluteStrip = ch / Geo::NPADS; 
-    int stripInSect = absoluteStrip % Geo::NSTRIPXSECTOR;
-    int shift = 0; 
-    if (dch == 1) shift = 0; // 2nd channel is on the right 
-    if (dch == 48) shift = 1; // 2nd channel is at the top
-    else continue;
-    int chOnStrip = ch%96;
-    int comb = 96*shift + chOnStrip; // index of the current pair of clusters on the strip; there are in total 96 + 48
 
-    auto corr1 = mCalibTOFapi->getTimeCalibration(ch, tot1); // we take into account LHCphase, offsets and time slewing
-    auto corr2 = mCalibTOFapi->getTimeCalibration(ch+dch, tot2); // we take into account LHCphase, offsets and time slewing
-    LOG(DEBUG) << "inserting in channel " << ch << ", " << ch+dch << ": dt = " << dt << ", tot1 = " << tot1 <<", tot2 = " << tot2 << ", corr1 = " << corr1 << ", corr2 = " << corr2 << ", corrected dt = " << dt - corr1 + corr2;
+    int sector = ch / Geo::NPADSXSECTOR;
+    int absoluteStrip = ch / Geo::NPADS;
+    int stripInSect = absoluteStrip % Geo::NSTRIPXSECTOR;
+    int shift = 0;
+    if (dch == 1)
+      shift = 0; // 2nd channel is on the right
+    if (dch == 48)
+      shift = 1; // 2nd channel is at the top
+    else
+      continue;
+    int chOnStrip = ch % 96;
+    int comb = 96 * shift + chOnStrip; // index of the current pair of clusters on the strip; there are in total 96 + 48
+
+    auto corr1 = mCalibTOFapi->getTimeCalibration(ch, tot1);       // we take into account LHCphase, offsets and time slewing
+    auto corr2 = mCalibTOFapi->getTimeCalibration(ch + dch, tot2); // we take into account LHCphase, offsets and time slewing
+    LOG(DEBUG) << "inserting in channel " << ch << ", " << ch + dch << ": dt = " << dt << ", tot1 = " << tot1 << ", tot2 = " << tot2 << ", corr1 = " << corr1 << ", corr2 = " << corr2 << ", corrected dt = " << dt - corr1 + corr2;
 
     dt -= corr1 - corr2;
 
     int combInSect = comb + stripInSect * NCOMBINSTRIP;
-    
+
     mHisto[sector](dt, combInSect); // we pass the difference of the *calibrated* times
     mEntries[comb + NCOMBINSTRIP * absoluteStrip] += 1;
   }
@@ -449,257 +444,6 @@ float TOFChannelData::integral(int ch) const
   // calculates the integral along one fixed channel and in the full x-range
 
   return integral(ch, ch, 0, mNBins - 1);
-}
-
-//===================================================================
-
-//_____________________________________________
-void TOFChannelCalibrator::initOutput()
-{
-  // Here we initialize the vector of our output objects
-  mInfoVector.clear();
-  mTimeSlewingVector.clear();
-  return;
-}
-
-//_____________________________________________
-bool TOFChannelCalibrator::hasEnoughData(const Slot& slot) const
-{
-
-  // Checking if all channels have enough data to do calibration.
-  // Delegating this to TOFChannelData
-
-  const o2::tof::TOFChannelData* c = slot.getContainer();
-  LOG(INFO) << "Checking statistics";
-  return (mTest ? true : c->hasEnoughData(mMinEntries));
-}
-
-//_____________________________________________
-void TOFChannelCalibrator::finalizeSlot(Slot& slot)
-{
-  // here we simply decide which finalize to call: for the use case with Tracks or cosmics
-  mCalibWithCosmics ? finalizeSlotWithCosmics(slot) : finalizeSlotWithTracks(slot);
-  return;
-  
-}
-//_____________________________________________
-
-  void TOFChannelCalibrator::finalizeSlotWithTracks(Slot& slot)
-{
-  // Extract results for the single slot
-  o2::tof::TOFChannelData* c = slot.getContainer();
-  LOG(INFO) << "Finalize slot " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
-
-  // for the CCDB entry
-  std::map<std::string, std::string> md;
-  TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
-
-  for (int ich = 0; ich < Geo::NCHANNELS; ich++) {
-    // make the slice of the 2D histogram so that we have the 1D of the current channel
-    int sector = ich / Geo::NPADSXSECTOR;
-    int chinsector = ich % Geo::NPADSXSECTOR;
-    std::vector<float> fitValues;
-    std::vector<float> histoValues;
-    /* //less efficient way
-    int startCount = chinsector * c->getNbins();
-    int counts = -1;
-    for (auto&& x : indexed(c->getHisto(sector))) {
-      counts++;
-      if (counts < startCount) continue;
-      if (x.index(1) > chinsector) { // we passed the needed channel
-	//LOG(INFO) << "x.index(1) > chinsectormax) > chinsectormax: BREAKING";
-	break;
-      }
-      histoValues.push_back(x.get());
-    }
-    */
-    std::vector<int> entriesPerChannel = c->getEntriesPerChannel();
-    if (entriesPerChannel.at(ich) == 0) {
-      continue; // skip always since a channel with 0 entries is normal, it will be flagged as problematic
-      if (mTest) {
-        LOG(DEBUG) << "Skipping channel " << ich << " because it has zero entries, but it should not be"; // should become error!
-        continue;
-      } else {
-        throw std::runtime_error("We found one channel with no entries, we cannot calibrate!");
-      }
-    }
-
-    // more efficient way
-    auto histo = c->getHisto(sector);
-    for (unsigned j = chinsector; j <= chinsector; ++j) {
-      for (unsigned i = 0; i < c->getNbins(); ++i) {
-        const auto& v = histo.at(i, j);
-        LOG(DEBUG) << "channel = " << ich << ", in sector = " << sector << " (where it is channel = " << chinsector << ") bin = " << i << " value = " << v;
-        histoValues.push_back(v);
-      }
-    }
-
-    double fitres = fitGaus(c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
-
-    if (fitValues[2] < 0) {
-      fitValues[2] = -fitValues[2];
-    }
-
-    if (fitres >= 0) {
-      LOG(DEBUG) << "Channel " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
-    } else {
-      LOG(INFO) << "Channel " << ich << " :: Fit failed with result = " << fitres;
-    }
-    float fractionUnderPeak;
-    float intmin = fitValues[1] - 5 * fitValues[2]; // mean - 5*sigma
-    float intmax = fitValues[1] + 5 * fitValues[2]; // mean + 5*sigma
-
-    if (intmin < -mRange) {
-      intmin = -mRange;
-    }
-    if (intmax < -mRange) {
-      intmax = -mRange;
-    }
-    if (intmin > mRange) {
-      intmin = mRange;
-    }
-    if (intmax > mRange) {
-      intmax = mRange;
-    }
-
-    /* 
-    // needed if we calculate the integral using the values
-    int binmin = c->findBin(intmin);
-    int binmax = c->findBin(intmax);
-
-    // for now these checks are useless, as we pass the value of the bin
-    if (binmin < 0)
-      binmin = 1; // avoid to take the underflow bin (can happen in case the sigma is too large)
-    if (binmax >= c->getNbins())
-      binmax = c->getNbins()-1; // avoid to take the overflow bin (can happen in case the sigma is too large)
-    float fractionUnderPeak = (c->integral(ch, binmin, binmax) + addduetoperiodicity) / c->integral(ch, 1, c->nbins());
-    */
-    float channelIntegral = c->integral(ich);
-    fractionUnderPeak = channelIntegral > 0 ? c->integral(ich, intmin, intmax) / channelIntegral : 0;
-    // now we need to store the results in the TimeSlewingObject
-    ts.setFractionUnderPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, fractionUnderPeak);
-    ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(fitValues[2]));
-    ts.updateOffsetInfo(ich, fitValues[1]);
-  }
-  auto clName = o2::utils::MemFileHelper::getClassName(ts);
-  auto flName = o2::ccdb::CcdbApi::generateFileName(clName);
-  mInfoVector.emplace_back("TOF/ChannelCalib", clName, flName, md, slot.getTFStart(), 99999999999999);
-  mTimeSlewingVector.emplace_back(ts);
-}
-//_____________________________________________
-
-  void TOFChannelCalibrator::finalizeSlotWithCosmics(Slot& slot)
-{
-  // Extract results for the single slot
-  o2::tof::TOFChannelData* c = slot.getContainer();
-  LOG(INFO) << "Finalize slot for calibration with cosmics " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
-
-  // for the CCDB entry
-  std::map<std::string, std::string> md;
-  TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
-
-  for (int ich = 0; ich < Geo::NCHANNELS; ich++) {
-    // make the slice of the 2D histogram so that we have the 1D of the current channel
-    int sector = ich / Geo::NPADSXSECTOR;
-    int chinsector = ich % Geo::NPADSXSECTOR;
-    std::vector<float> fitValues;
-    std::vector<float> histoValues;
-    /* //less efficient way
-    int startCount = chinsector * c->getNbins();
-    int counts = -1;
-    for (auto&& x : indexed(c->getHisto(sector))) {
-      counts++;
-      if (counts < startCount) continue;
-      if (x.index(1) > chinsector) { // we passed the needed channel
-	//LOG(INFO) << "x.index(1) > chinsectormax) > chinsectormax: BREAKING";
-	break;
-      }
-      histoValues.push_back(x.get());
-    }
-    */
-    std::vector<int> entriesPerChannel = c->getEntriesPerChannel();
-    if (entriesPerChannel.at(ich) == 0) {
-      continue; // skip always since a channel with 0 entries is normal, it will be flagged as problematic
-      if (mTest) {
-        LOG(DEBUG) << "Skipping channel " << ich << " because it has zero entries, but it should not be"; // should become error!
-        continue;
-      } else {
-        throw std::runtime_error("We found one channel with no entries, we cannot calibrate!");
-      }
-    }
-
-    // more efficient way
-    auto histo = c->getHisto(sector);
-    for (unsigned j = chinsector; j <= chinsector; ++j) {
-      for (unsigned i = 0; i < c->getNbins(); ++i) {
-        const auto& v = histo.at(i, j);
-        LOG(DEBUG) << "channel = " << ich << ", in sector = " << sector << " (where it is channel = " << chinsector << ") bin = " << i << " value = " << v;
-        histoValues.push_back(v);
-      }
-    }
-
-    double fitres = fitGaus(c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
-
-    if (fitValues[2] < 0) {
-      fitValues[2] = -fitValues[2];
-    }
-
-    if (fitres >= 0) {
-      LOG(DEBUG) << "Channel " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
-    } else {
-      LOG(INFO) << "Channel " << ich << " :: Fit failed with result = " << fitres;
-    }
-    float fractionUnderPeak;
-    float intmin = fitValues[1] - 5 * fitValues[2]; // mean - 5*sigma
-    float intmax = fitValues[1] + 5 * fitValues[2]; // mean + 5*sigma
-
-    if (intmin < -mRange) {
-      intmin = -mRange;
-    }
-    if (intmax < -mRange) {
-      intmax = -mRange;
-    }
-    if (intmin > mRange) {
-      intmin = mRange;
-    }
-    if (intmax > mRange) {
-      intmax = mRange;
-    }
-
-    /* 
-    // needed if we calculate the integral using the values
-    int binmin = c->findBin(intmin);
-    int binmax = c->findBin(intmax);
-
-    // for now these checks are useless, as we pass the value of the bin
-    if (binmin < 0)
-      binmin = 1; // avoid to take the underflow bin (can happen in case the sigma is too large)
-    if (binmax >= c->getNbins())
-      binmax = c->getNbins()-1; // avoid to take the overflow bin (can happen in case the sigma is too large)
-    float fractionUnderPeak = (c->integral(ch, binmin, binmax) + addduetoperiodicity) / c->integral(ch, 1, c->nbins());
-    */
-    float channelIntegral = c->integral(ich);
-    fractionUnderPeak = channelIntegral > 0 ? c->integral(ich, intmin, intmax) / channelIntegral : 0;
-    // now we need to store the results in the TimeSlewingObject
-    ts.setFractionUnderPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, fractionUnderPeak);
-    ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(fitValues[2]));
-    ts.updateOffsetInfo(ich, fitValues[1]);
-  }
-  auto clName = o2::utils::MemFileHelper::getClassName(ts);
-  auto flName = o2::ccdb::CcdbApi::generateFileName(clName);
-  mInfoVector.emplace_back("TOF/ChannelCalib", clName, flName, md, slot.getTFStart(), 99999999999999);
-  mTimeSlewingVector.emplace_back(ts);
-}
-
-//_____________________________________________
-Slot& TOFChannelCalibrator::emplaceNewSlot(bool front, TFType tstart, TFType tend)
-{
-
-  auto& cont = getSlots();
-  auto& slot = front ? cont.emplace_front(tstart, tend) : cont.emplace_back(tstart, tend);
-  int nElements = mCalibWithCosmics ? NCOMBINSTRIP * Geo::NSTRIPXSECTOR : Geo::NPADSXSECTOR; // if we calibrate with cosmics, we pass the number of possible combinations per sector; otherwise, the number of pads per sector
-  slot.setContainer(std::make_unique<TOFChannelData>(mNBins, mRange, mCalibTOFapi, nElements));
-  return slot;
 }
 
 } // end namespace tof
