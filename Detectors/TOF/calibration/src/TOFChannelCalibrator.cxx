@@ -55,7 +55,7 @@ void TOFChannelData::fill(const gsl::span<const o2::tof::CalibInfoCluster> data)
   // fill container
   for (int i = data.size(); i--;) {
     auto ch = data[i].getCH();
-    auto dch = data[i].getDCH();
+    auto dch = data[i].getDCH();     // this is a char! if you print it, you need to cast it to int
     auto dt = data[i].getDT();
     auto tot1 = data[i].getTOT1();
     auto tot2 = data[i].getTOT2();
@@ -75,12 +75,15 @@ void TOFChannelData::fill(const gsl::span<const o2::tof::CalibInfoCluster> data)
     int absoluteStrip = ch / Geo::NPADS;
     int stripInSect = absoluteStrip % Geo::NSTRIPXSECTOR;
     int shift = 0;
-    if (dch == 1)
+    if (dch == 1) {
       shift = 0; // 2nd channel is on the right
-    if (dch == 48)
+    }
+    else if (dch == 48) {
       shift = 1; // 2nd channel is at the top
-    else
+    }
+    else {
       continue;
+    }
     int chOnStrip = ch % 96;
     int comb = 96 * shift + chOnStrip; // index of the current pair of clusters on the strip; there are in total 96 + 48
 
@@ -92,6 +95,10 @@ void TOFChannelData::fill(const gsl::span<const o2::tof::CalibInfoCluster> data)
 
     int combInSect = comb + stripInSect * NCOMBINSTRIP;
 
+    LOG(DEBUG) << "ch = " << ch << ", sector = " << sector << ", absoluteStrip = " << absoluteStrip <<
+      ", stripInSect = " << stripInSect << ", shift = " << shift << ", dch = " << (int)dch << ", chOnStrip = " << chOnStrip <<
+      ", comb = " << comb;
+    
     mHisto[sector](dt, combInSect); // we pass the difference of the *calibrated* times
     mEntries[comb + NCOMBINSTRIP * absoluteStrip] += 1;
   }
@@ -114,15 +121,35 @@ bool TOFChannelData::hasEnoughData(int minEntries) const
 {
   // true if all channels can be fitted --> have enough statistics
 
-  // TODO: think of a better logic: it could be that some channels are off or misbehaving and do not
-  // have enough entries, even if in principle we collected enough
+  // We consider that we have enough entries if the mean of the number of entries in the channels
+  // with at least one entry is greater than the cut at "minEntries"
+  // Channels/pairs with zero entries are assumed to be off --> we do not consider them
 
-  // we can simply check if the min of the elements of the mEntries vector is >= minEntries
-  printEntries();
-  auto minElementIndex = std::min_element(mEntries.begin(), mEntries.end());
-  LOG(INFO) << "minElement is at position " << std::distance(mEntries.begin(), minElementIndex) << " and is " << *minElementIndex;
-  bool enough = *minElementIndex < minEntries ? false : true;
-  LOG(INFO) << "hasEnough = (minEntry=" << minEntries << ") " << (int)enough;
+  //printEntries();
+  int nValid = 0;
+  float mean = 0;
+  int smallestElementIndex = -1;
+  int smallestEntries = 1e5; 
+  for (auto i = 0; i < mEntries.size(); ++i) {
+    if (mEntries[i] != 0) { // skipping channels/pairs if they have zero entries (most likely they are simply off)
+      mean += mEntries[i];
+      ++nValid;
+      if (mEntries[i] < minEntries) {
+	smallestEntries = mEntries[i];
+	smallestElementIndex = i;
+      }
+    }
+  }
+  if (nValid == 0) {
+    LOG(INFO) << "hasEnough = false: all channels/pairs are empty";
+    return false;
+  }
+  
+  mean /= nValid;
+  
+  LOG(INFO) << "minElement is at position " <<  smallestElementIndex << " and is " << smallestEntries;
+  bool enough = mean < minEntries ? false : true;
+  LOG(INFO) << "hasEnough: " << (int)enough << " (found mean = " << mean << " with cut at = " << minEntries << ") ";
   return enough;
 }
 
@@ -177,7 +204,12 @@ void TOFChannelData::printEntries() const
 {
   // to print number of entries per channel
   for (int i = 0; i < mEntries.size(); ++i) {
-    LOG(INFO) << "channel " << i << " has " << mEntries[i] << " entries";
+    if (mEntries.size() > tof::Geo::NCHANNELS) {
+      LOG(INFO) << "pair of channels " << i << " has " << mEntries[i] << " entries";
+    }
+    else {
+      LOG(INFO) << "channel " << i << " has " << mEntries[i] << " entries";
+    }
   }
 }
 
