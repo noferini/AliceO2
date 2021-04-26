@@ -204,11 +204,11 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
         for (int ipair = 0; ipair < NCOMBINSTRIP; ipair++) {
           int chinsector = ipair + istrip * NCOMBINSTRIP;
           int ich = chinsector + sector * Geo::NSTRIPXSECTOR * NCOMBINSTRIP;
-	  auto entriesInPair = c->integral(ich);
-	  if (entriesInPair < mMinEntries) {
-	    LOG(DEBUG) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
-	    continue;
-	  }
+          auto entriesInPair = c->integral(ich);
+          if (entriesInPair < mMinEntries) {
+            LOG(DEBUG) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
+            continue;
+          }
           // make the slice of the 2D histogram so that we have the 1D of the current channel
           std::vector<float> fitValues;
           std::vector<float> histoValues;
@@ -252,7 +252,7 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
             LOG(DEBUG) << "Pair " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
           } else {
             //LOG(INFO) << "Pair " << ich << " :: Fit failed with result = " << fitres;
-	    continue;
+            continue;
           }
 
           if (fitValues[2] < 0) {
@@ -291,12 +291,12 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
           xp[goodpoints] = ipair + 0.5;      // pair index
           exp[goodpoints] = 0.0;             // error on pair index (dummy since it is on the pair index)
           deltat[goodpoints] = fitValues[1]; // delta between offsets from channels in pair (from the fit) - in ps
-          edeltat[goodpoints] = 20; // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
+          edeltat[goodpoints] = 20;          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
           goodpoints++;
           int ch1 = ipair % 96;
           int ch2 = ipair / 96 ? ch1 + 48 : ch1 + 1;
           float fractionUnderPeak = entriesInPair > 0 ? c->integral(ich, intmin, intmax) / entriesInPair : 0;
-	  // we keep as fractionUnderPeak of the channel the largest one that is found in the 3 possible pairs with that channel (for both channels ch1 and ch2 in the pair)
+          // we keep as fractionUnderPeak of the channel the largest one that is found in the 3 possible pairs with that channel (for both channels ch1 and ch2 in the pair)
           if (fracUnderPeak[ch1] < fractionUnderPeak) {
             fracUnderPeak[ch1] = fractionUnderPeak;
           }
@@ -306,11 +306,11 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
         } // end loop pairs
 
         // fit strip offset
-	if (goodpoints == 0) {
-	  //LOG(INFO) << "We did not find any good point for strip " << istrip << " in sector " << sector;
-	  continue;
-	}
-	LOG(DEBUG) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " <<  sector << " --> we can fit the TGraph";
+        if (goodpoints == 0) {
+          //LOG(INFO) << "We did not find any good point for strip " << istrip << " in sector " << sector;
+          continue;
+        }
+        LOG(DEBUG) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " << sector << " --> we can fit the TGraph";
         TGraphErrors g(goodpoints, xp, deltat, exp, edeltat);
         g.Fit(mFuncDeltaOffset, "Q0");
 
@@ -330,7 +330,7 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
     mInfoVector.emplace_back("TOF/ChannelCalib", clName, flName, md, slot.getTFStart(), 99999999999999);
     mTimeSlewingVector.emplace_back(ts);
   }
-  
+
   void finalizeSlotWithTracks(Slot& slot)
   {
     // Extract results for the single slot
@@ -347,8 +347,8 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
       int chinsector = ich % Geo::NPADSXSECTOR;
       auto entriesInChannel = c->integral(ich);
       if (entriesInChannel < mMinEntries) {
-	LOG(DEBUG) << "channel " << ich << " will not be calibrated since it has only " << entriesInChannel << " entries (min = " << mMinEntries << ")";
-	continue;
+        LOG(DEBUG) << "channel " << ich << " will not be calibrated since it has only " << entriesInChannel << " entries (min = " << mMinEntries << ")";
+        continue;
       }
       std::vector<float> fitValues;
       std::vector<float> histoValues;
@@ -391,8 +391,8 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
       if (fitres >= 0) {
         LOG(DEBUG) << "Channel " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
       } else {
-	//        LOG(INFO) << "Channel " << ich << " :: Fit failed with result = " << fitres;
-	continue;
+        //        LOG(INFO) << "Channel " << ich << " :: Fit failed with result = " << fitres;
+        continue;
       }
 
       if (fitValues[2] < 0) {
@@ -440,7 +440,7 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
     mTimeSlewingVector.emplace_back(ts);
   }
 
-Slot& emplaceNewSlot(bool front, TFType tstart, TFType tend) final
+  Slot& emplaceNewSlot(bool front, TFType tstart, TFType tend) final
   {
     auto& cont = getSlots();
     auto& slot = front ? cont.emplace_front(tstart, tend) : cont.emplace_back(tstart, tend);
