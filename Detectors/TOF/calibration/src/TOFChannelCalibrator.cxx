@@ -107,8 +107,8 @@ void TOFChannelData::merge(const TOFChannelData* prev)
   for (int isect = 0; isect < Geo::NSECTORS; isect++) {
     mHisto[isect] += prev->getHisto(isect);
   }
-  for (int ich = 0; ich < Geo::NCHANNELS; ich++) {
-    mEntries[ich] += prev->mEntries[ich];
+  for (auto iel = 0; iel < mEntries.size(); iel++) {
+    mEntries[iel] += prev->mEntries[iel];
   }
 }
 
@@ -126,13 +126,19 @@ bool TOFChannelData::hasEnoughData(int minEntries) const
   float mean = 0;
   int smallestElementIndex = -1;
   int smallestEntries = 1e5;
+  int largestElementIndex = -1;
+  int largestEntries = 0;
   for (auto i = 0; i < mEntries.size(); ++i) {
     if (mEntries[i] != 0) { // skipping channels/pairs if they have zero entries (most likely they are simply off)
       mean += mEntries[i];
       ++nValid;
-      if (mEntries[i] < minEntries) {
+      if (mEntries[i] < smallestEntries) {
         smallestEntries = mEntries[i];
         smallestElementIndex = i;
+      }
+      if (mEntries[i] > largestEntries) {
+	largestEntries = mEntries[i];
+	largestElementIndex = i;
       }
     }
   }
@@ -141,9 +147,11 @@ bool TOFChannelData::hasEnoughData(int minEntries) const
     return false;
   }
 
+  LOG(INFO) << "mean = " << mean << ", nvalid = " << nValid;
   mean /= nValid;
 
   LOG(INFO) << "minElement is at position " << smallestElementIndex << " and is " << smallestEntries;
+  LOG(INFO) << "maxElement is at position " << largestElementIndex << " and is " << largestEntries;
   bool enough = mean < minEntries ? false : true;
   LOG(INFO) << "hasEnough: " << (int)enough << " (found mean = " << mean << " with cut at = " << minEntries << ") ";
   return enough;

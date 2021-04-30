@@ -49,8 +49,23 @@ class TOFChannelCalibDevice : public o2::framework::Task
     int nb = std::max(500, ic.options().get<int>("nbins"));
     float range = ic.options().get<float>("range");
     int isTest = ic.options().get<bool>("do-TOF-channel-calib-in-test-mode");
+    bool updateAtEORonly = ic.options().get<bool>("update-at-end-of-run-only");
+    int slotL = ic.options().get<int>("tf-per-slot");
+    int delay = ic.options().get<int>("max-delay");
     mCalibrator = std::make_unique<o2::tof::TOFChannelCalibrator<T>>(minEnt, nb, range);
-    mCalibrator->setUpdateAtTheEndOfRunOnly();
+
+    // default behaviour is to have only 1 slot at a time, accepting everything for it till the
+    // minimum statistics is reached;
+    // if one defines a different slot length and delay,
+    // the usual time slot calibration behaviour is used;
+    // if one defines that the calibration should happen only at the end of the run,
+    // then the slot length and delay won't matter
+    mCalibrator->setSlotLength(slotL);
+    mCalibrator->setMaxSlotsDelay(delay);
+    if (updateAtEORonly) {
+      mCalibrator->setUpdateAtTheEndOfRunOnly();
+    }
+
     mCalibrator->setIsTest(isTest);
     mCalibrator->setDoCalibWithCosmics(mCosmics);
 
@@ -220,7 +235,10 @@ DataProcessorSpec getTOFChannelCalibDeviceSpec(bool useCCDB, bool attachChannelO
       {"nbins", VariantType::Int, 1000, {"number of bins for t-texp"}},
       {"range", VariantType::Float, 24000.f, {"range for t-text"}},
       {"do-TOF-channel-calib-in-test-mode", VariantType::Bool, false, {"to run in test mode for simplification"}},
-      {"ccdb-path", VariantType::String, "http://ccdb-test.cern.ch:8080", {"Path to CCDB"}}}};
+      {"ccdb-path", VariantType::String, "http://ccdb-test.cern.ch:8080", {"Path to CCDB"}},
+      {"update-at-end-of-run-only", VariantType::Bool, false, {"to update the CCDB only at the end of the run; has priority over calibrating in time slots"}},
+      {"tf-per-slot", VariantType::Int, 1, {"number of TFs per calibration time slot"}},
+      {"max-delay", VariantType::Int, 0, {"number of slots in past to consider"}}}};
 }
 
 } // namespace framework
