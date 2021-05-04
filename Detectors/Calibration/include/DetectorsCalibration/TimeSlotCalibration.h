@@ -16,6 +16,7 @@
 #include "DetectorsCalibration/TimeSlot.h"
 #include <deque>
 #include <gsl/gsl>
+#include <limits>
 
 namespace o2
 {
@@ -28,15 +29,18 @@ class TimeSlotCalibration
   using Slot = TimeSlot<Container>;
 
  public:
+
+  //  static constexpr int64_t INFINITE_TF = 0xfffffffffffffff;
+  
   TimeSlotCalibration() = default;
   virtual ~TimeSlotCalibration() = default;
   uint32_t getMaxSlotsDelay() const { return mMaxSlotsDelay; }
-  void setMaxSlotsDelay(uint32_t v) { mMaxSlotsDelay = v; }
+  void setMaxSlotsDelay(uint64_t v) { mMaxSlotsDelay = v; }
   //void setMaxSlotsDelay(uint32_t v) { (mSlotLength == 1 && mMaxSlotsDelay == 0) ? mMaxSlotsDelay = 0 : mMaxSlotsDelay = v < 1 ? 1 : v; }
   //void setMaxSlotsDelay(uint32_t v) { mSlotLength == 1 ? mMaxSlotsDelay = 0 : mMaxSlotsDelay = v < 1 ? 1 : v; }
 
   uint32_t getSlotLength() const { return mSlotLength; }
-  void setSlotLength(uint32_t v) { mSlotLength = v < 1 ? 1 : v; }
+  void setSlotLength(uint64_t v) { mSlotLength = v < 1 ? 1 : v; }
 
   TFType getFirstTF() const { return mFirstTF; }
   void setFirstTF(TFType v) { mFirstTF = v; }
@@ -77,8 +81,9 @@ class TimeSlotCalibration
 
   TFType mLastClosedTF = 0;
   TFType mFirstTF = 0;
-  uint32_t mSlotLength = 1;
-  uint32_t mMaxSlotsDelay = 3;
+  TFType mMaxSeenTF = 0;   // largest TF processed 
+  uint64_t mSlotLength = 1;
+  uint64_t mMaxSlotsDelay = 3;
   bool mUpdateAtTheEndOfRunOnly = false;
 
   ClassDef(TimeSlotCalibration, 1);
@@ -88,22 +93,29 @@ class TimeSlotCalibration
 template <typename Input, typename Container>
 bool TimeSlotCalibration<Input, Container>::process(TFType tf, const gsl::span<const Input> data)
 {
+
+  // process current TF
+
+  int maxDelay = mMaxSlotsDelay * mSlotLength;
   if (!mUpdateAtTheEndOfRunOnly) {
-    int maxDelay = mMaxSlotsDelay * mSlotLength;
     //  if (tf<mLastClosedTF || (!mSlots.empty() && getSlot(0).getTFStart() > tf + maxDelay)) { // ignore TF
-    if (maxDelay != 0 && (tf < mLastClosedTF || (!mSlots.empty() && getLastSlot().getTFStart() > tf + maxDelay))) { // ignore TF
+    if ((maxDelay != 0 && (tf < mLastClosedTF || (!mSlots.empty() && getLastSlot().getTFStart() > tf + maxDelay))) ||
+	(mSlots.size() == 1 && mSlots[0].getTFEnd() == (std::numeric_limits<long>::max() - 1) && tf < mLastClosedTF)) { // ignore TF; if you have only 1 timeslot
+                                                                                            // which is INFINITE_TF wide, then maxDelay
+                                                                                            // does not matter: you won't accept TFs from the past
       LOG(INFO) << "Ignoring TF " << tf;
       return false;
     }
+  }
 
+  auto& slotTF = getSlotForTF(tf);
+  slotTF.getContainer()->fill(data);
+  if (tf > mMaxSeenTF) mMaxSeenTF = tf;  // keep track of the most recent TF processed
+  if (!mUpdateAtTheEndOfRunOnly) {
     // check if some slots are done
     checkSlotsToFinalize(tf, maxDelay);
   }
-
-  // process current TF
-  auto& slotTF = getSlotForTF(tf);
-  slotTF.getContainer()->fill(data);
-
+  
   return true;
 }
 
@@ -112,27 +124,45 @@ template <typename Input, typename Container>
 void TimeSlotCalibration<Input, Container>::checkSlotsToFinalize(TFType tf, int maxDelay)
 {
   // Check which slots can be finalized, provided the newly arrived TF is tf
-  // check if some slots are done
-  for (auto slot = mSlots.begin(); slot != mSlots.end(); slot++) {
-    if (maxDelay == 0 || (slot->getTFEnd() + maxDelay) < tf) {
-      if (hasEnoughData(*slot)) {
-        finalizeSlot(*slot); // will be removed after finalization
-      } else if ((slot + 1) != mSlots.end()) {
-        LOG(INFO) << "Merging underpopulated slot " << slot->getTFStart() << " <= TF <= " << slot->getTFEnd()
-                  << " to slot " << (slot + 1)->getTFStart() << " <= TF <= " << (slot + 1)->getTFEnd();
-        (slot + 1)->mergeToPrevious(*slot);
-      } else {
-        LOG(INFO) << "Discard underpopulated slot " << slot->getTFStart() << " <= TF <= " << slot->getTFEnd();
-        break; // slot has no enough stat. and there is no other slot to merge it to
-      }
-      mLastClosedTF = slot->getTFEnd() + 1; // do not accept any TF below this
-      LOG(INFO) << "closing slot " << slot->getTFStart() << " <= TF <= " << slot->getTFEnd();
-      mSlots.erase(slot);
-    } else {
-      break;
+
+  // if we have one slot only which is INFINITE_TF long, and we are not at the end of run (tf != INFINITE_TF),
+  // we need to check if we got enough statistics, and if so, redefine the slot
+
+  if (mSlots.size() == 1 && mSlots[0].getTFEnd() == std::numeric_limits<long>::max() - 1) {
+    if (hasEnoughData(mSlots[0])) {
+      LOG(INFO) << "Here 1"; 
+      mSlots[0].setTFStart(mLastClosedTF);
+      mSlots[0].setTFEnd(mMaxSeenTF); // to be defined
+      finalizeSlot(mSlots[0]); // will be removed after finalization
+      mLastClosedTF = mSlots[0].getTFEnd() + 1;
+      mSlots.erase(mSlots.begin());
+      emplaceNewSlot(true, mLastClosedTF, std::numeric_limits<long>::max() - 1);
     }
-    if (mSlots.empty()) { // since erasing the very last entry may invalidate mSlots.end()
-      break;
+  }
+  else {
+    LOG(INFO) << "Here 2";     
+    // check if some slots are done
+    for (auto slot = mSlots.begin(); slot != mSlots.end(); slot++) {
+      if (maxDelay == 0 || (slot->getTFEnd() + maxDelay) < tf) {
+	if (hasEnoughData(*slot)) {
+	  finalizeSlot(*slot); // will be removed after finalization
+	} else if ((slot + 1) != mSlots.end()) {
+	  LOG(INFO) << "Merging underpopulated slot " << slot->getTFStart() << " <= TF <= " << slot->getTFEnd()
+		    << " to slot " << (slot + 1)->getTFStart() << " <= TF <= " << (slot + 1)->getTFEnd();
+	  (slot + 1)->mergeToPrevious(*slot);
+	} else {
+	  LOG(INFO) << "Discard underpopulated slot " << slot->getTFStart() << " <= TF <= " << slot->getTFEnd();
+	  break; // slot has no enough stat. and there is no other slot to merge it to
+	}
+	mLastClosedTF = slot->getTFEnd() + 1; // do not accept any TF below this
+	LOG(INFO) << "closing slot " << slot->getTFStart() << " <= TF <= " << slot->getTFEnd();
+	mSlots.erase(slot);
+      } else {
+	break;
+      }
+      if (mSlots.empty()) { // since erasing the very last entry may invalidate mSlots.end()
+	break;
+      }
     }
   }
 }

@@ -147,13 +147,16 @@ bool TOFChannelData::hasEnoughData(int minEntries) const
     return false;
   }
 
-  LOG(INFO) << "mean = " << mean << ", nvalid = " << nValid;
+  LOG(DEBUG) << "mean = " << mean << ", nvalid = " << nValid;
   mean /= nValid;
 
-  LOG(INFO) << "minElement is at position " << smallestElementIndex << " and is " << smallestEntries;
-  LOG(INFO) << "maxElement is at position " << largestElementIndex << " and is " << largestEntries;
-  bool enough = mean < minEntries ? false : true;
-  LOG(INFO) << "hasEnough: " << (int)enough << " (found mean = " << mean << " with cut at = " << minEntries << ") ";
+  LOG(DEBUG) << "minElement is at position " << smallestElementIndex << " and has " << smallestEntries << " entries";
+  LOG(DEBUG) << "maxElement is at position " << largestElementIndex << " and has " << largestEntries << " entries";
+  float threshold = minEntries + 5 * std::sqrt(minEntries);
+  bool enough = mean < threshold ? false : true; 
+  if (enough) {
+    LOG(INFO) << "hasEnough: " << (int)enough << " (found mean = " << mean << " with cut at = " << threshold << ") ";
+  }
   return enough;
 }
 
@@ -239,20 +242,20 @@ float TOFChannelData::integral(int chmin, int chmax, float binmin, float binmax)
 {
   // calculates the integral in [chmin, chmax] and in [binmin, binmax]
 
-  if (binmin < -mRange || binmax > mRange || chmin < 0 || chmax >= Geo::NCHANNELS) {
+  if (binmin < -mRange || binmax > mRange || chmin < 0 || chmax >= Geo::NSECTORS * mNElsPerSector) {
     throw std::runtime_error("Check your bins, we cannot calculate the integrals in under/overflows bins");
   }
   if (binmax < binmin || chmax < chmin) {
     throw std::runtime_error("Check your bin limits!");
   }
 
-  int sector = chmin / Geo::NPADSXSECTOR;
-  if (sector != chmax / Geo::NPADSXSECTOR) {
+  int sector = chmin / mNElsPerSector;
+  if (sector != chmax / mNElsPerSector) {
     throw std::runtime_error("We cannot integrate over channels that belong to different sectors");
   }
 
-  int chinsectormin = chmin % Geo::NPADSXSECTOR;
-  int chinsectormax = chmax % Geo::NPADSXSECTOR;
+  int chinsectormin = chmin % mNElsPerSector;
+  int chinsectormax = chmax % mNElsPerSector;
 
   float res2 = 0;
   //TStopwatch t3;
@@ -364,20 +367,20 @@ float TOFChannelData::integral(int chmin, int chmax, int binxmin, int binxmax) c
 {
   // calculates the integral in [chmin, chmax] and in [binmin, binmax]
 
-  if (binxmin < 0 || binxmax > mNBins || chmin < 0 || chmax >= Geo::NCHANNELS) {
+  if (binxmin < 0 || binxmax > mNBins || chmin < 0 || chmax >= Geo::NSECTORS * mNElsPerSector) {
     throw std::runtime_error("Check your bins, we cannot calculate the integrals in under/overflows bins");
   }
   if (binxmax < binxmin || chmax < chmin) {
     throw std::runtime_error("Check your bin limits!");
   }
 
-  int sector = chmin / Geo::NPADSXSECTOR;
-  if (sector != chmax / Geo::NPADSXSECTOR) {
+  int sector = chmin / mNElsPerSector;
+  if (sector != chmax / mNElsPerSector) {
     throw std::runtime_error("We cannot integrate over channels that belong to different sectors");
   }
 
-  int chinsectormin = chmin % Geo::NPADSXSECTOR;
-  int chinsectormax = chmax % Geo::NPADSXSECTOR;
+  int chinsectormin = chmin % mNElsPerSector;
+  int chinsectormax = chmax % mNElsPerSector;
 
   float res2 = 0;
   //TStopwatch t3;
