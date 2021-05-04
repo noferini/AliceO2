@@ -22,6 +22,8 @@
 #include "Framework/ControlService.h"
 #include "Framework/WorkflowSpec.h"
 
+#include <limits>
+
 using namespace o2::framework;
 
 namespace o2
@@ -43,7 +45,7 @@ class TOFCalibCollectorDevice : public o2::framework::Task
     mCollector = std::make_unique<o2::tof::TOFCalibCollector>(isTFsendingPolicy, maxEnt);
     mCollector->setIsTest(isTest);
     mCollector->setIsMaxNumberOfHitsAbsolute(absMaxEnt);
-    mCollector->setSlotLength(1);
+    mCollector->setSlotLength(std::numeric_limits<long>::max());
     mCollector->setMaxSlotsDelay(0);
   }
 

@@ -129,18 +129,19 @@ void TimeSlotCalibration<Input, Container>::checkSlotsToFinalize(TFType tf, int 
   // we need to check if we got enough statistics, and if so, redefine the slot
 
   if (mSlots.size() == 1 && mSlots[0].getTFEnd() == std::numeric_limits<long>::max() - 1) {
+    LOG(INFO) << "Checking slot for " << mSlots[0].getTFStart() << " <= TF <= " << mSlots[0].getTFEnd();
     if (hasEnoughData(mSlots[0])) {
-      LOG(INFO) << "Here 1"; 
       mSlots[0].setTFStart(mLastClosedTF);
       mSlots[0].setTFEnd(mMaxSeenTF); // to be defined
+      LOG(INFO) << "Finalizing slot for " << mSlots[0].getTFStart() << " <= TF <= " << mSlots[0].getTFEnd();
       finalizeSlot(mSlots[0]); // will be removed after finalization
       mLastClosedTF = mSlots[0].getTFEnd() + 1;
       mSlots.erase(mSlots.begin());
+      LOG(INFO) << "Creating new slot for " << mLastClosedTF << " <= TF <= " << std::numeric_limits<long>::max() - 1;
       emplaceNewSlot(true, mLastClosedTF, std::numeric_limits<long>::max() - 1);
     }
   }
   else {
-    LOG(INFO) << "Here 2";     
     // check if some slots are done
     for (auto slot = mSlots.begin(); slot != mSlots.end(); slot++) {
       if (maxDelay == 0 || (slot->getTFEnd() + maxDelay) < tf) {
