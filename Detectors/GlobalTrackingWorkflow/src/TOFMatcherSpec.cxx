@@ -102,7 +102,6 @@ void TOFMatcherSpec::run(ProcessingContext& pc)
 
   RecoContainer recoData;
   recoData.collectData(pc, *mDataRequest.get());
-  const auto clustersRO = pc.inputs().get<gsl::span<o2::tof::Cluster>>("tofcluster");
 
   LOG(INFO) << "isTrackSourceLoaded: TPC -> " << recoData.isTrackSourceLoaded(o2::dataformats::GlobalTrackID::Source::TPC);
   LOG(INFO) << "isTrackSourceLoaded: ITSTPC -> " << recoData.isTrackSourceLoaded(o2::dataformats::GlobalTrackID::Source::ITSTPC);
@@ -114,43 +113,9 @@ void TOFMatcherSpec::run(ProcessingContext& pc)
   bool isTPCTRDused = recoData.isTrackSourceLoaded(o2::dataformats::GlobalTrackID::Source::TPCTRD);
   bool isITSTPCTRDused = recoData.isTrackSourceLoaded(o2::dataformats::GlobalTrackID::Source::ITSTPCTRD);
 
-  if (mUseFIT) {
-    // Note: the particular variable will go out of scope, but the span is passed by copy to the
-    // worker and the underlying memory is valid throughout the whole computation
-    auto recPoints = std::move(pc.inputs().get<gsl::span<o2::ft0::RecPoints>>("fitrecpoints"));
-    mMatcher.setFITRecPoints(recPoints);
-    LOG(INFO) << "TOF Reco Workflow pulled " << recPoints.size() << " FIT RecPoints";
-  }
+  mMatcher.setFIT(mUseFIT);
 
-  o2::dataformats::MCTruthContainer<o2::MCCompLabel> toflab;
-  gsl::span<const o2::MCCompLabel> tpclab;
-  gsl::span<const o2::MCCompLabel> itstpclab;
-  gsl::span<const o2::MCCompLabel> tpctrdlab;
-  gsl::span<const o2::MCCompLabel> itstpctrdlab;
-  if (mUseMC) {
-    const auto toflabel = pc.inputs().get<o2::dataformats::MCTruthContainer<o2::MCCompLabel>*>("tofclusterlabel");
-    toflab = std::move(*toflabel);
-  }
-
-  mMatcher.setTOFClusterArray(clustersRO, toflab);
-
-  if (isTPCused) {
-    const auto tracksTPC = recoData.getTPCTracks();
-    if (mUseMC) {
-      tpclab = recoData.getTPCTracksMCLabels();
-    }
-    mMatcher.setTPCTrackArray(tracksTPC, tpclab);
-  }
-
-  if (isITSTPCused) {
-    const auto tracksITSTPC = recoData.getTPCITSTracks();
-    if (mUseMC) {
-      itstpclab = recoData.getTPCITSTracksMCLabels();
-    }
-    mMatcher.setITSTPCTrackArray(tracksITSTPC, itstpclab);
-  }
-
-  mMatcher.run();
+  mMatcher.run(recoData);
 
   if (isTPCused) {
     pc.outputs().snapshot(Output{o2::header::gDataOriginTOF, "MATCHINFO_0", 0, Lifetime::Timeframe}, mMatcher.getMatchedTrackVector(o2::dataformats::MatchInfoTOFReco::TrackType::TPC));
@@ -181,18 +146,12 @@ DataProcessorSpec getTOFMatcherSpec(GTrackID::mask_t src, bool useMC, bool useFI
 {
   auto dataRequest = std::make_shared<DataRequest>();
   dataRequest->requestTracks(src, useMC);
+  dataRequest->requestClusters(GTrackID::getSourceMask(GTrackID::TOF), useMC);
+  if(useFIT){
+    dataRequest->requestClusters(GTrackID::getSourceMask(GTrackID::FT0), false);
+  }
 
-  std::vector<InputSpec> inputs = dataRequest->inputs;
   std::vector<OutputSpec> outputs;
-
-  inputs.emplace_back("tofcluster", o2::header::gDataOriginTOF, "CLUSTERS", 0, Lifetime::Timeframe);
-  if (useMC) {
-    inputs.emplace_back("tofclusterlabel", o2::header::gDataOriginTOF, "CLUSTERSMCTR", 0, Lifetime::Timeframe);
-  }
-
-  if (useFIT) {
-    inputs.emplace_back("fitrecpoints", o2::header::gDataOriginFT0, "RECPOINTS", 0, Lifetime::Timeframe);
-  }
 
   outputs.emplace_back(o2::header::gDataOriginTOF, "MATCHINFO_0", 0, Lifetime::Timeframe);
   outputs.emplace_back(o2::header::gDataOriginTOF, "MATCHINFO_1", 0, Lifetime::Timeframe);
@@ -208,7 +167,7 @@ DataProcessorSpec getTOFMatcherSpec(GTrackID::mask_t src, bool useMC, bool useFI
 
   return DataProcessorSpec{
     "tof-matcher",
-    inputs,
+    dataRequest->inputs,
     outputs,
     AlgorithmSpec{adaptFromTask<TOFMatcherSpec>(dataRequest, useMC, useFIT)},
     Options{

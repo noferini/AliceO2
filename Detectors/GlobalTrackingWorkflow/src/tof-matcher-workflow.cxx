@@ -95,15 +95,18 @@ WorkflowSpec defineDataProcessing(ConfigContext const& configcontext)
   LOG(INFO) << "TOF disable-root-output = " << disableRootOut;
 
   GID::mask_t src = alowedSources & GID::getSourcesMask(configcontext.options().get<std::string>("track-sources"));
-  GID::mask_t dummy;
+  GID::mask_t mcmaskcl;
   GID::mask_t nonemask = GID::getSourcesMask(GID::NONE);
-
-  o2::globaltracking::InputHelper::addInputSpecs(configcontext, specs, nonemask, nonemask, src, useMC, dummy); // only tracks needed
-
-  if (!disableRootIn) { // input data loaded from root files
-    LOG(INFO) << "Insert TOF Cluster Reader";
-    specs.emplace_back(o2::tof::getClusterReaderSpec(useMC));
+  GID::mask_t clustermask = GID::getSourcesMask("TOF");
+  if(useFIT) {
+    clustermask |= GID::getSourceMask(GID::FT0);
   }
+
+  if(useMC) {
+    mcmaskcl |= GID::getSourceMask(GID::TOF);
+  }
+
+  o2::globaltracking::InputHelper::addInputSpecs(configcontext, specs, clustermask, nonemask, src, useMC, mcmaskcl); // only tracks needed
 
   specs.emplace_back(o2::globaltracking::getTOFMatcherSpec(src, useMC, useFIT));
 
