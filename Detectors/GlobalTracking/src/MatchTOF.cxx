@@ -148,7 +148,7 @@ bool MatchTOF::prepareFITData()
   // If available, read FIT Info
   if (mIsFIT) {
     mFITRecPoints = mRecoCont->getFT0RecPoints();
-//    prepareInteractionTimes();
+    //    prepareInteractionTimes();
   }
   return true;
 }
@@ -159,7 +159,8 @@ int MatchTOF::prepareInteractionTimes()
   return 0;
 }
 //______________________________________________
-bool MatchTOF::prepareTPCData(){
+bool MatchTOF::prepareTPCData()
+{
   mNotPropagatedToTOF[trkType::TPC] = 0;
   mNotPropagatedToTOF[trkType::ITSTPC] = 0;
   mNotPropagatedToTOF[trkType::TPCTRD] = 0;
@@ -170,8 +171,8 @@ bool MatchTOF::prepareTPCData(){
   mNumOfTracks[trkType::TPCTRD] = 0;
   mNumOfTracks[trkType::ITSTPCTRD] = 0;
 
-  for(int it = 0; it < trkType::SIZE; it++){
-    if(mNumOfTracks[it]) {
+  for (int it = 0; it < trkType::SIZE; it++) {
+    if (mNumOfTracks[it]) {
       mMatchedTracksIndex[it].resize(mNumOfTracks[it]);
       std::fill(mMatchedTracksIndex[it].begin(), mMatchedTracksIndex[it].end(), -1); // initializing all to -1
 
@@ -185,8 +186,8 @@ bool MatchTOF::prepareTPCData(){
         mTracksLblWork[it].reserve(mNumOfTracks[it]);
       }
       for (int sec = o2::constants::math::NSectors; sec--;) {
-         mTracksSectIndexCache[it][sec].clear();
-         mTracksSectIndexCache[it][sec].reserve(100 + 1.2 * mNumOfTracks[it] / o2::constants::math::NSectors);
+        mTracksSectIndexCache[it][sec].clear();
+        mTracksSectIndexCache[it][sec].reserve(100 + 1.2 * mNumOfTracks[it] / o2::constants::math::NSectors);
       }
     }
   }
@@ -203,7 +204,7 @@ bool MatchTOF::prepareTPCData(){
   };
   mRecoCont->createTracksVariadic(creator);
 
-  if(mIsTPCused){
+  if (mIsTPCused) {
     LOG(INFO) << "Total number of TPC tracks = " << mNumOfTracks[trkType::TPC] << ", Number of tracks that failed to be propagated to TOF = " << mNotPropagatedToTOF[trkType::TPC];
 
     // sort tracks in each sector according to their time (increasing in time)
@@ -220,10 +221,10 @@ bool MatchTOF::prepareTPCData(){
       });
     } // loop over tracks of single sector
 
-     mTPCLabels[trkType::TPC] = mRecoCont->getTPCTracksMCLabels();
-     mMCTruthON = mMCTruthON && mTPCLabels[trkType::TPC].size();
+    mTPCLabels[trkType::TPC] = mRecoCont->getTPCTracksMCLabels();
+    mMCTruthON = mMCTruthON && mTPCLabels[trkType::TPC].size();
   }
-  if(mIsITSTPCused){
+  if (mIsITSTPCused) {
     LOG(INFO) << "Total number of ITS-TPC tracks = " << mNumOfTracks[trkType::ITSTPC] << ", Number of tracks that failed to be propagated to TOF = " << mNotPropagatedToTOF[trkType::ITSTPC];
 
     // sort tracks in each sector according to their time (increasing in time)
@@ -240,20 +241,19 @@ bool MatchTOF::prepareTPCData(){
       });
     } // loop over tracks of single sector
 
-     mTPCLabels[trkType::ITSTPC] = mRecoCont->getTPCITSTracksMCLabels();
-     mMCTruthON = mMCTruthON && mTPCLabels[trkType::ITSTPC].size();
+    mTPCLabels[trkType::ITSTPC] = mRecoCont->getTPCITSTracksMCLabels();
+    mMCTruthON = mMCTruthON && mTPCLabels[trkType::ITSTPC].size();
   }
-  if(mIsTPCTRDused){
-
+  if (mIsTPCTRDused) {
   }
-  if(mIsITSTPCTRDused){
-
+  if (mIsITSTPCTRDused) {
   }
 
   return true;
 }
 //______________________________________________
-void MatchTOF::addITSTPCSeed(const o2::dataformats::TrackTPCITS& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID){
+void MatchTOF::addITSTPCSeed(const o2::dataformats::TrackTPCITS& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID)
+{
   mIsITSTPCused = true;
 
   std::array<float, 3> globalPos;
@@ -265,7 +265,7 @@ void MatchTOF::addITSTPCSeed(const o2::dataformats::TrackTPCITS& _tr, o2::datafo
   mTracksWork[trkType::ITSTPC].emplace_back(std::make_pair(_tr.getParamOut(), _tr.getTimeMUS()));
   mLTinfos[trkType::ITSTPC].emplace_back(_tr.getLTIntegralOut());
   auto& trc = mTracksWork[trkType::ITSTPC].back().first; // with this we take the TPCITS track propagated to the vertex
-  auto& intLT = mLTinfos[trkType::ITSTPC].back();                         // we get the integrated length from TPC-ITC outward propagation
+  auto& intLT = mLTinfos[trkType::ITSTPC].back();        // we get the integrated length from TPC-ITC outward propagation
 
   if (trc.getX() < o2::constants::geom::XTPCOuterRef - 1.) { // tpc-its track outward propagation did not reach outer ref.radius, skip this track
     mNotPropagatedToTOF[trkType::ITSTPC]++;
@@ -299,7 +299,8 @@ void MatchTOF::addITSTPCSeed(const o2::dataformats::TrackTPCITS& _tr, o2::datafo
   //delete trc; // Check: is this needed?
 }
 //______________________________________________
-void MatchTOF::addTPCSeed(const o2::tpc::TrackTPC& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID){
+void MatchTOF::addTPCSeed(const o2::tpc::TrackTPC& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID)
+{
   mIsTPCused = true;
   int nclustersMin = 0;
 
@@ -396,7 +397,7 @@ bool MatchTOF::prepareTracks()
     //o2::tpc::TrackTPC* trc = new o2::tpc::TrackTPC(trcTPCOrig); // this would take the TPCout track
     //auto& trc = mTracksWork[trkType::ITSTPC].back(); // with this we take the TPCITS track propagated to the vertex
     auto& trc = mTracksWork[trkType::ITSTPC].back().first; // with this we take the TPCITS track propagated to the vertex
-    auto& intLT = mLTinfos[trkType::ITSTPC].back();                         // we get the integrated length from TPC-ITC outward propagation
+    auto& intLT = mLTinfos[trkType::ITSTPC].back();        // we get the integrated length from TPC-ITC outward propagation
 
     if (trc.getX() < o2::constants::geom::XTPCOuterRef - 1.) { // tpc-its track outward propagation did not reach outer ref.radius, skip this track
       nNotPropagatedToTOF++;

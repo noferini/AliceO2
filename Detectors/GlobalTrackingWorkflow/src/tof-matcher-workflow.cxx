@@ -98,11 +98,11 @@ WorkflowSpec defineDataProcessing(ConfigContext const& configcontext)
   GID::mask_t mcmaskcl;
   GID::mask_t nonemask = GID::getSourcesMask(GID::NONE);
   GID::mask_t clustermask = GID::getSourcesMask("TOF");
-  if(useFIT) {
+  if (useFIT) {
     clustermask |= GID::getSourceMask(GID::FT0);
   }
 
-  if(useMC) {
+  if (useMC) {
     mcmaskcl |= GID::getSourceMask(GID::TOF);
   }
 

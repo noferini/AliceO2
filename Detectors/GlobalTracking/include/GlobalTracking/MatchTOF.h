@@ -160,7 +160,7 @@ class MatchTOF
     mTPCClusterIdxStruct = inp;
   }
 
-  void setFIT(bool value=true) { mIsFIT = value; }
+  void setFIT(bool value = true) { mIsFIT = value; }
   int findFITIndex(int bc);
 
   ///< populate externally provided container by TOF-time-constrained TPC tracks
@@ -184,8 +184,8 @@ class MatchTOF
   bool prepareTPCData();
   void addTPCSeed(const o2::tpc::TrackTPC& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID);
   void addITSTPCSeed(const o2::dataformats::TrackTPCITS& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID);
-//  void addTPCTRDSeed(const o2::track::TrackParCov& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID);
-//  void addITSTPCTRDSeed(const o2::track::TrackParCov& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID);
+  //  void addTPCTRDSeed(const o2::track::TrackParCov& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID);
+  //  void addITSTPCTRDSeed(const o2::track::TrackParCov& _tr, o2::dataformats::GlobalTrackID srcGID, int tpcID);
   bool prepareTracks();
   bool prepareTPCTracks();
   bool prepareTOFClusters();
@@ -208,15 +208,15 @@ class MatchTOF
   o2::InteractionRecord mStartIR{0, 0}; ///< IR corresponding to the start of the TF
 
   // for derived class
-  int mCurrTracksTreeEntry = 0;  ///< current tracks tree entry loaded to memory
+  int mCurrTracksTreeEntry = 0; ///< current tracks tree entry loaded to memory
 
   float mXRef = Geo::RMIN; ///< reference radius to propage tracks for matching
 
   bool mMCTruthON = false; ///< flag availability of MC truth
 
   ///========== Parameters to be set externally, e.g. from CCDB ====================
-  float mBz = 0;            ///< nominal Bz
-  float mMaxInvPt = 999.;   ///< derived from nominal Bz
+  float mBz = 0;          ///< nominal Bz
+  float mMaxInvPt = 999.; ///< derived from nominal Bz
 
   // to be done later
   float mTPCTBinMUS = 0.;    ///< TPC time bin duration in microseconds
@@ -236,7 +236,7 @@ class MatchTOF
   bool mSetHighPurity = false;
 
   // from ruben
-  gsl::span<const o2::tpc::TrackTPC> mTPCTracksArray;       ///< input TPC tracks span
+  gsl::span<const o2::tpc::TrackTPC> mTPCTracksArray; ///< input TPC tracks span
 
   ///>>>------ these are input arrays which should not be modified by the matching code
   //           since this info is provided by external device

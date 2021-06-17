@@ -147,7 +147,7 @@ DataProcessorSpec getTOFMatcherSpec(GTrackID::mask_t src, bool useMC, bool useFI
   auto dataRequest = std::make_shared<DataRequest>();
   dataRequest->requestTracks(src, useMC);
   dataRequest->requestClusters(GTrackID::getSourceMask(GTrackID::TOF), useMC);
-  if(useFIT){
+  if (useFIT) {
     dataRequest->requestClusters(GTrackID::getSourceMask(GTrackID::FT0), false);
   }
 
