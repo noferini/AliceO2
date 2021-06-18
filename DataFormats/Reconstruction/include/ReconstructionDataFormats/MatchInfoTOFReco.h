@@ -33,7 +33,7 @@ class MatchInfoTOFReco : public MatchInfoTOF
                             ITSTPC,
                             TPCTRD,
                             ITSTPCTRD,
-                            SIZEALL};
+                            SIZEALL };
 
   MatchInfoTOFReco(evIdx evIdxTOFCl, float chi2, o2::track::TrackLTIntegral trkIntLT, evGIdx evIdxTrack, TrackType trkType, float dt = 0, float z = 0) : MatchInfoTOF(evIdxTOFCl, chi2, trkIntLT, evIdxTrack, dt, z), mTrackType(trkType){};
 
