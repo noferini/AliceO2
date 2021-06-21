@@ -12,20 +12,20 @@
 o2_add_library(TOFCalibration
                TARGETVARNAME targetName
                SOURCES src/CalibTOFapi.cxx
-                   src/CalibTOF.cxx
-               src/CollectCalibInfoTOF.cxx
+                       src/CalibTOF.cxx
+                       src/CollectCalibInfoTOF.cxx
                        src/LHCClockCalibrator.cxx
-               src/TOFChannelCalibrator.cxx
-               src/TOFCalibCollector.cxx
-               src/TOFDCSProcessor.cxx
-               src/TOFFEElightReader.cxx
-               src/TOFFEElightConfig.cxx
+                       src/TOFChannelCalibrator.cxx
+                       src/TOFCalibCollector.cxx
+                       src/TOFDCSProcessor.cxx
+                       src/TOFFEElightReader.cxx
+                       src/TOFFEElightConfig.cxx
                PUBLIC_LINK_LIBRARIES O2::DataFormatsTOF O2::TOFBase
                                      O2::CCDB
-                                 O2::DetectorsCalibration
-                                 O2::DetectorsDCS
-                     ROOT::Minuit
-                                 Microsoft.GSL::GSL)
+                                     O2::DetectorsCalibration
+                                     O2::DetectorsDCS
+                                     ROOT::Minuit
+                                     Microsoft.GSL::GSL)
 
 
 o2_target_root_dictionary(TOFCalibration
@@ -35,9 +35,9 @@ o2_target_root_dictionary(TOFCalibration
                                   include/TOFCalibration/TOFChannelCalibrator.h
                                   include/TOFCalibration/TOFCalibCollector.h
                                   include/TOFCalibration/CollectCalibInfoTOF.h
-                  include/TOFCalibration/TOFDCSProcessor.h
-                  include/TOFCalibration/TOFFEElightReader.h
-                  include/TOFCalibration/TOFFEElightConfig.h)
+                                  include/TOFCalibration/TOFDCSProcessor.h
+                                  include/TOFCalibration/TOFFEElightReader.h
+                                  include/TOFCalibration/TOFFEElightConfig.h)
 
 if (OpenMP_CXX_FOUND)
     target_compile_definitions(${targetName} PRIVATE WITH_OPENMP)

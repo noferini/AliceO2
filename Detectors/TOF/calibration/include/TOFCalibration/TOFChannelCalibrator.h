@@ -22,9 +22,6 @@
 #include "TOFCalibration/CalibTOFapi.h"
 
 #include <array>
-#ifdef WITH_OPENMP
-#include <omp.h>
-#endif
 #include <boost/histogram.hpp>
 
 #include "TGraphErrors.h"
@@ -36,6 +33,10 @@
 #include "CommonUtils/MemFileHelper.h"
 #include "CCDB/CcdbApi.h"
 #include <boost/format.hpp>
+
+#if (defined(WITH_OPENMP) || defined(_OPENMP)) && !defined(__CLING__)
+#include <omp.h>
+#endif
 
 using o2::math_utils::fitGaus;
 
@@ -198,7 +199,8 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
     float xp[NCOMBINSTRIP], exp[NCOMBINSTRIP], deltat[NCOMBINSTRIP], edeltat[NCOMBINSTRIP], fracUnderPeak[Geo::NPADS];
 
 #ifdef WITH_OPENMP
-    #pragma omp parallel for
+    if (mNThreads == -1) mNThreads = omp_get_num_threads();
+#pragma omp parallel for schedule(dynamic) num_threads(mNThreads)
 #endif    
     for (int sector = 0; sector < Geo::NSECTORS; sector++) {
       int offsetsector = sector * Geo::NSTRIPXSECTOR * Geo::NPADS;
@@ -323,7 +325,8 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
     TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
 
 #ifdef WITH_OPENMP
-    #pragma omp parallel for
+    if (mNThreads == -1) mNThreads = omp_get_num_threads();
+    #pragma omp parallel for schedule(dynamic) num_threads(mNThreads)
 #endif    
     for (int sector = 0; sector < Geo::NSECTORS; sector++) {
       for (int chinsector = 0; chinsector < Geo::NPADSXSECTOR; chinsector++) {
@@ -425,6 +428,9 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
   void setDoCalibWithCosmics(bool doCalibWithCosmics = true) { mCalibWithCosmics = doCalibWithCosmics; }
   bool doCalibWithCosmics() const { return mCalibWithCosmics; }
 
+  void setNThreads(int n) { mNThreads = n; }
+  int getNThreads() const {return mNThreads; }
+
  private:
   int mMinEntries = 0; // min number of entries to calibrate the TimeSlot
   int mNBins = 0;      // bins of the histogram with the t-text per channel
@@ -444,6 +450,8 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
                                         // we still fill the TimeSlewing object
 
   bool mCalibWithCosmics = false; // flag to indicate whether we are calibrating with cosmics
+
+  int mNThreads = -1; // number of threads from OpenMP
 
   ClassDefOverride(TOFChannelCalibrator, 1);
 };
