@@ -40,10 +40,11 @@ o2_target_root_dictionary(TOFCalibration
                                   include/TOFCalibration/TOFFEElightConfig.h)
 
 if (OpenMP_CXX_FOUND)
+    message(STATUS "FOOO OPENMP ENABLED")	  
     target_compile_definitions(${targetName} PRIVATE WITH_OPENMP)
     target_link_libraries(${targetName} PRIVATE OpenMP::OpenMP_CXX)
 endif()
-  
+
 o2_add_executable(data-generator-workflow
                   COMPONENT_NAME calibration
                   SOURCES testWorkflow/data-generator-workflow.cxx
