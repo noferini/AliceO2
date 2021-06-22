@@ -203,9 +203,9 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
 
 #if defined(WITH_OPENMP) && !defined(__CLING__)
   //#ifdef WITH_OPENMP
-    LOG(INFO) << "omp_get_num_threads() = " << omp_get_num_threads() << ", omp_get_max_threads() = " << omp_get_max_threads();
-    //if (mNThreads < 1) mNThreads = omp_get_max_threads();
-    if (mNThreads < 1) mNThreads = omp_get_num_threads();
+    #warning FOOINCOMPILATION
+    LOG(INFO) << "omp_get_max_threads() = " << omp_get_max_threads();
+    if (mNThreads < 1) mNThreads = omp_get_max_threads();
     LOG(INFO) << "Number of threads that will be used = " << mNThreads;
 #pragma omp parallel for schedule(dynamic) num_threads(mNThreads)
 #endif
