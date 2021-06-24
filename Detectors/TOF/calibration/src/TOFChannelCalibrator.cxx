@@ -15,6 +15,10 @@
 #include <iostream>
 #include <sstream>
 #include <TStopwatch.h>
+#include "Fit/Fitter.h"
+#include "Fit/BinData.h"
+#include "Math/WrappedMultiTF1.h"
+
 
 #ifdef WITH_OPENMP
 #include <omp.h>
@@ -350,148 +354,188 @@ float TOFChannelData::integral(int ch) const
 
 template <typename T>
 void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
-{    // Extract results for the single slot
-    o2::tof::TOFChannelData* c = slot.getContainer();
-    LOG(INFO) << "Finalize slot for calibration with cosmics " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
-    LOG(INFO) << "Finalize slot for calibration with cosmics 1) " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
-
-    if (!mFuncDeltaOffset) {
-      mFuncDeltaOffset = new TF1("fChanOffset", FuncDeltaOffset, 0, NCOMBINSTRIP, Geo::NPADS);
-      mFuncDeltaOffset->FixParameter(24, 0); // fix one pad to fixed offset (as reference)
-      for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
-        if (ichLocal == 24) {
-          continue; //already fixed
-          mFuncDeltaOffset->SetParLimits(ichLocal, -mRange, mRange);
-        }
+{
+  // Extract results for the single slot
+  
+  o2::tof::TOFChannelData* c = slot.getContainer();
+  LOG(INFO) << "Finalize slot for calibration with cosmics " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
+  
+  if (!mFuncDeltaOffset) {
+    mFuncDeltaOffset = new TF1("fChanOffset", FuncDeltaOffset, 0, NCOMBINSTRIP, Geo::NPADS);
+    mFuncDeltaOffset->FixParameter(24, 0); // fix one pad to fixed offset (as reference)
+    for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
+      if (ichLocal == 24) {
+	continue; //already fixed
+	mFuncDeltaOffset->SetParLimits(ichLocal, -mRange, mRange);
+	mFuncDeltaOffset->SetParameter(ichLocal, ichLocal);
+	mFuncDeltaOffset->SetParError(ichLocal, ichLocal/10.);
       }
     }
-    LOG(INFO) << "Finalize slot for calibration with cosmics 2) " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
+    for (int i = 0; i < NMAXTHREADS; ++i) {
+      ROOT::Math::WrappedMultiTF1* wf = new ROOT::Math::WrappedMultiTF1(*mFuncDeltaOffset, 1);
+      mFitters[i]->SetFunction(*wf);
+    }
+  }
 
-    // for the CCDB entry
-    std::map<std::string, std::string> md;
-    TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
-
-    float xp[NCOMBINSTRIP], exp[NCOMBINSTRIP], deltat[NCOMBINSTRIP], edeltat[NCOMBINSTRIP], fracUnderPeak[Geo::NPADS];
-    LOG(INFO) << "Number of threads that will be used 0) = " << mNThreads;
-
+  // for the CCDB entry
+  std::map<std::string, std::string> md;
+  TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
+  
 #ifdef WITH_OPENMP
-    LOG(INFO) << "omp_get_max_threads() = " << omp_get_max_threads();
-    if (mNThreads < 1) mNThreads = omp_get_max_threads();
-    LOG(INFO) << "Number of threads that will be used = " << mNThreads;
+  if (mNThreads < 1) mNThreads = std::min(omp_get_max_threads(), NMAXTHREADS);
+  LOG(DEBUG) << "Number of threads that will be used = " << mNThreads;
 #pragma omp parallel for schedule(dynamic) num_threads(mNThreads)
+#else
+  mNThreads = 1;
 #endif
-    for (int sector = 0; sector < Geo::NSECTORS; sector++) {
-      LOG(INFO) << "Processing sector " << sector;
-      int offsetsector = sector * Geo::NSTRIPXSECTOR * Geo::NPADS;
-      for (int istrip = 0; istrip < Geo::NSTRIPXSECTOR; istrip++) {
-        int offsetstrip = istrip * Geo::NPADS + offsetsector;
-        int goodpoints = 0;
+  for (int sector = 0; sector < Geo::NSECTORS; sector++) {
+    LOG(INFO) << "Processing sector " << sector;
+    TMatrixD mat(3, 3);
+    int ithread = 0;
+#ifdef WITH_OPENMP
+	ithread = omp_get_thread_num();
+#endif
+	//float xp[NCOMBINSTRIP], exp[NCOMBINSTRIP], deltat[NCOMBINSTRIP], edeltat[NCOMBINSTRIP], fracUnderPeak[Geo::NPADS];
+    double xp[NCOMBINSTRIP], exp[NCOMBINSTRIP], deltat[NCOMBINSTRIP], edeltat[NCOMBINSTRIP], fracUnderPeak[Geo::NPADS];
 
-        memset(&fracUnderPeak[0], 0, sizeof(fracUnderPeak));
+    int offsetsector = sector * Geo::NSTRIPXSECTOR * Geo::NPADS;
+    for (int istrip = 0; istrip < Geo::NSTRIPXSECTOR; istrip++) {
+      int offsetstrip = istrip * Geo::NPADS + offsetsector;
+      int goodpoints = 0;
 
-        for (int ipair = 0; ipair < NCOMBINSTRIP; ipair++) {
-          int chinsector = ipair + istrip * NCOMBINSTRIP;
-          int ich = chinsector + sector * Geo::NSTRIPXSECTOR * NCOMBINSTRIP;
-          auto entriesInPair = c->integral(ich);
-          if (entriesInPair < mMinEntries && entriesInPair != 0) {
-            LOG(DEBUG) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
-            LOG(INFO) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
-            continue;
-          }
-          // make the slice of the 2D histogram so that we have the 1D of the current channel
-          std::vector<float> fitValues;
-          std::vector<float> histoValues;
-          std::vector<int> entriesPerChannel = c->getEntriesPerChannel();
-          if (entriesPerChannel.at(ich) == 0) {
-            continue; // skip always since a channel with 0 entries is normal, it will be flagged as problematic
-            if (mTest) {
-              LOG(INFO) << "Skipping channel " << ich << " because it has zero entries, but it should not be"; // should become error!
-              continue;
-            } else {
-              throw std::runtime_error("We found one channel with no entries, we cannot calibrate!");
-            }
-          }
+      memset(&fracUnderPeak[0], 0, sizeof(fracUnderPeak));
 
-          // more efficient way
-          auto histo = c->getHisto(sector);
-          for (unsigned j = chinsector; j <= chinsector; ++j) {
-            for (unsigned i = 0; i < c->getNbins(); ++i) {
-              const auto& v = histo.at(i, j);
-              LOG(DEBUG) << "channel = " << ich << ", in sector = " << sector << " (where it is channel = " << chinsector << ") bin = " << i << " value = " << v;
-              histoValues.push_back(v);
-            }
-          }
+      //std::vector<float> xpThread[NMAXTHREADS], expThread[NMAXTHREADS], deltatThread[NMAXTHREADS], edeltatThread[NMAXTHREADS]; // each thread will have its own vectors to use in the fitGaus
 
-          double fitres = fitGaus(c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
+      for (int ipair = 0; ipair < NCOMBINSTRIP; ipair++) {
+	int chinsector = ipair + istrip * NCOMBINSTRIP;
+	int ich = chinsector + sector * Geo::NSTRIPXSECTOR * NCOMBINSTRIP;
+	auto entriesInPair = c->integral(ich);
+	if (entriesInPair < mMinEntries && entriesInPair != 0) {
+	  LOG(DEBUG) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
+	  continue;
+	}
+	// make the slice of the 2D histogram so that we have the 1D of the current channel
+	std::vector<float> fitValues;
+	std::vector<float> histoValues;
+	std::vector<int> entriesPerChannel = c->getEntriesPerChannel();
+	if (entriesPerChannel.at(ich) == 0) {
+	  continue; // skip always since a channel with 0 entries is normal, it will be flagged as problematic
+	  if (mTest) {
+	    LOG(INFO) << "Skipping channel " << ich << " because it has zero entries, but it should not be"; // should become error!
+	    continue;
+	  } else {
+	    throw std::runtime_error("We found one channel with no entries, we cannot calibrate!");
+	  }
+	}
 
-          if (fitres >= 0) {
-            LOG(DEBUG) << "Pair " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
-          } else {
-            LOG(INFO) << "Pair " << ich << " :: Fit failed with result = " << fitres;
-            continue;
-          }
+	// more efficient way
+	auto histo = c->getHisto(sector);
+	for (unsigned j = chinsector; j <= chinsector; ++j) {
+	  for (unsigned i = 0; i < c->getNbins(); ++i) {
+	    const auto& v = histo.at(i, j);
+	    LOG(DEBUG) << "channel = " << ich << ", in sector = " << sector << " (where it is channel = " << chinsector << ") bin = " << i << " value = " << v;
+	    histoValues.push_back(v);
+	  }
+	}
 
-          if (fitValues[2] < 0) {
-            fitValues[2] = -fitValues[2];
-          }
+	double fitres = fitGaus(mLinFitters[ithread], &mat, c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
+	/*
+          double fitres = 1;
+	  fitValues[0] = 100;
+	  fitValues[1] = 200;
+	  fitValues[2] = 300;
+	*/
+	if (fitres >= 0) {
+	  LOG(DEBUG) << "Pair " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
+	} else {
+	  LOG(INFO) << "Pair " << ich << " :: Fit failed with result = " << fitres;
+	  continue;
+	}
 
-          float intmin = fitValues[1] - 5 * fitValues[2]; // mean - 5*sigma
-          float intmax = fitValues[1] + 5 * fitValues[2]; // mean + 5*sigma
+	if (fitValues[2] < 0) {
+	  fitValues[2] = -fitValues[2];
+	}
 
-          if (intmin < -mRange) {
-            intmin = -mRange;
-          }
-          if (intmax < -mRange) {
-            intmax = -mRange;
-          }
-          if (intmin > mRange) {
-            intmin = mRange;
-          }
-          if (intmax > mRange) {
-            intmax = mRange;
-          }
+	float intmin = fitValues[1] - 5 * fitValues[2]; // mean - 5*sigma
+	float intmax = fitValues[1] + 5 * fitValues[2]; // mean + 5*sigma
 
-          xp[goodpoints] = ipair + 0.5;      // pair index
-          exp[goodpoints] = 0.0;             // error on pair index (dummy since it is on the pair index)
-          deltat[goodpoints] = fitValues[1]; // delta between offsets from channels in pair (from the fit) - in ps
-          edeltat[goodpoints] = 20;          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
-          goodpoints++;
-          int ch1 = ipair % 96;
-          int ch2 = ipair / 96 ? ch1 + 48 : ch1 + 1;
-          float fractionUnderPeak = entriesInPair > 0 ? c->integral(ich, intmin, intmax) / entriesInPair : 0;
-          // we keep as fractionUnderPeak of the channel the largest one that is found in the 3 possible pairs with that channel (for both channels ch1 and ch2 in the pair)
-          if (fracUnderPeak[ch1] < fractionUnderPeak) {
-            fracUnderPeak[ch1] = fractionUnderPeak;
-          }
-          if (fracUnderPeak[ch2] < fractionUnderPeak) {
-            fracUnderPeak[ch2] = fractionUnderPeak;
-          }
-        } // end loop pairs
+	if (intmin < -mRange) {
+	  intmin = -mRange;
+	}
+	if (intmax < -mRange) {
+	  intmax = -mRange;
+	}
+	if (intmin > mRange) {
+	  intmin = mRange;
+	}
+	if (intmax > mRange) {
+	  intmax = mRange;
+	}
 
-        // fit strip offset
-        if (goodpoints == 0) {
-          //LOG(INFO) << "We did not find any good point for strip " << istrip << " in sector " << sector;
-          continue;
-        }
-        LOG(DEBUG) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " << sector << " --> we can fit the TGraph";
-        TGraphErrors g(goodpoints, xp, deltat, exp, edeltat);
-        g.Fit(mFuncDeltaOffset, "Q0");
+	/*
+	xpThread[ithread].push_back(ipair + 0.5);      // pair index
+	expThread[ithread].push_back(0.0);             // error on pair index (dummy since it is on the pair index)
+	deltatThread[ithread].push_back(fitValues[1]); // delta between offsets from channels in pair (from the fit) - in ps
+	edeltatThread[ithread].push_back(20);          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
+	*/
+	xp[goodpoints] = ipair + 0.5;      // pair index
+	exp[goodpoints] = 0.0;             // error on pair index (dummy since it is on the pair index)
+	deltat[goodpoints] = fitValues[1]; // delta between offsets from channels in pair (from the fit) - in ps
+	edeltat[goodpoints] = 20;          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
+	goodpoints++;
+	int ch1 = ipair % 96;
+	int ch2 = ipair / 96 ? ch1 + 48 : ch1 + 1;
+	float fractionUnderPeak = entriesInPair > 0 ? c->integral(ich, intmin, intmax) / entriesInPair : 0;
+	// we keep as fractionUnderPeak of the channel the largest one that is found in the 3 possible pairs with that channel (for both channels ch1 and ch2 in the pair)
+	if (fracUnderPeak[ch1] < fractionUnderPeak) {
+	  fracUnderPeak[ch1] = fractionUnderPeak;
+	}
+	if (fracUnderPeak[ch2] < fractionUnderPeak) {
+	  fracUnderPeak[ch2] = fractionUnderPeak;
+	}
+      } // end loop pairs
 
-        //update calibrations
-        for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
-          int ich = ichLocal + offsetstrip;
-          ts.updateOffsetInfo(ich, mFuncDeltaOffset->GetParameter(ichLocal));
-          ts.setFractionUnderPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, fracUnderPeak[ichLocal]);
-          ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(mFuncDeltaOffset->GetParError(ichLocal)));
-        }
+      /*
+      for (int ithread = 0; ithread < mNThreads; ++ithread) {
+	for (int ii = 0; ii < xpThread[ithread].size(); ++ii) {
+	  xp[goodpoints] = xpThread[ithread][ii];
+	  exp[goodpoints] = expThread[ithread][ii];
+	  deltat[goodpoints] = deltatThread[ithread][ii];
+	  edeltat[goodpoints] = edeltatThread[ithread][ii];
+	  goodpoints++;
+	}
+      }
+      */      
+      // fit strip offset
+      if (goodpoints == 0) {
+	//LOG(INFO) << "We did not find any good point for strip " << istrip << " in sector " << sector;
+	continue;
+      }
+      LOG(DEBUG) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " << sector << " --> we can fit the TGraph";
+      TGraphErrors g(goodpoints, xp, deltat, exp, edeltat);
+      //g.Fit(mFuncDeltaOffset, "Q0");
+      
+      ROOT::Fit::BinData dataB(goodpoints, &xp[0], &exp[0], &deltat[0], &edeltat[0]);
+      //      ROOT::Math::WrappedMultiTF1 wf(*mFuncDeltaOffset, 1);
+      //bool fitOk = mFitters[ithread]->Fit(dataB, wf);
+      bool fitOk = mFitters[ithread]->Fit(dataB);
+      
+      //update calibrations
+      for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
+	int ich = ichLocal + offsetstrip;
+	ts.updateOffsetInfo(ich, mFuncDeltaOffset->GetParameter(ichLocal));
+	ts.setFractionUnderPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, fracUnderPeak[ichLocal]);
+	ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(mFuncDeltaOffset->GetParError(ichLocal)));
+      }
 
-      } // end loop strips
-    }   // end loop sectors
+    } // end loop strips
+  }   // end loop sectors
 
-    auto clName = o2::utils::MemFileHelper::getClassName(ts);
-    auto flName = o2::ccdb::CcdbApi::generateFileName(clName);
-    mInfoVector.emplace_back("TOF/ChannelCalib", clName, flName, md, slot.getTFStart(), 99999999999999);
-    mTimeSlewingVector.emplace_back(ts);
+  auto clName = o2::utils::MemFileHelper::getClassName(ts);
+  auto flName = o2::ccdb::CcdbApi::generateFileName(clName);
+  mInfoVector.emplace_back("TOF/ChannelCalib", clName, flName, md, slot.getTFStart(), 99999999999999);
+  mTimeSlewingVector.emplace_back(ts);
 }
 
 //_____________________________________________
@@ -509,7 +553,9 @@ void TOFChannelCalibrator<T>::finalizeSlotWithTracks(Slot& slot)
 
 #if defined(WITH_OPENMP) && !defined(__CLING__)
     if (mNThreads < 1) mNThreads = omp_get_max_threads();
-    #pragma omp parallel for schedule(dynamic) num_threads(mNThreads)
+#pragma omp parallel for schedule(dynamic) num_threads(mNThreads)
+#else
+      mNThreads = 1;
 #endif
     for (int sector = 0; sector < Geo::NSECTORS; sector++) {
       for (int chinsector = 0; chinsector < Geo::NPADSXSECTOR; chinsector++) {
