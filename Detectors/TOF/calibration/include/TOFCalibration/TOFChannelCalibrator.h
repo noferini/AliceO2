@@ -30,7 +30,6 @@
 #include "TLinearFitter.h"
 #include "Fit/Fitter.h"
 
-
 #include "DetectorsCalibration/Utils.h"
 #include <boost/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
@@ -149,13 +148,16 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
   static constexpr int NMAXTHREADS = 20; // number of max threads that we allow OpenMP to use
 
   TOFChannelCalibrator(int minEnt = 500, int nb = 1000, float r = 24400) : mMinEntries(minEnt), mNBins(nb), mRange(r){
-
+    printf("set function\n");
+    setStripFunction();
     for (int i = 0; i < NMAXTHREADS; ++i) {
+      printf("%d) set fitters\n",i);
       mLinFitters[i] = new TLinearFitter(3, "pol2");
-      mFitters[i] = new ROOT::Fit::Fitter();
+      printf("next\n");
+      mFittersForCosmics[i] = new TLinearFitter(1,mStripOffsetFunction.c_str());
+      printf("ok\n");
     }
-
-  };
+  }
 
   ~TOFChannelCalibrator() final = default;
 
@@ -214,6 +216,41 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
   void setNThreads(int n) { mNThreads = std::min(n, NMAXTHREADS); }
   int getNThreads() const { return mNThreads; }
 
+  void setStripFunction(){
+    mStripOffsetFunction.clear();
+    for(int i=0; i < 96; i++){
+      int irow = i%48;
+      int icolumn = i/48;
+      if(i>0){
+        mStripOffsetFunction.append(Form("++ ("));
+      }
+      else{
+        mStripOffsetFunction.append(Form("("));
+      }
+      bool kadd=false;
+      if(irow < 47){
+        mStripOffsetFunction.append(Form("(x > %d && x < %d)",irow+icolumn*48,irow+icolumn*48+1));
+        kadd=true;
+      }
+      if(irow > 0){
+        mStripOffsetFunction.append("-");
+        mStripOffsetFunction.append(Form("(x > %d && x < %d)",irow+icolumn*48-1,irow+icolumn*48));
+        kadd=true;
+      }
+      if(icolumn<1){
+        if(kadd){
+           mStripOffsetFunction.append("+");
+        }
+        mStripOffsetFunction.append(Form("(x > %d && x < %d)",irow+96,irow+96+1));
+      }
+      else{
+        mStripOffsetFunction.append("-");
+        mStripOffsetFunction.append(Form("(x > %d && x < %d)",irow+96,irow+96+1));
+      }
+      mStripOffsetFunction.append(Form(") "));
+    }
+  }
+
  private:
   int mMinEntries = 0; // min number of entries to calibrate the TimeSlot
   int mNBins = 0;      // bins of the histogram with the t-text per channel
@@ -236,8 +273,10 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
 
   int mNThreads = 0; // number of threads from OpenMP
 
+  std::string mStripOffsetFunction; // TLinear functon for fitting channel offset within the strip in cosmic data 
+
   TLinearFitter* mLinFitters[NMAXTHREADS]; // fitters for OpenMP for fitGaus
-  ROOT::Fit::Fitter* mFitters[NMAXTHREADS]; // fitters for OpenMP to fit TGraphErrors;
+  TLinearFitter* mFittersForCosmics[NMAXTHREADS]; // fitters for OpenMP to fit TGraphErrors for cosmics
 
   ClassDefOverride(TOFChannelCalibrator, 1);
 };

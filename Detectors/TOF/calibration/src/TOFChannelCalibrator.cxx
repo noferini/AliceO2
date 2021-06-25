@@ -371,10 +371,6 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	mFuncDeltaOffset->SetParError(ichLocal, ichLocal/10.);
       }
     }
-    for (int i = 0; i < NMAXTHREADS; ++i) {
-      ROOT::Math::WrappedMultiTF1* wf = new ROOT::Math::WrappedMultiTF1(*mFuncDeltaOffset, 1);
-      mFitters[i]->SetFunction(*wf);
-    }
   }
 
   // for the CCDB entry
@@ -406,6 +402,9 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
       memset(&fracUnderPeak[0], 0, sizeof(fracUnderPeak));
 
       //std::vector<float> xpThread[NMAXTHREADS], expThread[NMAXTHREADS], deltatThread[NMAXTHREADS], edeltatThread[NMAXTHREADS]; // each thread will have its own vectors to use in the fitGaus
+
+      mFittersForCosmics[ithread]->StoreData(kFALSE);
+      mFittersForCosmics[ithread]->ClearPoints();
 
       for (int ipair = 0; ipair < NCOMBINSTRIP; ipair++) {
 	int chinsector = ipair + istrip * NCOMBINSTRIP;
@@ -483,7 +482,8 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	exp[goodpoints] = 0.0;             // error on pair index (dummy since it is on the pair index)
 	deltat[goodpoints] = fitValues[1]; // delta between offsets from channels in pair (from the fit) - in ps
 	edeltat[goodpoints] = 20;          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
-	goodpoints++;
+        mFittersForCosmics[ithread]->AddPoint(&(xp[goodpoints]),deltat[goodpoints],edeltat[goodpoints]);
+        goodpoints++;
 	int ch1 = ipair % 96;
 	int ch2 = ipair / 96 ? ch1 + 48 : ch1 + 1;
 	float fractionUnderPeak = entriesInPair > 0 ? c->integral(ich, intmin, intmax) / entriesInPair : 0;
@@ -515,16 +515,20 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
       LOG(DEBUG) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " << sector << " --> we can fit the TGraph";
       TGraphErrors g(goodpoints, xp, deltat, exp, edeltat);
       //g.Fit(mFuncDeltaOffset, "Q0");
-      
-      ROOT::Fit::BinData dataB(goodpoints, &xp[0], &exp[0], &deltat[0], &edeltat[0]);
+  
+      mFittersForCosmics[ithread]->FixParameter(24,0);
+      mFittersForCosmics[ithread]->Eval();
+      LOG(INFO) << "Strip = " << istrip << "fitted by thread = " << ithread << " with Chi/NDF " << mFittersForCosmics[ithread]->GetChisquare() << "/" << goodpoints-95;
+
+//      ROOT::Fit::BinData dataB(goodpoints, &xp[0], &exp[0], &deltat[0], &edeltat[0]);
       //      ROOT::Math::WrappedMultiTF1 wf(*mFuncDeltaOffset, 1);
-      //bool fitOk = mFitters[ithread]->Fit(dataB, wf);
-      bool fitOk = mFitters[ithread]->Fit(dataB);
+//      bool fitOk = mFitters[ithread]->Fit(dataB);
       
       //update calibrations
       for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
 	int ich = ichLocal + offsetstrip;
-	ts.updateOffsetInfo(ich, mFuncDeltaOffset->GetParameter(ichLocal));
+//	ts.updateOffsetInfo(ich, mFuncDeltaOffset->GetParameter(ichLocal));
+        ts.updateOffsetInfo(ich, mFittersForCosmics[ithread]->GetParameter(ichLocal));
 	ts.setFractionUnderPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, fracUnderPeak[ichLocal]);
 	ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(mFuncDeltaOffset->GetParError(ichLocal)));
       }
