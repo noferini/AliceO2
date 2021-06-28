@@ -155,7 +155,7 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
       mLinFitters[i] = new TLinearFitter(3, "pol2");
       printf("next\n");
       mFittersForCosmics[i] = new TLinearFitter(1, mStripOffsetFunction.c_str());
-      mFittersForCosmics[i]->FixParameter(24, 0);
+//      mFittersForCosmics[i]->FixParameter(24, 0);
       printf("ok\n");
     }
   }
