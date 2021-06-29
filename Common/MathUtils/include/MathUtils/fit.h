@@ -265,12 +265,12 @@ Double_t fitGaus(const size_t nBins, const T* arr, const T xMin, const T xMax, s
 }
 
 template <typename T>
-Double_t fitGaus(TLinearFitter* fitter, TMatrixD* mat, const size_t nBins, const T* arr, const T xMin, const T xMax, std::vector<T>& param)
+Double_t fitGaus(TLinearFitter& fitter, TMatrixD& mat, const size_t nBins, const T* arr, const T xMin, const T xMax, std::vector<T>& param)
 {
   
-  Double_t kTol = mat->GetTol();
-  fitter->StoreData(kFALSE);
-  fitter->ClearPoints();
+  Double_t kTol = mat.GetTol();
+  fitter.StoreData(kFALSE);
+  fitter.ClearPoints();
   TVectorD par(3);
   TVectorD sigma(3);
   TMatrixD A(3, 3);
@@ -320,7 +320,7 @@ Double_t fitGaus(TLinearFitter* fitter, TMatrixD* mat, const size_t nBins, const
       Double_t xcenter = xMin + (ibin + 0.5) * binWidth;
       Double_t error = 1. / TMath::Sqrt(entriesI);
       Double_t val = TMath::Log(Float_t(entriesI));
-      fitter->AddPoint(&xcenter, val, error);
+      fitter.AddPoint(&xcenter, val, error);
       if (npoints < 3) {
         A(npoints, 0) = 1;
         A(npoints, 1) = xcenter;
@@ -347,10 +347,10 @@ Double_t fitGaus(TLinearFitter* fitter, TMatrixD* mat, const size_t nBins, const
       chi2 = -3.;
     } else {
       // use fitter for more than three points
-      fitter->Eval();
-      fitter->GetParameters(par);
-      fitter->GetCovarianceMatrix(*mat);
-      chi2 = fitter->GetChisquare() / Double_t(npoints);
+      fitter.Eval();
+      fitter.GetParameters(par);
+      fitter.GetCovarianceMatrix(mat);
+      chi2 = fitter.GetChisquare() / Double_t(npoints);
     }
     if (TMath::Abs(par[1]) < kTol) {
       return -4;

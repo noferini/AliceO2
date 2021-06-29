@@ -350,6 +350,7 @@ float TOFChannelData::integral(int ch) const
 }
 
 //-------------------------------------------------------------------
+// TOF Channel Calibrator
 //-------------------------------------------------------------------
 
 template <typename T>
@@ -360,25 +361,10 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
   o2::tof::TOFChannelData* c = slot.getContainer();
   LOG(INFO) << "Finalize slot for calibration with cosmics " << slot.getTFStart() << " <= TF <= " << slot.getTFEnd();
   
-  if (!mFuncDeltaOffset) {
-    mFuncDeltaOffset = new TF1("fChanOffset", FuncDeltaOffset, 0, NCOMBINSTRIP, Geo::NPADS);
-    mFuncDeltaOffset->FixParameter(24, 0); // fix one pad to fixed offset (as reference)
-    for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
-      if (ichLocal == 24) {
-	continue; //already fixed
-	mFuncDeltaOffset->SetParLimits(ichLocal, -mRange, mRange);
-	//	mFuncDeltaOffset->SetParameter(ichLocal, ichLocal);
-	//mFuncDeltaOffset->SetParError(ichLocal, ichLocal/10.);
-      }
-    }
-  }
-
   // for the CCDB entry
   std::map<std::string, std::string> md;
   TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
   
-  double dummypoint = 0.0;
-
 #ifdef WITH_OPENMP
   if (mNThreads < 1) mNThreads = std::min(omp_get_max_threads(), NMAXTHREADS);
   LOG(DEBUG) << "Number of threads that will be used = " << mNThreads;
@@ -393,40 +379,30 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 #ifdef WITH_OPENMP
 	ithread = omp_get_thread_num();
 #endif
-	//float xp[NCOMBINSTRIP], exp[NCOMBINSTRIP], deltat[NCOMBINSTRIP], edeltat[NCOMBINSTRIP], fracUnderPeak[Geo::NPADS];
+
     double xp[NCOMBINSTRIP], exp[NCOMBINSTRIP], deltat[NCOMBINSTRIP], edeltat[NCOMBINSTRIP], fracUnderPeak[Geo::NPADS];
 
     bool isChON[96];
 
     int offsetsector = sector * Geo::NSTRIPXSECTOR * Geo::NPADS;
     for (int istrip = 0; istrip < Geo::NSTRIPXSECTOR; istrip++) {
+      LOG(INFO) << "Processing strip " << istrip;
       int offsetstrip = istrip * Geo::NPADS + offsetsector;
       int goodpoints = 0;
 
       TLinearFitter localFitter(1, mStripOffsetFunction.c_str());
 
-  
       memset(&fracUnderPeak[0], 0, sizeof(fracUnderPeak));
       memset(isChON, 0, 96);
-
-      //std::vector<float> xpThread[NMAXTHREADS], expThread[NMAXTHREADS], deltatThread[NMAXTHREADS], edeltatThread[NMAXTHREADS]; // each thread will have its own vectors to use in the fitGaus
-
+      
       localFitter.StoreData(kFALSE);
       localFitter.ClearPoints();
-//      mFittersForCosmics[ithread]->StoreData(kFALSE);
-//      mFittersForCosmics[ithread]->ClearPoints();
-      //      mFittersForCosmics[ithread]->Clear();
-      //mFittersForCosmics[ithread]->SetFormula(mStripOffsetFunction.c_str());
-      //mFittersForCosmics[ithread]->SetDim(1);
-      //LOG(INFO) << "0) Fitter has " << mFittersForCosmics[ithread]->GetNumberFreeParameters() << " free parameters, " << mFittersForCosmics[ithread]->GetNumberTotalParameters() << " total parameters, " << mFittersForCosmics[ithread]->GetNpoints() << " points";
       for (int ipair = 0; ipair < NCOMBINSTRIP; ipair++) {
 	int chinsector = ipair + istrip * NCOMBINSTRIP;
 	int ich = chinsector + sector * Geo::NSTRIPXSECTOR * NCOMBINSTRIP;
 	auto entriesInPair = c->integral(ich);
 	if (entriesInPair < mMinEntries && entriesInPair != 0) {
 	  LOG(DEBUG) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
-	  //LOG(INFO) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
-	  //LOG(INFO) << "0a) Fitter has " << mFittersForCosmics[ithread]->GetNumberFreeParameters() << " free parameters, " << mFittersForCosmics[ithread]->GetNumberTotalParameters() << " total parameters, " << mFittersForCosmics[ithread]->GetNpoints() << " points";
 	  continue;
 	}
 	// make the slice of the 2D histogram so that we have the 1D of the current channel
@@ -443,6 +419,7 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	  }
 	}
 
+	//LOG(INFO) << "Filling vector for fitGaus";
 	// more efficient way
 	auto histo = c->getHisto(sector);
 	for (unsigned j = chinsector; j <= chinsector; ++j) {
@@ -452,32 +429,28 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	    histoValues.push_back(v);
 	  }
 	}
+	//LOG(INFO) << "DONE: Filling vector for fitGaus";
 
-	double fitres = fitGaus(mLinFitters[ithread], &mat, c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
-//	LOG(INFO) << "0b) Fitter has " << mFittersForCosmics[ithread]->GetNumberFreeParameters() << " free parameters, " << mFittersForCosmics[ithread]->GetNumberTotalParameters() << " total parameters, " << mFittersForCosmics[ithread]->GetNpoints() << " points";
-	/*
-          double fitres = 1;
-	  fitValues[0] = 100;
-	  fitValues[1] = 200;
-	  fitValues[2] = 300;
-	*/
+	//fitValues[2] = 100;
+	//fitValues[1] = 0.01;
+	//LOG(INFO) << "fitGaus";
+	double fitres = entriesInPair - 1;
+	fitres = fitGaus(mLinFitters[ithread], mat, c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
+	//LOG(INFO) << "DONE: fitGaus";
 	if (fitres >= 0) {
 	  LOG(DEBUG) << "Pair " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
 	} else {
-	  LOG(INFO) << "Pair " << ich << " :: Fit failed with result = " << fitres;
-          dummypoint = ipair + 0.5;
-          //mFittersForCosmics[ithread]->AddPoint(&dummypoint, 0.0, 1000);
-          //localFitter.AddPoint(&dummypoint, 0.0, 1000);
+	  LOG(DEBUG) << "Pair " << ich << " :: Fit failed with result = " << fitres;
 	  continue;
 	}
-
+	
 	if (fitValues[2] < 0) {
 	  fitValues[2] = -fitValues[2];
 	}
-
+	
 	float intmin = fitValues[1] - 5 * fitValues[2]; // mean - 5*sigma
 	float intmax = fitValues[1] + 5 * fitValues[2]; // mean + 5*sigma
-
+	
 	if (intmin < -mRange) {
 	  intmin = -mRange;
 	}
@@ -490,27 +463,18 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	if (intmax > mRange) {
 	  intmax = mRange;
 	}
-
-	/*
-	xpThread[ithread].push_back(ipair + 0.5);      // pair index
-	expThread[ithread].push_back(0.0);             // error on pair index (dummy since it is on the pair index)
-	deltatThread[ithread].push_back(fitValues[1]); // delta between offsets from channels in pair (from the fit) - in ps
-	edeltatThread[ithread].push_back(20);          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
-	*/
+	
 	xp[goodpoints] = ipair + 0.5;      // pair index
 	exp[goodpoints] = 0.0;             // error on pair index (dummy since it is on the pair index)
 	deltat[goodpoints] = fitValues[1]; // delta between offsets from channels in pair (from the fit) - in ps
 	edeltat[goodpoints] = 20 + fitValues[2]/sqrt(entriesInPair);          // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
-	//LOG(INFO) << "1) Fitter has " << mFittersForCosmics[ithread]->GetNumberFreeParameters() << " free parameters, " << mFittersForCosmics[ithread]->GetNumberTotalParameters() << " total parameters, " << mFittersForCosmics[ithread]->GetNpoints() << " points";
-//        mFittersForCosmics[ithread]->AddPoint(&(xp[goodpoints]), deltat[goodpoints], edeltat[goodpoints]);
-        localFitter.AddPoint(&(xp[goodpoints]), deltat[goodpoints], edeltat[goodpoints]);
-//        LOG(INFO) << "add point: " << xp[goodpoints] << " " << deltat[goodpoints] << " " << edeltat[goodpoints] << " " << fitValues[2]; 
-        goodpoints++;
+	localFitter.AddPoint(&(xp[goodpoints]), deltat[goodpoints], edeltat[goodpoints]);
+	goodpoints++;
 	int ch1 = ipair % 96;
 	int ch2 = ipair / 96 ? ch1 + 48 : ch1 + 1;
-        isChON[ch1] = true;
-       	isChON[ch2] = true;
-
+	isChON[ch1] = true;
+	isChON[ch2] = true;
+	
 	float fractionUnderPeak = entriesInPair > 0 ? c->integral(ich, intmin, intmax) / entriesInPair : 0;
 	// we keep as fractionUnderPeak of the channel the largest one that is found in the 3 possible pairs with that channel (for both channels ch1 and ch2 in the pair)
 	if (fracUnderPeak[ch1] < fractionUnderPeak) {
@@ -520,89 +484,57 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	  fracUnderPeak[ch2] = fractionUnderPeak;
 	}
       } // end loop pairs
-
-      /*
-      for (int ithread = 0; ithread < mNThreads; ++ithread) {
-	for (int ii = 0; ii < xpThread[ithread].size(); ++ii) {
-	  xp[goodpoints] = xpThread[ithread][ii];
-	  exp[goodpoints] = expThread[ithread][ii];
-	  deltat[goodpoints] = deltatThread[ithread][ii];
-	  edeltat[goodpoints] = edeltatThread[ithread][ii];
-	  goodpoints++;
-	}
-      }
-      */      
+      
       // fit strip offset
       if (goodpoints == 0) {
-	//LOG(INFO) << "We did not find any good point for strip " << istrip << " in sector " << sector;
 	continue;
       }
       LOG(DEBUG) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " << sector << " --> we can fit the TGraph";
-      LOG(INFO) << "We found " << goodpoints << " good points for strip " << istrip << " in sector " << sector << " --> we can fit the TGraph";
-//      TGraphErrors g(goodpoints, xp, deltat, exp, edeltat);
-//      g.Fit(mFuncDeltaOffset, "Q0");
-
-
+      
       bool isFirst = true;
       int nparams = 0;
-      /*
-      for(int i=0; i < 96; i++){
-        if(mFittersForCosmics[ithread]->IsFixed(i)){
-          mFittersForCosmics[ithread]->ReleaseParameter(i);
-        }
+      LOG(DEBUG) << "N parameters before fixing = " << localFitter.GetNumberFreeParameters();
+      
+      // we fix to zero the parameters that have no entry, plus the first one that we find, which we will use as reference for the other offsets
+      for (int i = 0; i < 96; ++i){
+	if (isChON[i]) {
+	  if (isFirst) {
+	    localFitter.FixParameter(i, 0.);
+	    isFirst = false;
+	  } else {
+	    nparams++;
+	  } 
+	} else {
+	  localFitter.FixParameter(i, 0.);
+	}
       }
-      */    
-
-//      LOG(INFO) << "N parameters before fixing = " << mFittersForCosmics[ithread]->GetNumberFreeParameters();
-      LOG(INFO) << "N parameters before fixing = " << localFitter.GetNumberFreeParameters();
-
-      for(int i=0; i <96; i++){
-       if(isChON[i]){
-         if(isFirst){
-//           mFittersForCosmics[ithread]->FixParameter(i, 0.);
-           localFitter.FixParameter(i, 0.);
-           isFirst = false;
-         } else {
-           nparams++;
-         } 
-      } else {
-//         mFittersForCosmics[ithread]->FixParameter(i, 0.);
-         localFitter.FixParameter(i, 0.);
-       }
-      }
-
-      LOG(INFO) << "Strip = " << istrip << " fitted by thread = " << ithread << "NDF" << goodpoints - localFitter.GetNumberFreeParameters();
-
+      
+      LOG(DEBUG) << "Strip = " << istrip << " fitted by thread = " << ithread << ", NDF" << goodpoints - localFitter.GetNumberFreeParameters();
+      
       if(goodpoints < localFitter.GetNumberFreeParameters()){
-        LOG(INFO) << "Skipped";
-        continue;
+	LOG(DEBUG) << "Skipped";
+	continue;
       }
-
-      LOG(INFO) << "N real params = " << nparams;
-//      LOG(INFO) << "Fitter has " << mFittersForCosmics[ithread]->GetNumberFreeParameters() << " free parameters, " << mFittersForCosmics[ithread]->GetNumberTotalParameters() << " total parameters, " << mFittersForCosmics[ithread]->GetNpoints() << " points";
-      LOG(INFO) << "Fitter has " << localFitter.GetNumberFreeParameters() << " free parameters, " << localFitter.GetNumberTotalParameters() << " total parameters, " << localFitter.GetNpoints() << " points";
-//      LOG(INFO) << "2) Fitter has " << mFittersForCosmics[ithread]->GetNumberFreeParameters() << " free parameters, " << mFittersForCosmics[ithread]->GetNumberTotalParameters() << " total parameters, " << mFittersForCosmics[ithread]->GetNpoints() << " points";
-//      mFittersForCosmics[ithread]->Eval();
+      
+      LOG(DEBUG) << "N real params = " << nparams << ", fitter has " << localFitter.GetNumberFreeParameters() << " free parameters, " << localFitter.GetNumberTotalParameters() << " total parameters, " << localFitter.GetNpoints() << " points";
+      //LOG(INFO) << "Sector = " << sector << ", strip = " << istrip << " fitted by thread = " << ithread << ": ready to fit";
+      printf("Sector = %d, strip = %d, fitted by thread = %d: ready to fit\n", sector, istrip, ithread);
       localFitter.Eval();
-      LOG(INFO) << "Strip = " << istrip << " fitted by thread = " << ithread << " with Chi/NDF " << localFitter.GetChisquare() << "/" << goodpoints - localFitter.GetNumberFreeParameters();
-//      LOG(INFO) << "Strip = " << istrip << " fitted by thread = " << ithread << " with Chi/NDF " << mFittersForCosmics[ithread]->GetChisquare() << "/" << 95-goodpoints;
-
-//      ROOT::Fit::BinData dataB(goodpoints, &xp[0], &exp[0], &deltat[0], &edeltat[0]);
-      //      ROOT::Math::WrappedMultiTF1 wf(*mFuncDeltaOffset, 1);
-//      bool fitOk = mFitters[ithread]->Fit(dataB);
+      
+      //LOG(INFO) << "Sector = " << sector << ", strip = " << istrip << " fitted by thread = " << ithread << " with Chi/NDF " << localFitter.GetChisquare() << "/" << goodpoints - localFitter.GetNumberFreeParameters();
+      printf("Sector = %d, strip = %d, fitted by thread = %d: chi2/NDF = %f / %d\n", sector, istrip, ithread, localFitter.GetChisquare(), goodpoints - localFitter.GetNumberFreeParameters());
+      LOG(DEBUG) << "Strip = " << istrip << " fitted by thread = " << ithread << " with Chi/NDF " << localFitter.GetChisquare() << "/" << goodpoints - localFitter.GetNumberFreeParameters();
       
       //update calibrations
       for (int ichLocal = 0; ichLocal < Geo::NPADS; ichLocal++) {
 	int ich = ichLocal + offsetstrip;
-//	ts.updateOffsetInfo(ich, mFuncDeltaOffset->GetParameter(ichLocal));
-//        ts.updateOffsetInfo(ich, mFittersForCosmics[ithread]->GetParameter(ichLocal));
-        ts.updateOffsetInfo(ich, localFitter.GetParameter(ichLocal));
+	ts.updateOffsetInfo(ich, localFitter.GetParameter(ichLocal));
 	ts.setFractionUnderPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, fracUnderPeak[ichLocal]);
-	ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(mFuncDeltaOffset->GetParError(ichLocal)));
+      	ts.setSigmaPeak(ich / Geo::NPADSXSECTOR, ich % Geo::NPADSXSECTOR, abs(std::sqrt(localFitter.GetCovarianceMatrixElement(ichLocal, ichLocal))));
       }
 
     } // end loop strips
-  }   // end loop sectors
+  }  // end loop sectors
 
   auto clName = o2::utils::MemFileHelper::getClassName(ts);
   auto flName = o2::ccdb::CcdbApi::generateFileName(clName);

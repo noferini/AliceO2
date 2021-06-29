@@ -148,15 +148,11 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
   static constexpr int NMAXTHREADS = 20; // number of max threads that we allow OpenMP to use
 
   TOFChannelCalibrator(int minEnt = 500, int nb = 1000, float r = 24400) : mMinEntries(minEnt), mNBins(nb), mRange(r){
-    printf("set function\n");
     setStripFunction();
     for (int i = 0; i < NMAXTHREADS; ++i) {
-      printf("%d) set fitters\n",i);
-      mLinFitters[i] = new TLinearFitter(3, "pol2");
-      printf("next\n");
-      mFittersForCosmics[i] = new TLinearFitter(1, mStripOffsetFunction.c_str());
-//      mFittersForCosmics[i]->FixParameter(24, 0);
-      printf("ok\n");
+      //mLinFitters[i] = new TLinearFitter(3, "pol2");
+      mLinFitters[i].SetDim(3);
+      mLinFitters[i].SetFormula("pol2");
     }
   }
 
@@ -250,6 +246,12 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
       }
       mStripOffsetFunction.append(Form(") "));
     }
+    TLinearFitter localFitter2(1, mStripOffsetFunction.c_str()); // this is a workaround: when we define the TLinearFitter,
+                                                                 // the function is sort of added in some global namespace
+                                                                 // or somthing analogous; when then we use more than 1 thread,
+                                                                 // the threads conflict with each other in this operation, and
+                                                                 // it does not work. So we do the operation of adding the
+                                                                 // function to this global namespece in advance.
   }
 
  private:
@@ -257,7 +259,6 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
   int mNBins = 0;      // bins of the histogram with the t-text per channel
   float mRange = 0.;   // range of the histogram with the t-text per channel
   bool mTest = false;  // flag to be used when running in test mode: it simplify the processing (e.g. does not go through all channels)
-  TF1* mFuncDeltaOffset = nullptr;
 
   CalibTOFapi* mCalibTOFapi = nullptr; // CalibTOFapi needed to get the previous calibrations read from CCDB (do we need that it is a pointer?)
 
@@ -276,8 +277,7 @@ class TOFChannelCalibrator final : public o2::calibration::TimeSlotCalibration<T
 
   std::string mStripOffsetFunction; // TLinear functon for fitting channel offset within the strip in cosmic data 
 
-  TLinearFitter* mLinFitters[NMAXTHREADS]; // fitters for OpenMP for fitGaus
-  TLinearFitter* mFittersForCosmics[NMAXTHREADS]; // fitters for OpenMP to fit TGraphErrors for cosmics
+  TLinearFitter mLinFitters[NMAXTHREADS]; // fitters for OpenMP for fitGaus
 
   ClassDefOverride(TOFChannelCalibrator, 1);
 };
