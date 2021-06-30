@@ -365,6 +365,10 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
   std::map<std::string, std::string> md;
   TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
   
+  int nbins = c->getNbins();
+  float range = c->getRange();
+  std::vector<int> entriesPerChannel = c->getEntriesPerChannel();
+
 #ifdef WITH_OPENMP
   if (mNThreads < 1) mNThreads = std::min(omp_get_max_threads(), NMAXTHREADS);
   LOG(DEBUG) << "Number of threads that will be used = " << mNThreads;
@@ -384,6 +388,12 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 
     bool isChON[96];
 
+    std::vector<float> fitValues;
+    std::vector<float> histoValues;
+
+    auto& histo = c->getHisto(sector);
+
+    int offsetPairInSector = sector * Geo::NSTRIPXSECTOR * NCOMBINSTRIP;
     int offsetsector = sector * Geo::NSTRIPXSECTOR * Geo::NPADS;
     for (int istrip = 0; istrip < Geo::NSTRIPXSECTOR; istrip++) {
       LOG(INFO) << "Processing strip " << istrip;
@@ -395,20 +405,21 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
       memset(&fracUnderPeak[0], 0, sizeof(fracUnderPeak));
       memset(isChON, 0, 96);
       
+      int offsetPairInStrip = istrip * NCOMBINSTRIP;
+
       localFitter.StoreData(kFALSE);
       localFitter.ClearPoints();
       for (int ipair = 0; ipair < NCOMBINSTRIP; ipair++) {
-	int chinsector = ipair + istrip * NCOMBINSTRIP;
-	int ich = chinsector + sector * Geo::NSTRIPXSECTOR * NCOMBINSTRIP;
+	int chinsector = ipair + offsetPairInStrip;
+	int ich = chinsector + offsetPairInSector;
 	auto entriesInPair = c->integral(ich);
 	if (entriesInPair < mMinEntries && entriesInPair != 0) {
 	  LOG(DEBUG) << "pair " << ich << " will not be calibrated since it has only " << entriesInPair << " entries (min = " << mMinEntries << ")";
 	  continue;
 	}
 	// make the slice of the 2D histogram so that we have the 1D of the current channel
-	std::vector<float> fitValues;
-	std::vector<float> histoValues;
-	std::vector<int> entriesPerChannel = c->getEntriesPerChannel();
+	fitValues.clear();
+	histoValues.clear();
 	if (entriesPerChannel.at(ich) == 0) {
 	  continue; // skip always since a channel with 0 entries is normal, it will be flagged as problematic
 	  if (mTest) {
@@ -421,13 +432,10 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 
 	//LOG(INFO) << "Filling vector for fitGaus";
 	// more efficient way
-	auto histo = c->getHisto(sector);
-	for (unsigned j = chinsector; j <= chinsector; ++j) {
-	  for (unsigned i = 0; i < c->getNbins(); ++i) {
-	    const auto& v = histo.at(i, j);
-	    LOG(DEBUG) << "channel = " << ich << ", in sector = " << sector << " (where it is channel = " << chinsector << ") bin = " << i << " value = " << v;
-	    histoValues.push_back(v);
-	  }
+	for (unsigned i = 0; i < nbins; ++i) {
+	  const auto& v = histo.at(i, chinsector);
+	  LOG(DEBUG) << "channel = " << ich << ", in sector = " << sector << " (where it is channel = " << chinsector << ") bin = " << i << " value = " << v;
+	  histoValues.push_back(v);
 	}
 	//LOG(INFO) << "DONE: Filling vector for fitGaus";
 
@@ -435,7 +443,7 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
 	//fitValues[1] = 0.01;
 	//LOG(INFO) << "fitGaus";
 	double fitres = entriesInPair - 1;
-	fitres = fitGaus(mLinFitters[ithread], mat, c->getNbins(), histoValues.data(), -(c->getRange()), c->getRange(), fitValues);
+	fitres = fitGaus(mLinFitters[ithread], mat, nbins, histoValues.data(), -range, range, fitValues);
 	//LOG(INFO) << "DONE: fitGaus";
 	if (fitres >= 0) {
 	  LOG(DEBUG) << "Pair " << ich << " :: Fit result " << fitres << " Mean = " << fitValues[1] << " Sigma = " << fitValues[2];
