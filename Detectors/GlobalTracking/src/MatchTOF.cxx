@@ -60,6 +60,8 @@ void MatchTOF::run(const o2::globaltracking::RecoContainer& inp)
   mStartIR = inp.startIR;
   updateTimeDependentParams();
 
+  mTimerMatchTPC.Reset();
+  mTimerMatchITSTPC.Reset();
   mTimerTot.Start();
 
   mTimerTot.Stop();
@@ -102,10 +104,14 @@ void MatchTOF::run(const o2::globaltracking::RecoContainer& inp)
     mMatchedTracksPairs.clear(); // new sector
     LOG(INFO) << "Doing matching for sector " << sec << "...";
     if (mIsITSTPCused || mIsTPCTRDused || mIsITSTPCTRDused) {
+      mTimerMatchITSTPC.Start(sec == o2::constants::math::NSectors -1);
       doMatching(sec);
+      mTimerMatchITSTPC.Stop();
     }
     if (mIsTPCused) {
+      mTimerMatchTPC.Start(sec == o2::constants::math::NSectors -1);
       doMatchingForTPC(sec);
+      mTimerMatchTPC.Stop();
     }
     LOG(INFO) << "...done. Now check the best matches";
     selectBestMatches();
@@ -121,6 +127,8 @@ void MatchTOF::run(const o2::globaltracking::RecoContainer& inp)
 
   mTimerTot.Stop();
   LOGF(INFO, "Timing Do Matching: Cpu: %.3e s Real: %.3e s in %d slots", mTimerTot.CpuTime(), mTimerTot.RealTime(), mTimerTot.Counter() - 1);
+  LOGF(INFO, "Timing Do Matching ITSTPC: Cpu: %.3e s Real: %.3e s in %d slots", mTimerMatchITSTPC.CpuTime(), mTimerMatchITSTPC.RealTime(), mTimerMatchITSTPC.Counter() - 1);
+  LOGF(INFO, "Timing Do Matching TPC   : Cpu: %.3e s Real: %.3e s in %d slots", mTimerMatchTPC.CpuTime(), mTimerMatchTPC.RealTime(), mTimerMatchTPC.Counter() - 1);
 }
 //______________________________________________
 void MatchTOF::print() const
