@@ -695,7 +695,7 @@ void MatchTOF::doMatchingForTPC(int sec)
     }
 
     int itofMax = nTOFCls;
-    
+
     for (auto itof = itof0; itof < nTOFCls; itof++) {
       auto& trefTOF = mTOFClusWork[cacheTOF[itof]];
 
@@ -874,9 +874,9 @@ void MatchTOF::doMatchingForTPC(int sec)
             isInStrip = true;
           }
         }
-	
+
         if(!isInStrip) continue;
-	
+
 	unsigned long bcClus = trefTOF.getTime() * Geo::BC_TIME_INPS_INV;
 
         // compute fine correction using cluster position instead of pad center
