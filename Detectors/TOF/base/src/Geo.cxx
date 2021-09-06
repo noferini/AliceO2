@@ -406,7 +406,16 @@ Int_t Geo::fromPlateToStrip(Float_t* pos, Int_t iplate)
     step[1] = getHeights(iplate, istrip);
     step[2] = -getDistances(iplate, istrip);
     translate(posLoc2, step);
+
+    if(fabs(posLoc2[1]) > 10) continue;
+    if(fabs(posLoc2[2]) > 10) continue;
+    
+    float distanceSquared = posLoc2[0]*posLoc2[0]*0 + posLoc2[1]*posLoc2[1] + posLoc2[2]*posLoc2[2];
+
+    if(distanceSquared > 45) continue;
+
     rotateToStrip(posLoc2, iplate, istrip);
+
     if ((TMath::Abs(posLoc2[0]) <= STRIPLENGTH * 0.5) && (TMath::Abs(posLoc2[1]) <= HSTRIPY * 0.5) &&
         (TMath::Abs(posLoc2[2]) <= WCPCBZ * 0.5)) {
       step[0] = -0.5 * NPADX * XPAD;
@@ -417,7 +426,7 @@ Int_t Geo::fromPlateToStrip(Float_t* pos, Int_t iplate)
       for (Int_t jj = 0; jj < 3; jj++) {
         pos[jj] = posLoc2[jj];
       }
-
+      
       return istrip;
     }
   }
