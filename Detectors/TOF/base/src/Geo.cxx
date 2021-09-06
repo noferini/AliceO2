@@ -225,12 +225,15 @@ void Geo::getDetID(Float_t* pos, Int_t* det)
   }
 
   det[0] = getSector(posLocal);
+  if(det[0] == -1) return;
 
   fromGlobalToSector(posLocal, det[0]);
 
   det[1] = getPlate(posLocal);
+  if(det[1] == -1) return;
 
   det[2] = fromPlateToStrip(posLocal, det[1]);
+  if(det[2] == -1) return;
 
   det[3] = getPadZ(posLocal);
   det[4] = getPadX(posLocal);
@@ -461,10 +464,16 @@ void Geo::getPadDxDyDz(const Float_t* pos, Int_t* det, Float_t* DeltaPos)
   }
 
   det[0] = getSector(DeltaPos);
+  if(det[0] == -1) return;
+  
   fromGlobalToSector(DeltaPos, det[0]);
   det[1] = getPlate(DeltaPos);
+  if(det[1] == -1) return;
+
   det[2] = fromPlateToStrip(DeltaPos, det[1]);
-  det[3] = getPadZ(DeltaPos);
+  if(det[2] == -1) return;
+
+ det[3] = getPadZ(DeltaPos);
   det[4] = getPadX(DeltaPos);
   // translate to the pad center
 
