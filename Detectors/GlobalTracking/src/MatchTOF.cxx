@@ -104,12 +104,12 @@ void MatchTOF::run(const o2::globaltracking::RecoContainer& inp)
     mMatchedTracksPairs.clear(); // new sector
     LOG(INFO) << "Doing matching for sector " << sec << "...";
     if (mIsITSTPCused || mIsTPCTRDused || mIsITSTPCTRDused) {
-      mTimerMatchITSTPC.Start(sec == o2::constants::math::NSectors -1);
+      mTimerMatchITSTPC.Start(sec == o2::constants::math::NSectors - 1);
       doMatching(sec);
       mTimerMatchITSTPC.Stop();
     }
     if (mIsTPCused) {
-      mTimerMatchTPC.Start(sec == o2::constants::math::NSectors -1);
+      mTimerMatchTPC.Start(sec == o2::constants::math::NSectors - 1);
       doMatchingForTPC(sec);
       mTimerMatchTPC.Stop();
     }

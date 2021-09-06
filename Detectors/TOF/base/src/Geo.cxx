@@ -410,16 +410,16 @@ Int_t Geo::fromPlateToStrip(Float_t* pos, Int_t iplate)
     step[2] = -getDistances(iplate, istrip);
     translate(posLoc2, step);
 
-    if (fabs(posLoc2[1]) > 10){
+    if (fabs(posLoc2[1]) > 10) {
       continue;
     }
-    if (fabs(posLoc2[2]) > 10){
+    if (fabs(posLoc2[2]) > 10) {
       continue;
     }
 
     float distanceSquared = posLoc2[0] * posLoc2[0] * 0 + posLoc2[1] * posLoc2[1] + posLoc2[2] * posLoc2[2];
 
-    if (distanceSquared > 45){
+    if (distanceSquared > 45) {
       continue;
     }
 
