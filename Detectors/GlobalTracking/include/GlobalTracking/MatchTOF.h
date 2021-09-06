@@ -299,7 +299,7 @@ class MatchTOF
   TStopwatch mTimerMatchITSTPC;
   TStopwatch mTimerMatchTPC;
   TStopwatch mTimerDBG;
-  ClassDefNV(MatchTOF, 2);
+  ClassDefNV(MatchTOF, 3);
 };
 } // namespace globaltracking
 } // namespace o2
