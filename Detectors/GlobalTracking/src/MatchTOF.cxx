@@ -864,20 +864,21 @@ void MatchTOF::doMatchingForTPC(int sec)
           break;
         }
 
-	int mainChannel = trefTOF.getMainContributingChannel();
+        int mainChannel = trefTOF.getMainContributingChannel();
         int indices[5];
         Geo::getVolumeIndices(mainChannel, indices);
 
-	bool isInStrip = false;
+        bool isInStrip = false;
         for (auto iPropagation = 0; iPropagation < nStripsCrossedInPropagation[ibc]; iPropagation++) {
-          if(detId[ibc][iPropagation][1] == indices[1] && detId[ibc][iPropagation][2] == indices[2]){
+          if (detId[ibc][iPropagation][1] == indices[1] && detId[ibc][iPropagation][2] == indices[2]) {
             isInStrip = true;
           }
         }
 
-        if(!isInStrip) continue;
+        if (!isInStrip)
+          continue;
 
-	unsigned long bcClus = trefTOF.getTime() * Geo::BC_TIME_INPS_INV;
+        unsigned long bcClus = trefTOF.getTime() * Geo::BC_TIME_INPS_INV;
 
         // compute fine correction using cluster position instead of pad center
         // this because in case of multiple-hit cluster position is averaged on all pads contributing to the cluster (then error position matrix can be used for Chi2 if nedeed)
@@ -920,9 +921,9 @@ void MatchTOF::doMatchingForTPC(int sec)
         int eventIdTOF;
         int sourceIdTOF;
         for (auto iPropagation = 0; iPropagation < nStripsCrossedInPropagation[ibc]; iPropagation++) {
-	  if(detId[ibc][iPropagation][1] != indices[1] || detId[ibc][iPropagation][2] != indices[2]){
-	    continue;
-	  }
+          if (detId[ibc][iPropagation][1] != indices[1] || detId[ibc][iPropagation][2] != indices[2]) {
+            continue;
+          }
 
           LOG(DEBUG) << "TOF Cluster [" << itof << ", " << cacheTOF[itof] << "]:      indices   = " << indices[0] << ", " << indices[1] << ", " << indices[2] << ", " << indices[3] << ", " << indices[4];
           LOG(DEBUG) << "Propagated Track [" << itrk << "]: detId[" << iPropagation << "]  = " << detId[ibc][iPropagation][0] << ", " << detId[ibc][iPropagation][1] << ", " << detId[ibc][iPropagation][2] << ", " << detId[ibc][iPropagation][3] << ", " << detId[ibc][iPropagation][4];
