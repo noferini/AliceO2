@@ -15,6 +15,9 @@
 #ifndef ALICEO2_TOF_EVENTTIMEMAKER_H
 #define ALICEO2_TOF_EVENTTIMEMAKER_H
 
+#include "TRandom.h"
+#include "TMath.h"
+
 namespace o2
 {
 
@@ -27,8 +30,71 @@ struct eventTimeContainer {
   float eventTimeError = 0.f;
 };
 
+struct eventTimeTrack {
+  float tofSignal() { return mSignal; };
+  float tofChi2() { return mTOFChi2; };
+  float pt() { return mPt; };
+  float p() { return mP; };
+  float length() { return mLength; };
+  float tofExpTimePi() { return expTimes[0]; };
+  float tofExpTimeKa() { return expTimes[1]; };
+  float tofExpTimePr() { return expTimes[2]; };
+  float tofExpSigmaPi() { return expSigma[0]; };
+  float tofExpSigmaKa() { return expSigma[1]; };
+  float tofExpSigmaPr() { return expSigma[2]; };
+  float mSignal = 0.f;
+  float mTOFChi2 = -1.f;
+  float mPt = 0.f;
+  float mP = 0.f;
+  float mLength = 0.f;
+  float expTimes[3] = {0.f, 0.f, 0.f};
+  float expSigma[3] = {999.f, 999.f, 999.f};
+};
+
+void generateEvTimeTracks(std::vector<eventTimeTrack>& tracks, int ntracks, float evTime = 0.f)
+{
+  eventTimeTrack track;
+  constexpr float masses[3] = {0.13957000, 0.49367700, 0.93827200};
+  constexpr float kCSPEED = TMath::C() * 1.0e2f * 1.0e-12f; /// Speed of light in TOF units (cm/ps)
+  float energy = 0.f;
+  int hypo;
+  float betas[3] = {0.f};
+  for (int i = 0; i < ntracks; i++) {
+    track.mTOFChi2 = 1.f;
+    track.mP = gRandom->Exp(1);
+    track.mPt = track.mP;
+    hypo = gRandom->Exp(1);
+    if (hypo > 2) {
+      hypo = 2;
+    }
+    for (int j = 0; j < 3; j++) {
+      energy = sqrt(masses[hypo] * masses[hypo] + track.mP * track.mP);
+      betas[j] = track.mP / energy;
+      track.expTimes[j] = track.mLength / (betas[j] * kCSPEED);
+      track.expSigma[j] = 100.f;
+      if (j == hypo) {
+        track.mSignal = track.expTimes[j] + gRandom->Gaus(0.f, track.expSigma[j]);
+      }
+    }
+    tracks.push_back(track);
+  }
+}
+
+#if 0
 template <typename trackContainer>
 eventTimeContainer evTimeMaker(const trackContainer& tracks);
+#else
+template <typename trackContainer>
+eventTimeContainer evTimeMaker(const trackContainer& tracks)
+{
+  // Qui facciamo un pool di tracce buone per calcolare il T0
+  for (auto track : tracks) {
+    track.tofSignal();
+    track.length();
+  }
+  return eventTimeContainer{0.f, 0.f};
+}
+#endif
 
 } // namespace tof
 } // namespace o2
