@@ -20,5 +20,15 @@ namespace o2
 namespace tof
 {
 
+template <typename trackContainer>
+eventTimeContainer evTimeMaker(const trackContainer& tracks)
+{
+  for (auto track : tracks) {
+    track.tofSignal();
+    track.length();
+  }
+  return eventTimeContainer{0.f, 0.f};
+}
+
 } // namespace tof
 } // namespace o2

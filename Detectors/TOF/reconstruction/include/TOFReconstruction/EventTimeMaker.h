@@ -28,13 +28,7 @@ struct eventTimeContainer {
 };
 
 template <typename trackContainer>
-eventTimeContainer evTimeMaker(const trackContainer& tracks)
-{
-  for (auto track : tracks) {
-    track.tofSignal();
-  }
-  return eventTimeContainer{0.f, 0.f};
-}
+eventTimeContainer evTimeMaker(const trackContainer& tracks);
 
 } // namespace tof
 } // namespace o2
