@@ -54,3 +54,8 @@ o2_add_test_root_macro(checkChannelMapping.C
                        PUBLIC_LINK_LIBRARIES O2::TOFBase
                        LABELS tof)
 
+
+o2_add_test_root_macro(macroEvTime.C
+                       PUBLIC_LINK_LIBRARIES O2::TOFBase
+                                             O2::TOFReconstruction
+                       LABELS tof)

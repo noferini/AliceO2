@@ -24,6 +24,8 @@
 #pragma link C++ class o2::tof::CTFCoder + ;
 #pragma link C++ class o2::tof::CosmicProcessor + ;
 #pragma link C++ class o2::tof::eventTimeTrack + ;
+#pragma link C++ class o2::tof::eventTimeTrackTest + ;
 #pragma link C++ class vector < o2::tof::eventTimeTrack> + ;
+#pragma link C++ class vector < o2::tof::eventTimeTrackTest> + ;
 
 #endif
