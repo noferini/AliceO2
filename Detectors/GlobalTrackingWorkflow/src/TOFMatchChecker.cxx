@@ -67,7 +67,7 @@ class TOFMatchChecker : public Task
   bool mIsTPCTRD;
   bool mIsITSTPCTRD;
   bool mIsITSTPC;
-  gsl::span<const o2::tof::Cluster> mTOFClustersArrayInp;     ///< input TOF clusters
+  gsl::span<const o2::tof::Cluster> mTOFClustersArrayInp; ///< input TOF clusters
 
   RecoContainer mRecoData;
   std::shared_ptr<DataRequest> mDataRequest;
@@ -75,33 +75,34 @@ class TOFMatchChecker : public Task
   TStopwatch mTimer;
 };
 
-void TOFMatchChecker::checkMatching(GID gid){
-  if(gid.getSource() == GID::TPCTRD){
+void TOFMatchChecker::checkMatching(GID gid)
+{
+  if (gid.getSource() == GID::TPCTRD) {
     return;
   }
-  if(gid.getSource() == GID::TPC){
+  if (gid.getSource() == GID::TPC) {
     return;
   }
-  if(gid.getSource() == GID::ITSTPCTRD){
+  if (gid.getSource() == GID::ITSTPCTRD) {
     return;
   }
-  if(gid.getSource() == GID::ITSTPC){
+  if (gid.getSource() == GID::ITSTPC) {
     return;
   }
-  if(!mIsTPCTRD && gid.getSource() == GID::TPCTRDTOF){
+  if (!mIsTPCTRD && gid.getSource() == GID::TPCTRDTOF) {
     return;
   }
-  if(!mIsTPC && gid.getSource() == GID::TPCTOF){
+  if (!mIsTPC && gid.getSource() == GID::TPCTOF) {
     return;
   }
-  if(!mIsITSTPCTRD && gid.getSource() == GID::ITSTPCTRDTOF){
+  if (!mIsITSTPCTRD && gid.getSource() == GID::ITSTPCTRDTOF) {
     return;
   }
-  if(!mIsITSTPC && gid.getSource() == GID::ITSTPCTOF){
+  if (!mIsITSTPC && gid.getSource() == GID::ITSTPCTOF) {
     return;
   }
 
-  const o2::dataformats::MatchInfoTOF& match =  mRecoData.getTOFMatch(gid);
+  const o2::dataformats::MatchInfoTOF& match = mRecoData.getTOFMatch(gid);
 
   int tofcl = match.getIdxTOFCl();
   int trIndex = match.getTrackIndex();
@@ -111,7 +112,7 @@ void TOFMatchChecker::checkMatching(GID gid){
   float y = mTOFClustersArrayInp[tofcl].getY();
   float z = mTOFClustersArrayInp[tofcl].getZ();
   int sector = mTOFClustersArrayInp[tofcl].getSector();
-  LOG(INFO) << "cl=" << tofcl << " - trk=" << trIndex << " - chi2 =" << chi2 << " - time=" << ttof << " - coordinates (to be rotated, sector=" << sector<< ") = (" << x << "," << y << "," << z << ")";
+  LOG(INFO) << "cl=" << tofcl << " - trk=" << trIndex << " - chi2 =" << chi2 << " - time=" << ttof << " - coordinates (to be rotated, sector=" << sector << ") = (" << x << "," << y << "," << z << ")";
 }
 
 void TOFMatchChecker::init(InitContext& ic)
@@ -143,7 +144,7 @@ void TOFMatchChecker::run(ProcessingContext& pc)
   LOG(INFO) << "isTrackSourceLoaded: ITSTPCTRD -> " << mIsITSTPCTRD;
   LOG(INFO) << "TOF cluster size = " << mTOFClustersArrayInp.size();
 
-  if(!mTOFClustersArrayInp.size()){
+  if (!mTOFClustersArrayInp.size()) {
     return;
   }
 
