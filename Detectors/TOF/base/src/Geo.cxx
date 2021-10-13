@@ -153,7 +153,7 @@ void Geo::Init()
 
 void Geo::InitIndices()
 {
-  if(!mToBeInitIndexing) {
+  if (!mToBeInitIndexing) {
     return;
   }
   mToBeInitIndexing = kFALSE;
