@@ -398,7 +398,7 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
     int offsetsector = sector * Geo::NSTRIPXSECTOR * Geo::NPADS;
     for (int istrip = 0; istrip < Geo::NSTRIPXSECTOR; istrip++) {
 #ifdef DEBUGGING
-      system(Form("echo \"\" >strip_%d_%d",sector,istrip));
+      system(Form("echo \"\" >strip_%d_%d", sector, istrip));
 #endif
       LOG(INFO) << "Processing strip " << istrip;
       double fracUnderPeak[Geo::NPADS] = {0.};
@@ -417,7 +417,7 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
         int chinsector = ipair + offsetPairInStrip;
         int ich = chinsector + offsetPairInSector;
         auto entriesInPair = entriesPerChannel.at(ich);
-        xp[allpoints] = ipair + 0.5;                                  // pair index
+        xp[allpoints] = ipair + 0.5; // pair index
 
         if (entriesInPair == 0) {
           localFitter.AddPoint(&(xp[allpoints]), 0.0, 1.0);
@@ -471,14 +471,14 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
           intmax = mRange;
         }
 
-        xp[allpoints] = ipair + 0.5;                                  // pair index
-        exp[allpoints] = 0.0;                                         // error on pair index (dummy since it is on the pair index)
-        deltat[allpoints] = fitValues[1];                             // delta between offsets from channels in pair (from the fit) - in ps
+        xp[allpoints] = ipair + 0.5;      // pair index
+        exp[allpoints] = 0.0;             // error on pair index (dummy since it is on the pair index)
+        deltat[allpoints] = fitValues[1]; // delta between offsets from channels in pair (from the fit) - in ps
         float integral = c->integral(ich, intmin, intmax);
         edeltat[allpoints] = 20 + fitValues[2] / sqrt(integral); // TODO: for now put by default to 20 ps since it was seen to be reasonable; but it should come from the fit: who gives us the error from the fit ??????
         localFitter.AddPoint(&(xp[allpoints]), deltat[allpoints], edeltat[allpoints]);
 #ifdef DEBUGGING
-        system(Form("echo \"%d %f %f\" >>strip_%d_%d",ipair,deltat[allpoints],edeltat[allpoints],sector,istrip));
+        system(Form("echo \"%d %f %f\" >>strip_%d_%d", ipair, deltat[allpoints], edeltat[allpoints], sector, istrip));
 #endif
         goodpoints++;
         allpoints++;
@@ -520,8 +520,6 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
           localFitter.FixParameter(i, 0.);
         }
       }
-
-
 
       LOG(DEBUG) << "Strip = " << istrip << " fitted by thread = " << ithread << ", goodpoints = " << goodpoints << ", number of free parameters = "
                  << localFitter.GetNumberFreeParameters() << ",  NDF = " << goodpoints - localFitter.GetNumberFreeParameters();
