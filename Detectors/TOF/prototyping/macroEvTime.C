@@ -3,7 +3,7 @@
 #endif
 
 using namespace o2::tof;
-void macroEvTime(bool removebias = true)
+void macroEvTime(bool removebias = false)
 {
 
   TH1F* htest = new TH1F("htest", ";N#sigma (t0_{reco} - t0_{true})", 100, -10, 10);
@@ -16,7 +16,7 @@ void macroEvTime(bool removebias = true)
   std::vector<eventTimeTrackTest> tracks;
   for (int i = 0; i < 1000; i++) {
     tracks.clear();
-    generateEvTimeTracks(tracks, 5);
+    generateEvTimeTracks(tracks, 10);
     auto evtime = evTimeMaker<std::vector<eventTimeTrackTest>, eventTimeTrackTest, filterDummy>(tracks);
     //    Printf("Ev time %f +-%f", evtime.eventTime, evtime.eventTimeError);
     htest->Fill(evtime.eventTime / evtime.eventTimeError);
