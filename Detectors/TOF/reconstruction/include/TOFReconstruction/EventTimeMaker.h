@@ -47,9 +47,9 @@ struct eventTimeTrack {
     }
   }
   float tofSignal() const { return mSignal; }
-  float tofExpTimePi() const { return expTimes[0]; }
-  float tofExpTimeKa() const { return expTimes[1]; }
-  float tofExpTimePr() const { return expTimes[2]; }
+  float tofExpSignalPi(const float& tofSignal = 0.f) const { return expTimes[0]; }
+  float tofExpSignalKa(const float& tofSignal = 0.f) const { return expTimes[1]; }
+  float tofExpSignalPr(const float& tofSignal = 0.f) const { return expTimes[2]; }
   float tofExpSigmaPi() const { return expSigma[0]; }
   float tofExpSigmaKa() const { return expSigma[1]; }
   float tofExpSigmaPr() const { return expSigma[2]; }
@@ -76,7 +76,7 @@ void generateEvTimeTracks(std::vector<eventTimeTrackTest>& tracks, int ntracks, 
 template <typename trackType>
 bool filterDummy(const trackType& tr)
 {
-  return (tr.tofChi2() >= 0 && tr.mP < 2.0);
+  return (tr.tofChi2() >= 0 && tr.p() < 2.0);
 } // accept all
 
 void computeEvTime(const std::vector<eventTimeTrack>& tracks, const std::vector<int>& trkIndex, eventTimeContainer& evtime);
@@ -105,7 +105,7 @@ eventTimeContainer evTimeMaker(const trackTypeContainer& tracks, float diamond =
   // Qui facciamo un pool di tracce buone per calcolare il T0
   for (auto track : tracks) {
     if (trackFilter(track)) {
-      expt[0] = track.tofExpTimePi(), expt[1] = track.tofExpTimeKa(), expt[2] = track.tofExpTimePr();
+      expt[0] = track.tofExpSignalPi(track.tofSignal()), expt[1] = track.tofExpSignalKa(track.tofSignal()), expt[2] = track.tofExpSignalPr(track.tofSignal());
       expsigma[0] = track.tofExpSigmaPi(), expsigma[1] = track.tofExpSigmaKa(), expsigma[2] = track.tofExpSigmaPr();
       trkWork.emplace_back(track.tofSignal(), expt, expsigma);
       trkIndex.push_back(result.weights.size());
