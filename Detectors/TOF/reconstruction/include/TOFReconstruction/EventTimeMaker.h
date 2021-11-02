@@ -9,8 +9,11 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file EventTimeMaker.h
-/// \brief Definition of the TOF event time maker
+/// \file   EventTimeMaker.h
+/// \author Francesca Ercolessi francesca.ercolessi@cern.ch
+/// \author Francesco Noferini francesco.noferini@cern.ch
+/// \author Nicolò Jacazio nicolo.jacazio@cern.ch
+/// \brief  Definition of the TOF event time maker
 
 #ifndef ALICEO2_TOF_EVENTTIMEMAKER_H
 #define ALICEO2_TOF_EVENTTIMEMAKER_H

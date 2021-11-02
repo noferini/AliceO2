@@ -9,8 +9,13 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file EventTimeMaker.cxx
-/// \brief Implementation of the TOF event time maker
+///
+/// \file   EventTimeMaker.cxx
+/// \author Francesca Ercolessi francesca.ercolessi@cern.ch
+/// \author Francesco Noferini francesco.noferini@cern.ch
+/// \author Nicolò Jacazio nicolo.jacazio@cern.ch
+/// \brief  Implementation of the TOF event time maker
+///
 
 #include "TOFReconstruction/EventTimeMaker.h"
 
