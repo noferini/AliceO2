@@ -200,4 +200,3 @@ CalibTimeSlewingParamTOF::CalibTimeSlewingParamTOF(const CalibTimeSlewingParamTO
     *(mSigmaPeak[i]) = *(source.mSigmaPeak[i]);
   }
 }
-
