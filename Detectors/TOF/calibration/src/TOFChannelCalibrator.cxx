@@ -425,7 +425,7 @@ void TOFChannelCalibrator<T>::finalizeSlotWithCosmics(Slot& slot)
   // for the CCDB entry
   std::map<std::string, std::string> md;
   TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
-  ts.bind();
+//  ts.bind();
 
   int nbins = c->getNbins();
   float range = c->getRange();
@@ -642,7 +642,7 @@ void TOFChannelCalibrator<T>::finalizeSlotWithTracks(Slot& slot)
   // for the CCDB entry
   std::map<std::string, std::string> md;
   TimeSlewing& ts = mCalibTOFapi->getSlewParamObj(); // we take the current CCDB object, since we want to simply update the offset
-  ts.bind();
+//  ts.bind();
 
 #ifdef WITH_OPENMP
   if (mNThreads < 1) {

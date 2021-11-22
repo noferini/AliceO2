@@ -189,3 +189,15 @@ CalibTimeSlewingParamTOF& CalibTimeSlewingParamTOF::operator+=(const CalibTimeSl
   }
   return *this;
 }
+//______________________________________________
+CalibTimeSlewingParamTOF::CalibTimeSlewingParamTOF(const CalibTimeSlewingParamTOF& source)
+{
+  bind();
+  for (int i = 0; i < NSECTORS; i++) {
+    *(mTimeSlewing[i]) = *(source.mTimeSlewing[i]);
+    (*(mChannelStart[i])) = (*(source.mChannelStart[i]));
+    *(mFractionUnderPeak[i]) = *(source.mFractionUnderPeak[i]);
+    *(mSigmaPeak[i]) = *(source.mSigmaPeak[i]);
+  }
+}
+
