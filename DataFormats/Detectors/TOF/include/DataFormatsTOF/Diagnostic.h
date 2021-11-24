@@ -49,7 +49,8 @@ class Diagnostic
   void fill(const Diagnostic& diag);                       // for calibration
   void fill(const gsl::span<const o2::tof::Diagnostic>){}; // for calibration
   void merge(const Diagnostic* prev);
-  void getNoisyMap(Bool_t* output); // set true in output channel array
+  void getNoisyMap(Bool_t* output, int noisyThr = 1); // set true in output channel array
+  void getNoisyLevelMap(Char_t* output);              // set true in output channel array
   unsigned long size() const { return mVector.size(); }
   ULong64_t getPattern(int i) const
   {
@@ -63,6 +64,8 @@ class Diagnostic
   int getCrate(ULong64_t pattern) const;
   int getChannel(ULong64_t pattern) const;
   int getNoisyLevel(ULong64_t pattern) const;
+
+  const std::map<ULong64_t, uint32_t>& getVector() const { return mVector; }
 
  private:
   std::map<ULong64_t, uint32_t> mVector; // diagnostic frequency vector (key/pattern , frequency)
