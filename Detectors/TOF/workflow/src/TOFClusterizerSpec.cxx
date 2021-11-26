@@ -124,7 +124,8 @@ class TOFDPLClustererTask
 
     if (mUseCCDB) {
       calibapi.setURL(mCCDBurl.c_str());
-      calibapi.setTimeStamp(0);
+      auto creationTime = DataRefUtils::getHeader<DataProcessingHeader*>(pc.inputs().getFirstValid(true))->creation;
+      calibapi.setTimeStamp(creationTime / 1000);
       calibapi.readLHCphase();
       calibapi.readTimeSlewingParam();
       calibapi.readDiagnosticFrequencies();

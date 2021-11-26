@@ -73,6 +73,8 @@ void CalibTOFapi::readDiagnosticFrequencies()
   auto& mgr = CcdbManager::instance();
   mDiaFreq = mgr.getForTimeStamp<Diagnostic>("TOF/Calib/Diagnostic", mTimeStamp);
 
+  mDiaFreq->print();
+
   resetDia();
 
   if (!mDiaFreq->getFrequencyROW()) {
