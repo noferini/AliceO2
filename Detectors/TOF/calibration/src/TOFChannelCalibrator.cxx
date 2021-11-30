@@ -91,9 +91,9 @@ void TOFChannelData::fill(const gsl::span<const o2::dataformats::CalibInfoTOF> d
 
     dtcorr = Utils::subtractInteractionBC(dtcorr, true) - Utils::mLHCPhase;
 
-    LOG(INFO) << "LHCphase = " << Utils::mLHCPhase;
+    LOG(info) << "LHCphase = " << Utils::mLHCPhase;
 
-    LOG(INFO) << "inserting in channel " << ch << ": dt = " << Utils::subtractInteractionBC(dt, true) << ", tot = " << tot << ", corr = " << corr << ", corrected dt = " << dtcorr;
+    LOG(info) << "inserting in channel " << ch << ": dt = " << Utils::subtractInteractionBC(dt, true) << ", tot = " << tot << ", corr = " << corr << ", corrected dt = " << dtcorr;
 
 #ifdef DEBUGGING
     mChannelDist->Fill(ch, dtcorr);

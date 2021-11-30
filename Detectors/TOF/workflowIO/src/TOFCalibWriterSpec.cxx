@@ -45,7 +45,7 @@ DataProcessorSpec getTOFCalibWriterSpec(const char* outdef, bool toftpc)
   };
   // A spectator for logging
   auto loggerDia = [](CalibDiaType const& indata) {
-    LOG(DEBUG) << "DIAGNOSTIC WORD SIZE " << indata.size();
+    LOG(debug) << "DIAGNOSTIC WORD SIZE " << indata.size();
   };
   o2::header::DataDescription ddCalib{"CALIBDATA"};
   o2::header::DataDescription ddCalibDia{"DIAFREQ"};
