@@ -101,7 +101,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& configcontext)
     }
   }
 
-  if(!o2::tof::Utils::hasFillScheme()){
+  if (!o2::tof::Utils::hasFillScheme()) {
     // check collision context
     auto mcReader = std::make_unique<o2::steer::MCKinematicsReader>("collisioncontext.root");
     auto context = mcReader->getDigitizationContext();
