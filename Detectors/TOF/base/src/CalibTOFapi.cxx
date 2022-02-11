@@ -104,17 +104,23 @@ void CalibTOFapi::readTimeSlewingParam()
 
 void CalibTOFapi::readDiagnosticFrequencies()
 {
+  auto& mgr = CcdbManager::instance();
+  long timems = long(mTimeStamp) * 1000;
+  mDiaFreq = mgr.getForTimeStamp<Diagnostic>("TOF/Calib/Diagnostic", timems);
+
+  loadDiagnosticFrequencies();
+}
+//______________________________________________________________________
+
+void CalibTOFapi::loadDiagnosticFrequencies()
+{
+  //  mDiaFreq->print();
+
   static const int NCH_PER_CRATE = Geo::NSTRIPXSECTOR * Geo::NPADS;
   // getting the Diagnostic Frequency calibration
   // needed for simulation
 
   memset(mIsNoisy, false, Geo::NCHANNELS);
-
-  auto& mgr = CcdbManager::instance();
-  long timems = long(mTimeStamp) * 1000;
-  mDiaFreq = mgr.getForTimeStamp<Diagnostic>("TOF/Calib/Diagnostic", timems);
-
-  //  mDiaFreq->print();
 
   resetDia();
 
