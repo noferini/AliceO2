@@ -60,7 +60,7 @@ class TOFDPLClustererTask
   bool mUpdateCCDB = false;
 
   std::string mCCDBurl;
-  o2::tof::CalibTOFapi *mCalibApi = nullptr;
+  o2::tof::CalibTOFapi* mCalibApi = nullptr;
 
  public:
   explicit TOFDPLClustererTask(bool useMC, bool useCCDB, bool doCalib, bool isCosmic, std::string ccdb_url) : mUseMC(useMC), mUseCCDB(useCCDB), mIsCalib(doCalib), mIsCosmic(isCosmic), mCCDBurl(ccdb_url) {}
@@ -92,15 +92,15 @@ class TOFDPLClustererTask
     }
   }
 
-  void finaliseCCDB( o2::framework::ConcreteDataMatcher matcher, void* obj)
+  void finaliseCCDB(o2::framework::ConcreteDataMatcher matcher, void* obj)
   {
-    if(matcher == ConcreteDataMatcher("TOF","DiagnosticCal",0)){
+    if (matcher == ConcreteDataMatcher("TOF", "DiagnosticCal", 0)) {
       mUpdateCCDB = true;
     }
-    if(matcher == ConcreteDataMatcher("TOF","LHCphaseCal",0)){
+    if (matcher == ConcreteDataMatcher("TOF", "LHCphaseCal", 0)) {
       mUpdateCCDB = true;
     }
-    if(matcher == ConcreteDataMatcher("TOF","ChannelCalibCal",0)){
+    if (matcher == ConcreteDataMatcher("TOF", "ChannelCalibCal", 0)) {
       mUpdateCCDB = true;
     }
   }
@@ -124,9 +124,9 @@ class TOFDPLClustererTask
       mClsLabels.clear();
     }
 
-//    const o2::dataformats::CalibLHCphaseTOF* lhcPhase;
-//    const o2::dataformats::CalibTimeSlewingParamTOF* channelCalib;
-//    const o2::tof::Diagnostic* diagnostic;
+    //    const o2::dataformats::CalibLHCphaseTOF* lhcPhase;
+    //    const o2::dataformats::CalibTimeSlewingParamTOF* channelCalib;
+    //    const o2::tof::Diagnostic* diagnostic;
 
     if (mUseCCDB) { // read calibration objects from ccdb
       // check LHC phase
@@ -134,29 +134,29 @@ class TOFDPLClustererTask
       const auto channelCalibIn = pc.inputs().get<o2::dataformats::CalibTimeSlewingParamTOF*>("tofccdbChannelCalib");
       const auto diagnosticIn = pc.inputs().get<o2::tof::Diagnostic*>("tofccdbDia");
 
-      if(!mCalibApi){
-        o2::dataformats::CalibLHCphaseTOF *lhcPhase = new o2::dataformats::CalibLHCphaseTOF(std::move(*lhcPhaseIn));
-        o2::dataformats::CalibTimeSlewingParamTOF *channelCalib = new CalibTimeSlewingParamTOF(std::move(*channelCalibIn)); 
-        o2::tof::Diagnostic *diagnostic = new o2::tof::Diagnostic(std::move(*diagnosticIn));
+      if (!mCalibApi) {
+        o2::dataformats::CalibLHCphaseTOF* lhcPhase = new o2::dataformats::CalibLHCphaseTOF(std::move(*lhcPhaseIn));
+        o2::dataformats::CalibTimeSlewingParamTOF* channelCalib = new CalibTimeSlewingParamTOF(std::move(*channelCalibIn));
+        o2::tof::Diagnostic* diagnostic = new o2::tof::Diagnostic(std::move(*diagnosticIn));
         mCalibApi = new o2::tof::CalibTOFapi(long(0), lhcPhase, channelCalib, diagnostic);
         mCalibApi->readDiagnosticFrequencies();
         // add dia
       } else { // update if necessary
-        if(mUpdateCCDB){
+        if (mUpdateCCDB) {
           LOG(info) << "Update CCDB objects since new";
           delete mCalibApi;
-          o2::dataformats::CalibLHCphaseTOF *lhcPhase = new o2::dataformats::CalibLHCphaseTOF(*lhcPhaseIn);
-          o2::dataformats::CalibTimeSlewingParamTOF *channelCalib = new CalibTimeSlewingParamTOF(*channelCalibIn); 
-          o2::tof::Diagnostic *diagnostic = new o2::tof::Diagnostic(std::move(*diagnosticIn));
+          o2::dataformats::CalibLHCphaseTOF* lhcPhase = new o2::dataformats::CalibLHCphaseTOF(*lhcPhaseIn);
+          o2::dataformats::CalibTimeSlewingParamTOF* channelCalib = new CalibTimeSlewingParamTOF(*channelCalibIn);
+          o2::tof::Diagnostic* diagnostic = new o2::tof::Diagnostic(std::move(*diagnosticIn));
           mCalibApi = new o2::tof::CalibTOFapi(long(0), lhcPhase, channelCalib);
           mCalibApi->readDiagnosticFrequencies();
         } else {
           // do nothing
         }
       }
-    } else if(!mCalibApi){ // calibration objects set to zero
-      auto *lhcPhaseDummy = new o2::dataformats::CalibLHCphaseTOF();
-      auto *channelCalibDummy = new o2::dataformats::CalibTimeSlewingParamTOF();
+    } else if (!mCalibApi) { // calibration objects set to zero
+      auto* lhcPhaseDummy = new o2::dataformats::CalibLHCphaseTOF();
+      auto* channelCalibDummy = new o2::dataformats::CalibTimeSlewingParamTOF();
 
       lhcPhaseDummy->addLHCphase(0, 0);
       lhcPhaseDummy->addLHCphase(2000000000, 0);
@@ -170,7 +170,7 @@ class TOFDPLClustererTask
       mCalibApi = new o2::tof::CalibTOFapi(long(0), lhcPhaseDummy, channelCalibDummy);
     }
 
-/*
+    /*
     if (mUseCCDB) {
       mCalibapi.setURL(mCCDBurl.c_str());
       auto creationTime = DataRefUtils::getHeader<DataProcessingHeader*>(pc.inputs().getFirstValid(true))->creation;
@@ -298,11 +298,11 @@ o2::framework::DataProcessorSpec getTOFClusterizerSpec(bool useMC, bool useCCDB,
   inputs.emplace_back("patterns", o2::header::gDataOriginTOF, "PATTERNS", 0, Lifetime::Timeframe);
 
   if (useCCDB) {
-//    inputs.emplace_back("tofccdbLHCphase", "TOF", "StatusTOF", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/Status"));
+    //    inputs.emplace_back("tofccdbLHCphase", "TOF", "StatusTOF", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/Status"));
     inputs.emplace_back("tofccdbDia", "TOF", "DiagnosticCal", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/Diagnostic"));
     inputs.emplace_back("tofccdbLHCphase", "TOF", "LHCphaseCal", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/LHCphase"));
     inputs.emplace_back("tofccdbChannelCalib", "TOF", "ChannelCalibCal", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/ChannelCalib"));
-  //    inputs.emplace_back("tofccdbChannelCalib", o2::header::gDataOriginTOF, "ChannelCalib");
+    //    inputs.emplace_back("tofccdbChannelCalib", o2::header::gDataOriginTOF, "ChannelCalib");
   }
   if (useMC) {
     inputs.emplace_back("tofdigitlabels", o2::header::gDataOriginTOF, "DIGITSMCTR", 0, Lifetime::Timeframe);
