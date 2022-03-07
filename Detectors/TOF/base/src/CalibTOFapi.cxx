@@ -47,7 +47,7 @@ void CalibTOFapi::readActiveMap()
 {
   auto& mgr = CcdbManager::instance();
   long timems = long(mTimeStamp) * 1000;
-  LOG(INFO) << "TOF get active map with timestamp (ms) = " << timems;
+  LOG(info) << "TOF get active map with timestamp (ms) = " << timems;
   auto fee = mgr.getForTimeStamp<TOFFEElightInfo>("TOF/Calib/FEELIGHT", timems);
   loadActiveMap(fee);
 }
@@ -80,7 +80,7 @@ void CalibTOFapi::readLHCphase()
 
   auto& mgr = CcdbManager::instance();
   long timems = long(mTimeStamp) * 1000;
-  LOG(INFO) << "TOF get LHCphase with timestamp (ms) = " << timems;
+  LOG(info) << "TOF get LHCphase with timestamp (ms) = " << timems;
   mLHCphase = mgr.getForTimeStamp<LhcPhase>("TOF/Calib/LHCphase", timems);
   if (mLHCphase) {
     LOG(info) << "read LHCphase for TOF " << mLHCphase->getLHCphase(mTimeStamp);
@@ -99,7 +99,7 @@ void CalibTOFapi::readTimeSlewingParam()
 
   auto& mgr = CcdbManager::instance();
   long timems = long(mTimeStamp) * 1000;
-  LOG(INFO) << "TOF get time calibrations with timestamp (ms) = " << timems;
+  LOG(info) << "TOF get time calibrations with timestamp (ms) = " << timems;
   mSlewParam = mgr.getForTimeStamp<SlewParam>("TOF/Calib/ChannelCalib", timems);
   if (mSlewParam) {
     LOG(info) << "read TimeSlewingParam for TOF";
@@ -114,7 +114,7 @@ void CalibTOFapi::readDiagnosticFrequencies()
 {
   auto& mgr = CcdbManager::instance();
   long timems = long(mTimeStamp) * 1000;
-  LOG(INFO) << "TOF get Diagnostics with timestamp (ms) = " << timems;
+  LOG(info) << "TOF get Diagnostics with timestamp (ms) = " << timems;
   mDiaFreq = mgr.getForTimeStamp<Diagnostic>("TOF/Calib/Diagnostic", timems);
 
   loadDiagnosticFrequencies();
