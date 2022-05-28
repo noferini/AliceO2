@@ -107,12 +107,12 @@ class CalibTOFapi
   Diagnostic* mDiaFreq = nullptr;  ///< object for Diagnostic Frequency
 
   // info from diagnostic
-  int mNoisyThreshold = 1;                           ///< threshold to be noisy
-  float mEmptyTOF = 0;                               ///< probability to have TOF fully empty
-  float mEmptyCrateProb[Geo::kNCrate] = {};          ///< probability to have an empty crate in the current readout window
-  std::vector<std::pair<int, float>> mNoisy;         ///< probTRMerror
-  std::vector<std::pair<int, float>> mTRMerrorProb;  ///< probTRMerror
-  std::vector<int> mTRMmask;                         ///< mask error for TRM
+  int mNoisyThreshold = 1;                          ///< threshold to be noisy
+  float mEmptyTOF = 0;                              ///< probability to have TOF fully empty
+  float mEmptyCrateProb[Geo::kNCrate] = {};         ///< probability to have an empty crate in the current readout window
+  std::vector<std::pair<int, float>> mNoisy;        ///< probTRMerror
+  std::vector<std::pair<int, float>> mTRMerrorProb; ///< probTRMerror
+  std::vector<int> mTRMmask;                        ///< mask error for TRM
 
   bool mIsErrorCh[Geo::NCHANNELS] = {}; ///< channels in error (TRM)
   std::vector<int> mFillErrChannel;     ///< last error channels filled
