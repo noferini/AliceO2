@@ -26,10 +26,6 @@ void CalibTOFapi::resetDia()
 
 CalibTOFapi::CalibTOFapi()
 {
-  resetDia();
-  memset(mIsErrorCh, false, Geo::NCHANNELS);
-  memset(mIsOffCh, false, Geo::NCHANNELS);
-  memset(mIsNoisy, false, Geo::NCHANNELS);
 }
 
 //______________________________________________________________________

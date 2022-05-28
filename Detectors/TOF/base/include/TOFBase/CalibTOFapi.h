@@ -24,6 +24,16 @@
 #include "DataFormatsTOF/Diagnostic.h"
 #include "DataFormatsTOF/TOFFEElightInfo.h"
 
+#define INITB_COL false,false
+#define INITB_FEA INITB_COL,INITB_COL,INITB_COL,INITB_COL
+#define INITB_STRIP INITB_FEA,INITB_FEA,INITB_FEA,INITB_FEA
+#define INITB_STRIP_10 INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP,INITB_STRIP
+#define INITB_SECTOR INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP_10,INITB_STRIP
+#define INITB_ALL INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR,INITB_SECTOR
+
+#define INITF_SECTOR 0.,0.,0.,0.
+#define INITF_ALL INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR,INITF_SECTOR
+
 namespace o2
 {
 namespace tof
@@ -107,17 +117,17 @@ class CalibTOFapi
   Diagnostic* mDiaFreq = nullptr;  ///< object for Diagnostic Frequency
 
   // info from diagnostic
-  int mNoisyThreshold = 1;                          ///< threshold to be noisy
-  float mEmptyTOF = 0;                              ///< probability to have TOF fully empty
-  float mEmptyCrateProb[Geo::kNCrate];              ///< probability to have an empty crate in the current readout window
-  std::vector<std::pair<int, float>> mNoisy;        ///< probTRMerror
-  std::vector<std::pair<int, float>> mTRMerrorProb; ///< probTRMerror
-  std::vector<int> mTRMmask;                        ///< mask error for TRM
+  int mNoisyThreshold = 1;                           ///< threshold to be noisy
+  float mEmptyTOF = 0;                               ///< probability to have TOF fully empty
+  float mEmptyCrateProb[Geo::kNCrate] = {INITF_ALL}; ///< probability to have an empty crate in the current readout window
+  std::vector<std::pair<int, float>> mNoisy;         ///< probTRMerror
+  std::vector<std::pair<int, float>> mTRMerrorProb;  ///< probTRMerror
+  std::vector<int> mTRMmask;                         ///< mask error for TRM
 
-  bool mIsErrorCh[Geo::NCHANNELS];  ///< channels in error (TRM)
-  std::vector<int> mFillErrChannel; ///< last error channels filled
-  bool mIsOffCh[Geo::NCHANNELS];    ///< channels in error (TRM)
-  bool mIsNoisy[Geo::NCHANNELS];    ///< noisy channels
+  bool mIsErrorCh[Geo::NCHANNELS] = {INITB_ALL};  ///< channels in error (TRM)
+  std::vector<int> mFillErrChannel;               ///< last error channels filled
+  bool mIsOffCh[Geo::NCHANNELS] = {INITB_ALL};    ///< channels in error (TRM)
+  bool mIsNoisy[Geo::NCHANNELS] = {INITB_ALL};    ///< noisy channels
 
   ClassDefNV(CalibTOFapi, 1);
 };
