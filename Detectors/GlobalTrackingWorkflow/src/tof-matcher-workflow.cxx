@@ -1,4 +1,4 @@
-3// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
+3 // Copyright 2019-2020 CERN and copyright holders of ALICE O2.
 // See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
 // All rights not expressly granted are reserved.
 //
@@ -32,7 +32,7 @@
 #include "TSystem.h"
 #include "DetectorsBase/DPLWorkflowUtils.h"
 
-using namespace o2::framework;
+  using namespace o2::framework;
 using DetID = o2::detectors::DetID;
 using GID = o2::dataformats::GlobalTrackID;
 // ------------------------------------------------------------------
