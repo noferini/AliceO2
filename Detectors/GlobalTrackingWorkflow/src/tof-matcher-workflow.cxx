@@ -32,7 +32,7 @@
 #include "TSystem.h"
 #include "DetectorsBase/DPLWorkflowUtils.h"
 
-  using namespace o2::framework;
+using namespace o2::framework;
 using DetID = o2::detectors::DetID;
 using GID = o2::dataformats::GlobalTrackID;
 // ------------------------------------------------------------------
