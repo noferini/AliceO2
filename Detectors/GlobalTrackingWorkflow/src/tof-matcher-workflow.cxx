@@ -1,4 +1,4 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
+3// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
 // See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
 // All rights not expressly granted are reserved.
 //
@@ -59,7 +59,7 @@ void customize(std::vector<o2::framework::ConfigParamSpec>& workflowOptions)
     {"use-fit", o2::framework::VariantType::Bool, false, {"enable access to fit info for calibration"}},
     {"use-ccdb", o2::framework::VariantType::Bool, false, {"enable access to ccdb tof calibration objects"}},
     {"strict-matching", o2::framework::VariantType::Bool, false, {"High purity preliminary matching"}},
-    {"output-type", o2::framework::VariantType::String, "matching-info,calib-info", {"matching-info, calib-info"}},
+    {"output-type", o2::framework::VariantType::String, "matching-info", {"matching-info, calib-info"}},
     {"enable-dia", o2::framework::VariantType::Bool, false, {"to require diagnostic freq and then write to calib outputs (obsolete since now default)"}},
     {"trd-extra-tolerance", o2::framework::VariantType::Float, 500.0f, {"Extra time tolerance for TRD tracks in ns"}},
     {"configKeyValues", VariantType::String, "", {"Semicolon separated key=value strings ..."}},
