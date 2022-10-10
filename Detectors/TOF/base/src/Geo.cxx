@@ -191,7 +191,7 @@ void Geo::Init()
           // load strip alignment parameters from current geometry
           const Double_t* tr = stripMat.GetTranslation();
           const Double_t* rot = stripMat.GetRotationMatrix();
-          mGeoDistances[isector][iplate][istrip] = tr[1];            // DISTANCES[iplate][istrip];
+          mGeoDistances[isector][iplate][istrip] = tr[1];                     // DISTANCES[iplate][istrip];
           mGeoHeights[isector][iplate][istrip] = tr[2] - (RMAX + RMIN) * 0.5; // HEIGHTS[iplate][istrip];
           mGeoX[isector][iplate][istrip] = tr[0];
 
