@@ -508,8 +508,8 @@ void MatchTOF::doMatching(int sec)
     //    Printf("intLT (before doing anything): length = %f, time (Pion) = %f", intLT.getL(), intLT.getTOF(o2::track::PID::Pion));
     float minTrkTime = (trackWork.second.getTimeStamp() - mSigmaTimeCut * trackWork.second.getTimeStampError()) * 1.E6 + timeShift;         // minimum time in ps
     float maxTrkTime = (trackWork.second.getTimeStamp() + mSigmaTimeCut * trackWork.second.getTimeStampError()) * 1.E6 + timeShift + 100E3; // maximum time in ps + 100 ns for slow tracks (beta->0.2)
-    int istep = 1;                                                                                                                                // number of steps
-    float step = 1.0;                                                                                                                             // step size in cm
+    int istep = 1;                                                                                                                          // number of steps
+    float step = 1.0;                                                                                                                       // step size in cm
 
     //uncomment for local debug
     /*
