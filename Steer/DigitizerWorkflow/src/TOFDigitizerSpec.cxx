@@ -32,6 +32,7 @@
 #include "DetectorsRaw/HBFUtils.h"
 #include "TOFBase/Geo.h"
 #include "Framework/CCDBParamSpec.h"
+#include "DataFormatsTOF/ParameterContainers.h"
 
 using namespace o2::framework;
 using namespace o2::dataformats;
@@ -46,7 +47,7 @@ namespace tof
 class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
 {
  public:
-  TOFDPLDigitizerTask(bool useCCDB, std::string ccdb_url, int timestamp, bool ccdbSA) : mUseCCDB{useCCDB}, mCCDBurl(ccdb_url), mTimestamp(timestamp), mCCDBsa(ccdbSA), o2::base::BaseDPLDigitizer(o2::base::InitServices::FIELD | o2::base::InitServices::GEOM){};
+  TOFDPLDigitizerTask(bool useCCDB, std::string ccdb_url, int timestamp, bool ccdbSA) : mUseCCDB{useCCDB}, mCCDBurl(ccdb_url), mTimestamp(timestamp), mCCDBsa(ccdbSA), o2::base::BaseDPLDigitizer(o2::base::InitServices::FIELD | o2::base::InitServices::GEOM), mPass("unanchored") {};
 
   void initDigitizerTask(framework::InitContext& ic) override
   {
@@ -87,6 +88,10 @@ class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
       mUpdateCCDB = true;
       return;
     }
+    if (matcher == ConcreteDataMatcher("TOF", "parameters", 0)) {
+      mUpdateCCDB = true;
+      return;
+    }
   }
 
   void run(framework::ProcessingContext& pc)
@@ -122,6 +127,33 @@ class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
       const auto channelCalibIn = pc.inputs().get<o2::dataformats::CalibTimeSlewingParamTOF*>("tofccdbChannelCalib");
       const auto diagnosticIn = pc.inputs().get<o2::tof::Diagnostic*>("tofccdbDia");
       const auto statusIn = pc.inputs().get<o2::tof::TOFFEElightInfo*>("tofccdbStatus");
+      const auto tofParams = pc.inputs().get<o2::tof::ParameterCollection*>("tofccdbParams");
+
+      if(tofParams->getSize(mPass) < 0) {
+        LOG(fatal) << "Pass " << mPass << " not found in the tofParams object (stop here!)";
+      } else {
+          const auto& params = tofParams->getPars(mPass);
+          if(params.count("time_resolution")){
+            mDigitizer->setResolution(120);//params.at("time_resolution"));
+            LOG(INFO) << "time_resolution load from ccdb -> " << params.at("time_resolution");
+          }
+          if(params.count("eff_center")){
+            mDigitizer->setEffCenter(params.at("eff_center"));
+            LOG(INFO) << "eff_center load from ccdb -> " << params.at("eff_center");
+          }
+          if(params.count("eff_boundary1")){
+            mDigitizer->setEffBoundary1(params.at("eff_boundary1"));
+            LOG(INFO) << "eff_boundary1 load from ccdb -> " << params.at("eff_boundary1");
+          }
+          if(params.count("eff_boundary2")){
+            mDigitizer->setEffBoundary2(params.at("eff_boundary2"));
+            LOG(INFO) << "eff_boundary2 load from ccdb -> " << params.at("eff_boundary2");
+          }
+          if(params.count("eff_boundary3")){
+            mDigitizer->setEffBoundary3(params.at("eff_boundary3"));
+            LOG(INFO) << "eff_boundary3 load from ccdb -> " << params.at("eff_boundary3");
+          }
+      }
 
       if (!mCalibApi) {
         o2::dataformats::CalibLHCphaseTOF* lhcPhase = new o2::dataformats::CalibLHCphaseTOF(std::move(*lhcPhaseIn));
@@ -262,6 +294,7 @@ class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
   bool mUpdateCCDB = false;
   o2::tof::CalibTOFapi* mCalibApi = nullptr;
   bool mCCDBsa = false;
+  std::string mPass;
 };
 
 DataProcessorSpec getTOFDigitizerSpec(int channel, bool useCCDB, bool mctruth, std::string ccdb_url, int timestamp, bool ccdbSA)
@@ -283,6 +316,7 @@ DataProcessorSpec getTOFDigitizerSpec(int channel, bool useCCDB, bool mctruth, s
     inputs.emplace_back("tofccdbDia", "TOF", "DiagnosticCal", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/Diagnostic"));
     inputs.emplace_back("tofccdbLHCphase", "TOF", "LHCphaseCal", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/LHCphase"));
     inputs.emplace_back("tofccdbChannelCalib", "TOF", "ChannelCalibCal", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/ChannelCalib"));
+    inputs.emplace_back("tofccdbParams", "TOF", "parameters", 0, Lifetime::Condition, ccdbParamSpec("TOF/Calib/Params"));
   }
 
   std::vector<OutputSpec> outputs;
