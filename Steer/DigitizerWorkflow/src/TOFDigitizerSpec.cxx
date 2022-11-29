@@ -135,23 +135,23 @@ class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
           const auto& params = tofParams->getPars(mPass);
           if(params.count("time_resolution")){
             mDigitizer->setResolution(120);//params.at("time_resolution"));
-            LOG(INFO) << "time_resolution load from ccdb -> " << params.at("time_resolution");
+            LOG(info) << "time_resolution load from ccdb -> " << params.at("time_resolution");
           }
           if(params.count("eff_center")){
             mDigitizer->setEffCenter(params.at("eff_center"));
-            LOG(INFO) << "eff_center load from ccdb -> " << params.at("eff_center");
+            LOG(info) << "eff_center load from ccdb -> " << params.at("eff_center");
           }
           if(params.count("eff_boundary1")){
             mDigitizer->setEffBoundary1(params.at("eff_boundary1"));
-            LOG(INFO) << "eff_boundary1 load from ccdb -> " << params.at("eff_boundary1");
+            LOG(info) << "eff_boundary1 load from ccdb -> " << params.at("eff_boundary1");
           }
           if(params.count("eff_boundary2")){
             mDigitizer->setEffBoundary2(params.at("eff_boundary2"));
-            LOG(INFO) << "eff_boundary2 load from ccdb -> " << params.at("eff_boundary2");
+            LOG(info) << "eff_boundary2 load from ccdb -> " << params.at("eff_boundary2");
           }
           if(params.count("eff_boundary3")){
             mDigitizer->setEffBoundary3(params.at("eff_boundary3"));
-            LOG(INFO) << "eff_boundary3 load from ccdb -> " << params.at("eff_boundary3");
+            LOG(info) << "eff_boundary3 load from ccdb -> " << params.at("eff_boundary3");
           }
       }
 
