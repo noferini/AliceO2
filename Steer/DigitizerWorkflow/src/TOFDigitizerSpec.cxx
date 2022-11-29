@@ -47,7 +47,7 @@ namespace tof
 class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
 {
  public:
-  TOFDPLDigitizerTask(bool useCCDB, std::string ccdb_url, int timestamp, bool ccdbSA) : mUseCCDB{useCCDB}, mCCDBurl(ccdb_url), mTimestamp(timestamp), mCCDBsa(ccdbSA), o2::base::BaseDPLDigitizer(o2::base::InitServices::FIELD | o2::base::InitServices::GEOM), mPass("unanchored") {};
+  TOFDPLDigitizerTask(bool useCCDB, std::string ccdb_url, int timestamp, bool ccdbSA) : mUseCCDB{useCCDB}, mCCDBurl(ccdb_url), mTimestamp(timestamp), mCCDBsa(ccdbSA), o2::base::BaseDPLDigitizer(o2::base::InitServices::FIELD | o2::base::InitServices::GEOM), mPass("unanchored"){};
 
   void initDigitizerTask(framework::InitContext& ic) override
   {
@@ -129,30 +129,30 @@ class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
       const auto statusIn = pc.inputs().get<o2::tof::TOFFEElightInfo*>("tofccdbStatus");
       const auto tofParams = pc.inputs().get<o2::tof::ParameterCollection*>("tofccdbParams");
 
-      if(tofParams->getSize(mPass) < 0) {
+      if (tofParams->getSize(mPass) < 0) {
         LOG(fatal) << "Pass " << mPass << " not found in the tofParams object (stop here!)";
       } else {
-          const auto& params = tofParams->getPars(mPass);
-          if(params.count("time_resolution")){
-            mDigitizer->setResolution(120);//params.at("time_resolution"));
-            LOG(INFO) << "time_resolution load from ccdb -> " << params.at("time_resolution");
-          }
-          if(params.count("eff_center")){
-            mDigitizer->setEffCenter(params.at("eff_center"));
-            LOG(INFO) << "eff_center load from ccdb -> " << params.at("eff_center");
-          }
-          if(params.count("eff_boundary1")){
-            mDigitizer->setEffBoundary1(params.at("eff_boundary1"));
-            LOG(INFO) << "eff_boundary1 load from ccdb -> " << params.at("eff_boundary1");
-          }
-          if(params.count("eff_boundary2")){
-            mDigitizer->setEffBoundary2(params.at("eff_boundary2"));
-            LOG(INFO) << "eff_boundary2 load from ccdb -> " << params.at("eff_boundary2");
-          }
-          if(params.count("eff_boundary3")){
-            mDigitizer->setEffBoundary3(params.at("eff_boundary3"));
-            LOG(INFO) << "eff_boundary3 load from ccdb -> " << params.at("eff_boundary3");
-          }
+        const auto& params = tofParams->getPars(mPass);
+        if (params.count("time_resolution")) {
+          mDigitizer->setResolution(120); // params.at("time_resolution"));
+          LOG(INFO) << "time_resolution load from ccdb -> " << params.at("time_resolution");
+        }
+        if (params.count("eff_center")) {
+          mDigitizer->setEffCenter(params.at("eff_center"));
+          LOG(INFO) << "eff_center load from ccdb -> " << params.at("eff_center");
+        }
+        if (params.count("eff_boundary1")) {
+          mDigitizer->setEffBoundary1(params.at("eff_boundary1"));
+          LOG(INFO) << "eff_boundary1 load from ccdb -> " << params.at("eff_boundary1");
+        }
+        if (params.count("eff_boundary2")) {
+          mDigitizer->setEffBoundary2(params.at("eff_boundary2"));
+          LOG(INFO) << "eff_boundary2 load from ccdb -> " << params.at("eff_boundary2");
+        }
+        if (params.count("eff_boundary3")) {
+          mDigitizer->setEffBoundary3(params.at("eff_boundary3"));
+          LOG(INFO) << "eff_boundary3 load from ccdb -> " << params.at("eff_boundary3");
+        }
       }
 
       if (!mCalibApi) {
