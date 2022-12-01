@@ -35,6 +35,9 @@ void DigitReader::init(InitContext& ic)
   LOG(debug) << "Init Digit reader!";
   auto filename = o2::utils::Str::concat_string(o2::utils::Str::rectifyDirectory(ic.options().get<std::string>("input-dir")),
                                                 ic.options().get<std::string>("tof-digit-infile"));
+
+  mDelayInMuSec = atoi(ic.options().get<std::string>("reader-delay").c_str())*1E6;
+
   mFile.reset(TFile::Open(filename.c_str()));
   if (!mFile->IsOpen()) {
     LOG(error) << "Cannot open the " << filename.c_str() << " file !";
@@ -46,6 +49,8 @@ void DigitReader::init(InitContext& ic)
 
 void DigitReader::run(ProcessingContext& pc)
 {
+  usleep(mDelayInMuSec);
+
   if (mState != 1) {
     return;
   }
