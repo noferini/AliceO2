@@ -57,7 +57,7 @@ ClassImp(MatchTOF);
 //______________________________________________
 void MatchTOF::run(const o2::globaltracking::RecoContainer& inp)
 {
-  if( !mMatchParams ){
+  if (!mMatchParams) {
     mMatchParams = &o2::globaltracking::MatchTOFParams::Instance();
   }
 
