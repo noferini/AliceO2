@@ -196,6 +196,7 @@ class MatchTOF
 
   static void grouppingMatch(std::vector<o2::dataformats::MatchInfoTOFReco> origin, std::vector<std::vector<o2::dataformats::MatchInfoTOFReco>>& groupped);
   static void printGroupping(const std::vector<o2::dataformats::MatchInfoTOFReco>& origin, const std::vector<std::vector<o2::dataformats::MatchInfoTOFReco>>& groupped);
+
  private:
   bool prepareFITData();
   int prepareInteractionTimes();
