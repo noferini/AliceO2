@@ -199,6 +199,80 @@ int MatchTOF::prepareInteractionTimes()
   return 0;
 }
 //______________________________________________
+void MatchTOF::printGroupping(const std::vector<o2::dataformats::MatchInfoTOFReco>& origin, const std::vector<std::vector<o2::dataformats::MatchInfoTOFReco>>& groupped){
+  printf("Original vector\n");
+  for(const auto& seed : origin){
+    printf("Pair: track=%d TOFcl=%d\n",seed.getIdLocal(),seed.getTOFClIndex());
+  }
+
+  printf("\nGroups\n");
+  int ngroups = 0;
+  for(const auto& gr : groupped){
+    ngroups++;
+    printf("Group %d\n",ngroups);
+    for(const auto& seed : gr){
+      printf("Pair: track=%d TOFcl=%d\n",seed.getIdLocal(),seed.getTOFClIndex());
+    }
+  }
+}
+//______________________________________________
+void MatchTOF::grouppingMatch(std::vector<o2::dataformats::MatchInfoTOFReco> origin, std::vector<std::vector<o2::dataformats::MatchInfoTOFReco>>& groupped){
+  groupped.clear();
+
+  std::vector<o2::dataformats::MatchInfoTOFReco> dummy;
+
+  // lists of elements in the group
+  std::vector<int> firstEls;
+  std::vector<int> secondEls;
+
+  int pos = 0;
+  while(origin.size()){ // go ahead if there are elements
+    bool found = true;
+    groupped.push_back(dummy);
+    firstEls.clear();
+    secondEls.clear();
+    // first element is the seed
+    const auto& seed = origin[0];
+    firstEls.push_back(seed.getIdLocal());
+    secondEls.push_back(seed.getTOFClIndex());
+    // remove element added to the current group
+    groupped[pos].push_back(seed);
+    origin.erase(origin.begin());
+
+    while(found){
+      found = false;
+      for(int i=0; i < origin.size(); i++){
+	const auto& seed = origin[i];
+	int matchFirst = -1;
+	int matchSecond = -1;
+ 	for(const int& ind : firstEls){
+	  if(seed.getIdLocal() == ind){
+	    matchFirst = ind;
+	    break;
+	  }
+	}
+ 	for(const int& ind : secondEls){
+	  if(seed.getTOFClIndex() == ind){
+	    matchSecond = ind;
+	    break;
+	  }
+	}
+
+	if(matchFirst >= 0 || matchSecond >=0){ // belong to this group
+	  if(matchFirst < 0) firstEls.push_back(seed.getIdLocal());
+	  if(matchSecond < 0) secondEls.push_back(seed.getTOFClIndex());
+	  groupped[pos].push_back(seed);
+	  origin.erase(origin.begin() + i);
+	  found = true;
+	  break;
+	}
+      }
+    }
+    pos++; // move to the next group
+  }
+}
+
+//______________________________________________
 bool MatchTOF::prepareTPCData()
 {
   mNotPropagatedToTOF[trkType::UNCONS] = 0;
