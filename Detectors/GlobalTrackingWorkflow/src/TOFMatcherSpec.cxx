@@ -58,7 +58,7 @@ namespace globaltracking
 class TOFMatcherSpec : public Task
 {
  public:
-  TOFMatcherSpec(std::shared_ptr<DataRequest> dr, std::shared_ptr<o2::base::GRPGeomRequest> gr, bool useMC, bool useFIT, bool tpcRefit, bool strict) : mDataRequest(dr), mGGCCDBRequest(gr), mUseMC(useMC), mUseFIT(useFIT), mDoTPCRefit(tpcRefit), mStrict(strict) {}
+  TOFMatcherSpec(std::shared_ptr<DataRequest> dr, std::shared_ptr<o2::base::GRPGeomRequest> gr, bool useMC, bool useFIT, bool tpcRefit, bool strict, bool pushMatchable) : mDataRequest(dr), mGGCCDBRequest(gr), mUseMC(useMC), mUseFIT(useFIT), mDoTPCRefit(tpcRefit), mStrict(strict), mPushMatchable(pushMatchable) {}
   ~TOFMatcherSpec() override = default;
   void init(InitContext& ic) final;
   void run(ProcessingContext& pc) final;
@@ -75,6 +75,7 @@ class TOFMatcherSpec : public Task
   bool mUseFIT = false;
   bool mDoTPCRefit = false;
   bool mStrict = false;
+  bool mPushMatchable=false;
   float mExtraTolTRD = 0.;
   MatchTOF mMatcher; ///< Cluster finder
   TStopwatch mTimer;
@@ -202,6 +203,10 @@ void TOFMatcherSpec::run(ProcessingContext& pc)
   // TODO: TRD-matched tracks
   pc.outputs().snapshot(Output{o2::header::gDataOriginTOF, "CALIBDATA", 0, Lifetime::Timeframe}, mMatcher.getCalibVector());
 
+  if (mPushMatchable) {
+    pc.outputs().snapshot(Output{o2::header::gDataOriginTOF, "MATCHABLES", 0, Lifetime::Timeframe}, mMatcher.getMatchedTracksPair());
+  }
+
   mTimer.Stop();
 }
 
@@ -211,7 +216,7 @@ void TOFMatcherSpec::endOfStream(EndOfStreamContext& ec)
        mTimer.CpuTime(), mTimer.RealTime(), mTimer.Counter() - 1);
 }
 
-DataProcessorSpec getTOFMatcherSpec(GID::mask_t src, bool useMC, bool useFIT, bool tpcRefit, bool strict, float extratolerancetrd)
+DataProcessorSpec getTOFMatcherSpec(GID::mask_t src, bool useMC, bool useFIT, bool tpcRefit, bool strict, float extratolerancetrd, bool pushMatchable)
 {
   uint32_t ss = o2::globaltracking::getSubSpec(strict ? o2::globaltracking::MatchingType::Strict : o2::globaltracking::MatchingType::Standard);
   auto dataRequest = std::make_shared<DataRequest>();
@@ -262,11 +267,15 @@ DataProcessorSpec getTOFMatcherSpec(GID::mask_t src, bool useMC, bool useFIT, bo
   }
   outputs.emplace_back(o2::header::gDataOriginTOF, "CALIBDATA", 0, Lifetime::Timeframe);
 
+  if (pushMatchable) {
+    outputs.emplace_back(o2::header::gDataOriginTOF, "MATCHABLES", 0, Lifetime::Timeframe);
+  }
+
   return DataProcessorSpec{
     "tof-matcher",
     dataRequest->inputs,
     outputs,
-    AlgorithmSpec{adaptFromTask<TOFMatcherSpec>(dataRequest, ggRequest, useMC, useFIT, tpcRefit, strict)},
+    AlgorithmSpec{adaptFromTask<TOFMatcherSpec>(dataRequest, ggRequest, useMC, useFIT, tpcRefit, strict, pushMatchable)},
     Options{}};
 }
 

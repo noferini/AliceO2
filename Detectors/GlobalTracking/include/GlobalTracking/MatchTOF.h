@@ -147,6 +147,8 @@ class MatchTOF
   std::vector<o2::dataformats::MatchInfoTOF>& getMatchedTrackVector(trkType index) { return mMatchedTracks[index]; }
   std::vector<o2::dataformats::CalibInfoTOF>& getCalibVector() { return mCalibInfoTOF; }
 
+  std::vector<o2::dataformats::MatchInfoTOFReco>& getMatchedTracksPair() { return mMatchedTracksPairs; }
+
   std::vector<o2::MCCompLabel>& getMatchedTOFLabelsVector(trkType index) { return mOutTOFLabels[index]; } ///< get vector of TOF labels of matched tracks
 
   void setTPCVDrift(const o2::tpc::VDriftCorrFact& v);
