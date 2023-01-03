@@ -43,10 +43,10 @@ DataProcessorSpec getTOFMatchableWriterSpec(const char* outdef)
                                 outdef,
                                 "matchableTOF",
                                 BranchDefinition<MatchableType>{InputSpec{"input", o2::header::gDataOriginTOF, ddMatchable, 0},
-                                                                 "TOFMatchableInfo",
-                                                                 "matchableinfo-branch-name",
-                                                                 1,
-                                                                 logger})();
+                                                                "TOFMatchableInfo",
+                                                                "matchableinfo-branch-name",
+                                                                1,
+                                                                logger})();
 }
 
 } // namespace tof

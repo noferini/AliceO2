@@ -75,7 +75,7 @@ class TOFMatcherSpec : public Task
   bool mUseFIT = false;
   bool mDoTPCRefit = false;
   bool mStrict = false;
-  bool mPushMatchable=false;
+  bool mPushMatchable = false;
   float mExtraTolTRD = 0.;
   MatchTOF mMatcher; ///< Cluster finder
   TStopwatch mTimer;
