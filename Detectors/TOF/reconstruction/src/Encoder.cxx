@@ -46,7 +46,7 @@ Encoder::Encoder()
 
 void Encoder::nextWord(int icrate)
 {
-  if (mNextWordStatus[icrate]) {
+  if (mOldFormat && mNextWordStatus[icrate]) {
     mUnion[icrate]++;
     mUnion[icrate]->data = 0;
     mUnion[icrate]++;

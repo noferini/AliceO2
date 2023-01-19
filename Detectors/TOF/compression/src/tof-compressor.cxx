@@ -116,7 +116,8 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
         {"tof-compressor-conet-mode", VariantType::Bool, false, {"Decoder CONET flag"}},
         {"tof-compressor-decoder-verbose", VariantType::Bool, false, {"Decoder verbose flag"}},
         {"tof-compressor-encoder-verbose", VariantType::Bool, false, {"Encoder verbose flag"}},
-        {"tof-compressor-checker-verbose", VariantType::Bool, false, {"Checker verbose flag"}}}});
+        {"tof-compressor-checker-verbose", VariantType::Bool, false, {"Checker verbose flag"}},
+        {"use-old-format", VariantType::Bool, false, {"expecting zeroes in words 2 and 3 of the CRU payload"}}}});
     idevice++;
   }
 
