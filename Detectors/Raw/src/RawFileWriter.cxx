@@ -182,10 +182,12 @@ void RawFileWriter::addData(uint16_t feeid, uint16_t cru, uint8_t lnk, uint8_t e
   if (mVerbosity > 10) {
     LOGP(info, "addData for {}  on IR BCid:{} Orbit: {}, payload: {}, preformatted: {}, trigger: {}, detField: {}", link.describe(), ir.bc, ir.orbit, data.size(), preformatted, trigger, detField);
   }
+
   if (isCRUDetector() && (data.size() % RDHUtils::GBTWord)) {
     LOG(error) << "provided payload size " << data.size() << " is not multiple of GBT word size";
-    throw std::runtime_error("payload size is not mutiple of GBT word size");
+    throw std::runtime_error(Form("payload size %lu is not mutiple of GBT word size",data.size()));
   }
+
   if (ir < mHBFUtils.getFirstSampledTFIR()) {
     LOG(warning) << "provided " << ir << " precedes first sampled TF " << mHBFUtils.getFirstSampledTFIR() << " | discarding data for " << link.describe();
     return;
