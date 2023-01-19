@@ -42,12 +42,17 @@ void CompressorTask<RDH, verbose, paranoid>::init(InitContext& ic)
   auto decoderVerbose = ic.options().get<bool>("tof-compressor-decoder-verbose");
   auto encoderVerbose = ic.options().get<bool>("tof-compressor-encoder-verbose");
   auto checkerVerbose = ic.options().get<bool>("tof-compressor-checker-verbose");
+  auto oldformat = ic.options().get<bool>("use-old-format");
   mOutputBufferSize = ic.options().get<int>("tof-compressor-output-buffer-size");
 
   mCompressor.setDecoderCONET(decoderCONET);
   mCompressor.setDecoderVerbose(decoderVerbose);
   mCompressor.setEncoderVerbose(encoderVerbose);
   mCompressor.setCheckerVerbose(checkerVerbose);
+
+  if (oldformat) {
+    mCompressor.setDecoderCRUZEROES();
+  }
 
   auto finishFunction = [this]() {
     mCompressor.checkSummary();

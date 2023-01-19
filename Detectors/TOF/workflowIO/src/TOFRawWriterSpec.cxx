@@ -36,6 +36,7 @@ void RawWriter::init(InitContext& ic)
   mOutFileName = ic.options().get<std::string>("tof-raw-outfile");
   mOutDirName = ic.options().get<std::string>("tof-raw-outdir");
   mFileFor = ic.options().get<std::string>("file-for");
+  mOldFormat = ic.options().get<bool>("use-old-format");
   LOG(debug) << "Raw output file: " << mOutFileName.c_str();
 
   // if needed, create output directory
@@ -60,6 +61,10 @@ void RawWriter::run(ProcessingContext& pc)
 
   o2::tof::raw::Encoder encoder;
   encoder.setVerbose(verbosity);
+
+  if (mOldFormat) {
+    encoder.setEncoderCRUZEROES();
+  }
 
   encoder.open(mOutFileName, mOutDirName, mFileFor);
   encoder.alloc(cache);
@@ -119,7 +124,8 @@ DataProcessorSpec getTOFRawWriterSpec()
     Options{
       {"tof-raw-outfile", VariantType::String, "tof.raw", {"Name of the output file"}},
       {"tof-raw-outdir", VariantType::String, ".", {"Name of the output dir"}},
-      {"file-for", VariantType::String, "cruendpoint", {"Single file per: all,cruendpoint,link"}}}};
+      {"file-for", VariantType::String, "cruendpoint", {"Single file per: all,cruendpoint,link"}},
+      {"use-old-format", VariantType::Bool, false, {"expecting zeroes in words 2 and 3 of the CRU payload"}}}};
 }
 } // namespace tof
 } // namespace o2
