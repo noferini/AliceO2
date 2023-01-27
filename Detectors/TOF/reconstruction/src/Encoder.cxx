@@ -360,11 +360,11 @@ bool Encoder::encode(std::vector<std::vector<o2::tof::Digit>> digitWindow, int t
       // check if the numer of paylod words  is divisible by 4 (16 bytes), otherwise fill with two words
       int nbytes = getSize(mTOFDataHeader[i], mUnion[i]);
       if (nbytes % 4) {
-         LOG(error) << "Nbytes not divisible by 4? Something went wrong with the word (32 bits) length";
+        LOG(error) << "Nbytes not divisible by 4? Something went wrong with the word (32 bits) length";
       } else if (nbytes % 8) {
-         LOG(error) << "Odd number of nwords in TOF payload, this should not happen";
+        LOG(error) << "Odd number of nwords in TOF payload, this should not happen";
       } else if (nbytes % 16) {
-         LOG(info) << "Nwords not divisible by 4, let's fill with 2 more words";
+        LOG(info) << "Nwords not divisible by 4, let's fill with 2 more words";
         mUnion[i] = 0x70000000;
         nextWord(i);
         mUnion[i] = 0x70000000;
