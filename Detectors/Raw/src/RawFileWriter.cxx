@@ -185,7 +185,7 @@ void RawFileWriter::addData(uint16_t feeid, uint16_t cru, uint8_t lnk, uint8_t e
 
   if (isCRUDetector() && (data.size() % RDHUtils::GBTWord)) {
     LOG(error) << "provided payload size " << data.size() << " is not multiple of GBT word size";
-    throw std::runtime_error(Form("payload size %lu is not mutiple of GBT word size",data.size()));
+    throw std::runtime_error(Form("payload size %lu is not mutiple of GBT word size", data.size()));
   }
 
   if (ir < mHBFUtils.getFirstSampledTFIR()) {
