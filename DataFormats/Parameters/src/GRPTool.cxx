@@ -78,7 +78,7 @@ class CCDBHelper
     auto soreor = o2::ccdb::BasicCCDBManager::getRunDuration(api, opts.run);
     runStart = soreor.first;
     runEnd = soreor.second;
-    if(opts.timestamp > 0) {
+    if (opts.timestamp > 0) {
       timestamp = opts.timestamp;
     } else {
       timestamp = runStart;
