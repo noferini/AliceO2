@@ -141,7 +141,7 @@ void MatchTOF::run(const o2::globaltracking::RecoContainer& inp, unsigned long f
 
   o2::tof::Geo::Init();
 
-  if (mIsITSTPCused || mIsTPCTRDused || mIsITSTPCTRDused) {
+  if (mIsITSTPCused || mIsTPCTRDused || mIsITSTPCTRDused || mIsITSused) {
 #ifdef WITH_OPENMP
 #pragma omp parallel for schedule(dynamic) num_threads(mNlanes)
 #endif
@@ -199,6 +199,7 @@ void MatchTOF::run(const o2::globaltracking::RecoContainer& inp, unsigned long f
   // re-arrange outputs from constrained/unconstrained to the 4 cases (TPC, ITS-TPC, TPC-TRD, ITS-TPC-TRD) to be implemented as soon as TPC-TRD and ITS-TPC-TRD tracks available
 
   mIsTPCused = false;
+  mIsITSused = false;
   mIsITSTPCused = false;
   mIsTPCTRDused = false;
   mIsITSTPCTRDused = false;
@@ -355,6 +356,9 @@ bool MatchTOF::prepareTPCData()
   mNotPropagatedToTOF[trkType::UNCONS] = 0;
   mNotPropagatedToTOF[trkType::CONSTR] = 0;
 
+  //  const auto& alpParams = o2::itsmft::DPLAlpideParam<o2::detectors::DetID::ITS>::Instance();
+  //  double ITSTimeBiasMUS = alpParams.roFrameBiasInBC * o2::constants::lhc::LHCBunchSpacingNS * 1e-3;
+
   auto creator = [this](auto& trk, GTrackID gid, float time0, float terr) {
     const int nclustersMin = 0;
     if constexpr (isTPCTrack<decltype(trk)>()) {
@@ -376,6 +380,16 @@ bool MatchTOF::prepareTPCData()
     if constexpr (isTRDTrack<decltype(trk)>()) {
       this->addTRDSeed(trk, gid, time0, terr);
     }
+    if constexpr (isITSTrack<decltype(trk)>()) {
+      //      float tMin = nBC * o2::constants::lhc::LHCBunchSpacingMUS + ITSTimeBiasMUS;
+      //      float tMax = (nBC + mITSROFrameLengthInBC) * o2::constants::lhc::LHCBunchSpacingMUS + ITSTimeBiasMUS;
+
+      //      time0 += itsBias;
+      //      terr *= this->mITSROFrameLengthMUS;               // error is supplied as a half-ROF duration, convert to \mus
+      terr = 5; // just to start
+      this->addITSSeed(trk, gid, time0, terr);
+    }
+
     return true;
   };
   mRecoCont->createTracksVariadic(creator);
@@ -463,7 +477,7 @@ bool MatchTOF::prepareTPCData()
       });
     } // loop over tracks of single sector
   }
-  if (mIsITSTPCused || mIsTPCTRDused || mIsITSTPCTRDused) {
+  if (mIsITSTPCused || mIsTPCTRDused || mIsITSTPCTRDused || mIsITSused) {
     LOG(debug) << "Number of CONSTRAINED tracks that failed to be propagated to TOF = " << mNotPropagatedToTOF[trkType::CONSTR];
 
     // sort tracks in each sector according to their time (increasing in time)
@@ -580,6 +594,25 @@ void MatchTOF::propagateConstrTracks(int sec)
       mTracksSeed[trkType::CONSTR][sec].push_back(it); // to be moved to another sector
     }
   }
+}
+
+void MatchTOF::addITSSeed(const o2::its::TrackITS& _tr, o2::dataformats::GlobalTrackID srcGID, float time0, float terr)
+{
+  mIsITSused = true;
+
+  if (_tr.getPt() < 0.5) {
+    return;
+  }
+
+  //  LOG(info) << "ITS time0 = " << time0<< " - ITS error = " << terr;
+
+  auto trc = _tr.getParamOut();
+  o2::track::TrackLTIntegral intLT0; // mTPCTracksWork.back().getLTIntegralOut(); // we get the integrated length from TPC-ITC outward propagation
+  // compute track length up to now
+  o2::base::Propagator::Instance()->estimateLTFast(intLT0, trc);
+
+  timeEst ts(time0, terr);
+  addConstrainedSeed(trc, srcGID, intLT0, ts);
 }
 //______________________________________________
 void MatchTOF::addITSTPCSeed(const o2::dataformats::TrackTPCITS& _tr, o2::dataformats::GlobalTrackID srcGID, float time0, float terr)
@@ -1420,6 +1453,8 @@ void MatchTOF::BestMatches(std::vector<o2::dataformats::MatchInfoTOFReco>& match
       trkTypeSplitted = (int)trkType::TPCTRD;
     } else if (sourceID == o2::dataformats::GlobalTrackID::ITSTPCTRD) {
       trkTypeSplitted = (int)trkType::ITSTPCTRD;
+    } else if (sourceID == o2::dataformats::GlobalTrackID::ITS) {
+      trkTypeSplitted = (int)trkType::ITS;
     }
     matchedTracks[trkTypeSplitted].push_back(matchingPair); // array of MatchInfoTOF
 
@@ -1568,7 +1603,10 @@ void MatchTOF::BestMatchesHP(std::vector<o2::dataformats::MatchInfoTOFReco>& mat
       trkTypeSplitted = (int)trkType::TPCTRD;
     } else if (sourceID == o2::dataformats::GlobalTrackID::ITSTPCTRD) {
       trkTypeSplitted = (int)trkType::ITSTPCTRD;
+    } else if (sourceID == o2::dataformats::GlobalTrackID::ITS) {
+      trkTypeSplitted = (int)trkType::ITS;
     }
+
     matchedTracks[trkTypeSplitted].push_back(matchingPair); // array of MatchInfoTOF
 
     const o2::track::TrackLTIntegral& intLT = matchingPair.getLTIntegralOut();
