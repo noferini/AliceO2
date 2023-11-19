@@ -303,16 +303,16 @@ class MatchTOF
   /// <<<-----
 
   ///<working copy of the input tracks
-  std::vector<matchTrack> mTracksWork[o2::constants::math::NSectors][trkType::SIZE]; ///<track params prepared for matching + time value
-  std::vector<o2::MCCompLabel> mTracksLblWork[o2::constants::math::NSectors][trkType::SIZE];           ///<TPCITS track labels
-  std::vector<o2::track::TrackLTIntegral> mLTinfos[o2::constants::math::NSectors][trkType::SIZE];      ///<expected times and others
-  std::vector<o2::dataformats::GlobalTrackID> mTrackGid[o2::constants::math::NSectors][trkType::SIZE]; ///<expected times and others
+  std::vector<matchTrack> mTracksWork[o2::constants::math::NSectors][trkType::SIZE];                   ///< track params prepared for matching + time value
+  std::vector<o2::MCCompLabel> mTracksLblWork[o2::constants::math::NSectors][trkType::SIZE];           ///< TPCITS track labels
+  std::vector<o2::track::TrackLTIntegral> mLTinfos[o2::constants::math::NSectors][trkType::SIZE];      ///< expected times and others
+  std::vector<o2::dataformats::GlobalTrackID> mTrackGid[o2::constants::math::NSectors][trkType::SIZE]; ///< expected times and others
   ///< per sector indices of track entry in mTracksWork
   std::array<std::vector<int>, o2::constants::math::NSectors> mTracksSectIndexCache[trkType::SIZE];
 
-  std::vector<float> mExtraTPCFwdTime[o2::constants::math::NSectors]; ///<track extra params for TPC tracks: Fws Max time
-  std::vector<Cluster> mTOFClusWork;                                  ///<track params prepared for matching
-  std::vector<int8_t> mSideTPC[o2::constants::math::NSectors];        ///<track side for TPC tracks
+  std::vector<float> mExtraTPCFwdTime[o2::constants::math::NSectors]; ///< track extra params for TPC tracks: Fws Max time
+  std::vector<Cluster> mTOFClusWork;                                  ///< track params prepared for matching
+  std::vector<int8_t> mSideTPC[o2::constants::math::NSectors];        ///< track side for TPC tracks
 
   ///< per sector indices of TOF cluster entry in mTOFClusWork
   std::array<std::vector<int>, o2::constants::math::NSectors> mTOFClusSectIndexCache;

@@ -396,7 +396,7 @@ bool MatchTOF::prepareTPCData()
       if (!indexCache.size()) {
         continue;
       }
-      std::sort(indexCache.begin(), indexCache.end(), [this,sec](int a, int b) {
+      std::sort(indexCache.begin(), indexCache.end(), [this, sec](int a, int b) {
         auto& trcA = mTracksWork[sec][trkType::UNCONS][a].second;
         auto& trcB = mTracksWork[sec][trkType::UNCONS][b].second;
         return ((trcA.getTimeStamp() - trcA.getTimeStampError()) - (trcB.getTimeStamp() - trcB.getTimeStampError()) < 0.);
@@ -413,7 +413,7 @@ bool MatchTOF::prepareTPCData()
       if (!indexCache.size()) {
         continue;
       }
-      std::sort(indexCache.begin(), indexCache.end(), [this,sec](int a, int b) {
+      std::sort(indexCache.begin(), indexCache.end(), [this, sec](int a, int b) {
         auto& trcA = mTracksWork[sec][trkType::CONSTR][a].second;
         auto& trcB = mTracksWork[sec][trkType::CONSTR][b].second;
         return ((trcA.getTimeStamp() - mSigmaTimeCut * trcA.getTimeStampError()) - (trcB.getTimeStamp() - mSigmaTimeCut * trcB.getTimeStampError()) < 0.);
@@ -929,7 +929,7 @@ void MatchTOF::doMatchingForTPC(int sec)
     // look at BC candidates for the track
     double minTrkTime = (trackWork.second.getTimeStamp() - trackWork.second.getTimeStampError()) * 1.E6 + timeShift; // minimum time in ps
     minTrkTime = int(minTrkTime / BCgranularity) * BCgranularity;                                                    // align min to a BC
-    double maxTrkTime = (trackWork.second.getTimeStamp() + mExtraTPCFwdTime[sec][cacheTrk[itrk]]) * 1.E6 + timeShift;     // maximum time in ps
+    double maxTrkTime = (trackWork.second.getTimeStamp() + mExtraTPCFwdTime[sec][cacheTrk[itrk]]) * 1.E6 + timeShift; // maximum time in ps
 
     if (mIsCosmics) {
       for (double tBC = minTrkTime; tBC < maxTrkTime; tBC += BCgranularity) {
