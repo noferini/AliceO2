@@ -701,6 +701,11 @@ void MatchTOF::addTPCSeed(const o2::tpc::TrackTPC& _tr, o2::dataformats::GlobalT
   o2::track::TrackLTIntegral intLT0; // mTPCTracksWork.back().getLTIntegralOut(); // we get the integrated length from TPC-ITC outward propagation
   // compute track length up to now
   mLTinfos[sector][trkType::UNCONS].emplace_back(intLT0);
+  float vz0 = _tr.getZAt(0, mBz);
+  if(abs(vz0) > 9000){
+    vz0 = _tr.getZ() - _tr.getX() * _tr.getTgl();
+  }
+  mVZtpcOnly[sector].push_back(vz0);
 
   /*
     const auto& trackTune = TrackTuneParams::Instance();
@@ -841,6 +846,8 @@ void MatchTOF::doMatching(int sec)
     //    Printf("intLT (before doing anything): length = %f, time (Pion) = %f", intLT.getL(), intLT.getTOF(o2::track::PID::Pion));
     float minTrkTime = (trackWork.second.getTimeStamp() - mSigmaTimeCut * trackWork.second.getTimeStampError()) * 1.E6 + timeShift;         // minimum time in ps
     float maxTrkTime = (trackWork.second.getTimeStamp() + mSigmaTimeCut * trackWork.second.getTimeStampError()) * 1.E6 + timeShift + 100E3; // maximum time in ps + 100 ns for slow tracks (beta->0.2)
+    const float sqrt12inv = 1./sqrt(12.);
+    float resT = (trackWork.second.getTimeStampError() + 100E-3) * sqrt12inv;
     int istep = 1;                                                                                                                          // number of steps
     float step = 1.0;                                                                                                                       // step size in cm
 
@@ -1012,6 +1019,11 @@ void MatchTOF::doMatching(int sec)
       int eventIdTOF;
       int sourceIdTOF;
       for (auto iPropagation = 0; iPropagation < nStripsCrossedInPropagation; iPropagation++) {
+        float cosangle = TMath::Cos(Geo::getAngles(indices[1], indices[2]) * TMath::DegToRad());
+        float errXinv2 = 1. / (trefTrk.getSigmaY2());
+        float errZinv2 = 1. / (trefTrk.getSigmaZ2() * cosangle); // should be valid only at eta=0
+        // look at getPadDxDyDz to understand how to convert track errors in TOF strip ref system (wip)
+
         LOG(debug) << "TOF Cluster [" << itof << ", " << cacheTOF[itof] << "]:      indices   = " << indices[0] << ", " << indices[1] << ", " << indices[2] << ", " << indices[3] << ", " << indices[4];
         LOG(debug) << "Propagated Track [" << itrk << "]: detId[" << iPropagation << "]  = " << detId[iPropagation][0] << ", " << detId[iPropagation][1] << ", " << detId[iPropagation][2] << ", " << detId[iPropagation][3] << ", " << detId[iPropagation][4];
         float resX = deltaPos[iPropagation][0] - (indices[4] - detId[iPropagation][4]) * Geo::XPAD + posCorr[0]; // readjusting the residuals due to the fact that the propagation fell in a pad that was not exactly the one of the cluster
@@ -1028,7 +1040,7 @@ void MatchTOF::doMatching(int sec)
         if (indices[2] != detId[iPropagation][2]) {
           continue;
         }
-        float chi2 = res; // TODO: take into account also the time!
+        float chi2 = 0.5 * (resX * resX * errXinv2 + resZ * resZ * errZinv2); // TODO: take into account also the time!
 
         if (res < mSpaceTolerance) { // matching ok!
           LOG(debug) << "MATCHING FOUND: We have a match! between track " << mTracksSectIndexCache[type][sec][itrk] << " and TOF cluster " << mTOFClusSectIndexCache[indices[0]][itof];
@@ -1037,6 +1049,11 @@ void MatchTOF::doMatching(int sec)
           int eventIndexTOFCluster = mTOFClusSectIndexCache[indices[0]][itof];
           mMatchedTracksPairsSec[sec].emplace_back(cacheTrk[itrk], eventIndexTOFCluster, mTOFClusWork[cacheTOF[itof]].getTime(), chi2, trkLTInt[iPropagation], mTrackGid[sec][type][cacheTrk[itrk]], type, (trefTOF.getTime() - (minTrkTime + maxTrkTime - 100E3) * 0.5) * 1E-6, trefTOF.getZ(), resX, resZ); // subracting 100 ns to max track which was artificially added
           mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setPt(pt);
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResX(sqrt(1. / errXinv2));
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResZ(sqrt(1. / errZinv2));
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setResT(resT);
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setVz2(0.0);                  // not needed for constrained tracks
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setChannel(mainChannel);
         }
       }
     }
@@ -1097,6 +1114,8 @@ void MatchTOF::doMatchingForTPC(int sec)
     double minTrkTime = (tpctime - trackWork.second.getTimeStampError()) * 1.E6 + timeShift;                         // minimum time in ps
     minTrkTime = int(minTrkTime / BCgranularity) * BCgranularity;                                                    // align min to a BC
     double maxTrkTime = (tpctime + mExtraTPCFwdTime[sec][cacheTrk[itrk]]) * 1.E6 + timeShift;                        // maximum time in ps
+    const float sqrt12inv = 1./sqrt(12.);
+    float resT = (maxTrkTime - minTrkTime) * sqrt12inv;
 
     if (mIsCosmics) {
       for (double tBC = minTrkTime; tBC < maxTrkTime; tBC += BCgranularity) {
@@ -1208,6 +1227,8 @@ void MatchTOF::doMatchingForTPC(int sec)
         } else {
           posFloat[2] = pos[2];
         }
+
+        float Zshift = posFloat[2] - pos[2];
 
         Geo::getPadDxDyDz(posFloat, detIdTemp, deltaPosTemp, sec);
 
@@ -1337,6 +1358,10 @@ void MatchTOF::doMatchingForTPC(int sec)
           if (detId[ibc][iPropagation][1] != indices[1] || detId[ibc][iPropagation][2] != indices[2]) {
             continue;
           }
+          float cosangle = TMath::Cos(Geo::getAngles(indices[1], indices[2]) * TMath::DegToRad());
+          float errXinv2 = 1. / (trefTrk.getSigmaY2());
+          float errZinv2 = 1. / (trefTrk.getSigmaZ2() * cosangle); // should be valid only at eta=0
+          // look at getPadDxDyDz to understand how to convert track errors in TOF strip ref system (wip)
 
           LOG(debug) << "TOF Cluster [" << itof << ", " << cacheTOF[itof] << "]:      indices   = " << indices[0] << ", " << indices[1] << ", " << indices[2] << ", " << indices[3] << ", " << indices[4];
           LOG(debug) << "Propagated Track [" << itrk << "]: detId[" << iPropagation << "]  = " << detId[ibc][iPropagation][0] << ", " << detId[ibc][iPropagation][1] << ", " << detId[ibc][iPropagation][2] << ", " << detId[ibc][iPropagation][3] << ", " << detId[ibc][iPropagation][4];
@@ -1360,15 +1385,21 @@ void MatchTOF::doMatchingForTPC(int sec)
           }
 
           LOG(debug) << "resX = " << resX << ", resZ = " << resZ << ", res = " << res;
-          float chi2 = mIsCosmics ? resX : res; // TODO: take into account also the time!
+          float chi2 = mIsCosmics ? resX : 0.5 * (resX * resX * errXinv2 + resZ * resZ * errZinv2); // TODO: take into account also the time!
 
           if (res < mSpaceTolerance) { // matching ok!
             LOG(debug) << "MATCHING FOUND: We have a match! between track " << mTracksSectIndexCache[trkType::UNCONS][sec][itrk] << " and TOF cluster " << mTOFClusSectIndexCache[indices[0]][itof];
             foundCluster = true;
             // set event indexes (to be checked)
+
             int eventIndexTOFCluster = mTOFClusSectIndexCache[indices[0]][itof];
-            mMatchedTracksPairsSec[sec].emplace_back(cacheTrk[itrk], eventIndexTOFCluster, mTOFClusWork[cacheTOF[itof]].getTime(), chi2, trkLTInt[ibc][iPropagation], mTrackGid[sec][trkType::UNCONS][cacheTrk[itrk]], trkType::UNCONS, trefTOF.getTime() * 1E-6 - tpctime, trefTOF.getZ(), resX, resZ); // TODO: check if this is correct!
+            mMatchedTracksPairsSec[sec].emplace_back(cacheTrk[itrk], eventIndexTOFCluster, mTOFClusWork[cacheTOF[itof]].getTime(), chi2, trkLTInt[ibc][iPropagation], mTrackGid[sec][trkType::UNCONS][cacheTrk[itrk]], trkType::UNCONS, deltat, trefTOF.getZ(), resX, resZ); // TODO: check if this is correct!
             mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setPt(pt);
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResX(sqrt(1. / errXinv2));
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResZ(sqrt(1. / errZinv2));
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setResT(resT);
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setVz(mVZtpcOnly[sec][itrk] + Zshift);
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setChannel(mainChannel);
           }
         }
       }
