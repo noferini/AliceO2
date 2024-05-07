@@ -702,7 +702,7 @@ void MatchTOF::addTPCSeed(const o2::tpc::TrackTPC& _tr, o2::dataformats::GlobalT
   // compute track length up to now
   mLTinfos[sector][trkType::UNCONS].emplace_back(intLT0);
   float vz0 = _tr.getZAt(0, mBz);
-  if(abs(vz0) > 9000){
+  if (abs(vz0) > 9000) {
     vz0 = _tr.getZ() - _tr.getX() * _tr.getTgl();
   }
   mVZtpcOnly[sector].push_back(vz0);
@@ -846,7 +846,7 @@ void MatchTOF::doMatching(int sec)
     //    Printf("intLT (before doing anything): length = %f, time (Pion) = %f", intLT.getL(), intLT.getTOF(o2::track::PID::Pion));
     float minTrkTime = (trackWork.second.getTimeStamp() - mSigmaTimeCut * trackWork.second.getTimeStampError()) * 1.E6 + timeShift;         // minimum time in ps
     float maxTrkTime = (trackWork.second.getTimeStamp() + mSigmaTimeCut * trackWork.second.getTimeStampError()) * 1.E6 + timeShift + 100E3; // maximum time in ps + 100 ns for slow tracks (beta->0.2)
-    const float sqrt12inv = 1./sqrt(12.);
+    const float sqrt12inv = 1. / sqrt(12.);
     float resT = (trackWork.second.getTimeStampError() + 100E-3) * sqrt12inv;
     int istep = 1;                                                                                                                          // number of steps
     float step = 1.0;                                                                                                                       // step size in cm
@@ -1051,9 +1051,9 @@ void MatchTOF::doMatching(int sec)
           mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setPt(pt);
           mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResX(sqrt(1. / errXinv2));
           mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResZ(sqrt(1. / errZinv2));
-          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setResT(resT);
-          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setVz2(0.0);                  // not needed for constrained tracks
-          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setChannel(mainChannel);
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResT(resT);
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setVz2(0.0); // not needed for constrained tracks
+          mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setChannel(mainChannel);
         }
       }
     }
@@ -1114,7 +1114,7 @@ void MatchTOF::doMatchingForTPC(int sec)
     double minTrkTime = (tpctime - trackWork.second.getTimeStampError()) * 1.E6 + timeShift;                         // minimum time in ps
     minTrkTime = int(minTrkTime / BCgranularity) * BCgranularity;                                                    // align min to a BC
     double maxTrkTime = (tpctime + mExtraTPCFwdTime[sec][cacheTrk[itrk]]) * 1.E6 + timeShift;                        // maximum time in ps
-    const float sqrt12inv = 1./sqrt(12.);
+    const float sqrt12inv = 1. / sqrt(12.);
     float resT = (maxTrkTime - minTrkTime) * sqrt12inv;
 
     if (mIsCosmics) {
@@ -1397,9 +1397,9 @@ void MatchTOF::doMatchingForTPC(int sec)
             mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setPt(pt);
             mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResX(sqrt(1. / errXinv2));
             mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResZ(sqrt(1. / errZinv2));
-            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setResT(resT);
-            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setVz(mVZtpcOnly[sec][itrk] + Zshift);
-            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() -1].setChannel(mainChannel);
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setResT(resT);
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setVz(mVZtpcOnly[sec][itrk] + Zshift);
+            mMatchedTracksPairsSec[sec][mMatchedTracksPairsSec[sec].size() - 1].setChannel(mainChannel);
           }
         }
       }
