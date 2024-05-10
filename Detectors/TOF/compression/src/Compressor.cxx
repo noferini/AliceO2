@@ -212,7 +212,7 @@ bool Compressor<RDH, verbose, paranoid>::processHBF()
 
   if (mEncoderPointer + mDecoderRDH->headerSize >= mEncoderPointerMax) {
     LOG(warning) << "link = " << rdh->feeId << ": beyond the buffer size mEncoderPointer+mDecoderRDH->headerSize = " << mEncoderPointer + mDecoderRDH->headerSize << " >= "
-               << "mEncoderPointerMax = " << mEncoderPointerMax;
+                 << "mEncoderPointerMax = " << mEncoderPointerMax;
     encoderRewind();
     return true;
   }
@@ -255,7 +255,7 @@ bool Compressor<RDH, verbose, paranoid>::processHBF()
   /** CAREFUL WITH THE PAGE COUNTER **/
   if (mEncoderPointer + rdh->headerSize >= mEncoderPointerMax) {
     LOG(warning) << "link = " << rdh->feeId << ": beyond the buffer size mEncoderPointer+rdh->headerSize = " << mEncoderPointer + rdh->headerSize << " >= "
-               << "mEncoderPointerMax = " << mEncoderPointerMax;
+                 << "mEncoderPointerMax = " << mEncoderPointerMax;
     return true;
   }
   mEncoderRDH = reinterpret_cast<RDH*>(mEncoderPointer);
