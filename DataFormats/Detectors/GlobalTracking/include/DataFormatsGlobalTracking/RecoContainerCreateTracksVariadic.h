@@ -170,8 +170,8 @@ void o2::globaltracking::RecoContainer::createTracksVariadic(T creator, GTrackID
       }
       for (unsigned i = 0; i < matchesTPCTRDTOF.size(); i++) {
         const auto& match = matchesTPCTRDTOF[i];
-        auto gidx = match.getTrackRef(); // this should be corresponding TPC-TRD track
-                                         //        const auto& tofCl = tofClusters[match.getTOFClIndex()];
+        auto gidx = match.getTrackRef();                                                                         // this should be corresponding TPC-TRD track
+                                                                                                                 //        const auto& tofCl = tofClusters[match.getTOFClIndex()];
         float timeTOFMUS = (match.getSignal() - match.getLTIntegralOut().getTOF(o2::track::PID::Pion)) * PS2MUS; // tof time in \mus, FIXME: account for time of flight to R TOF
         const float timeErr = 0.010f;                                                                          // assume 10 ns error FIXME
         if (creator(tracksTPCTRD[gidx.getIndex()], {i, currentSource}, timeTOFMUS, timeErr)) {
