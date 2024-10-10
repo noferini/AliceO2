@@ -1411,10 +1411,10 @@ void MatchTOF::doMatchingForTPC(int sec)
           }
 
           if (mMatchParams->applyPIDcutTPConly) {                                 // for TPC only tracks allowing possibility to apply a PID cut
-            if (std::abs(tof - trkLTInt[ibc][iPropagation].getTOF(2)) < 2000) {        // pion hypotesis
+            if (std::abs(tof - trkLTInt[ibc][iPropagation].getTOF(2)) < 2000) {   // pion hypotesis
             } else if (std::abs(tof - trkLTInt[ibc][iPropagation].getTOF(3)) < 2000) { // kaon hypoteis
             } else if (std::abs(tof - trkLTInt[ibc][iPropagation].getTOF(4)) < 2000) { // proton hypotesis
-            } else {                                                              // reject matching
+            } else {                                                                   // reject matching
               continue;
             }
           }
