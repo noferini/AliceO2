@@ -111,7 +111,7 @@ void checkTOFMatching(bool batchMode = true)
     // loop over tracks
     for (uint i = 0; i < mTracksArrayInp->size(); i++) {
       o2::dataformats::TrackTPCITS trackITSTPC = mTracksArrayInp->at(i);
-      if (TMath::Abs(trackITSTPC.getEta()) < 0.9) {
+      if (std::abs(trackITSTPC.getEta()) < 0.9) {
         htrack->Fill(trackITSTPC.getPt());
         if (trackITSTPC.getPt() > 0.5) {
           htrack_t->Fill(trackITSTPC.getTimeMUS().getTimeStamp());
@@ -287,7 +287,7 @@ void checkTOFMatching(bool batchMode = true)
 #endif
       bool bMatched = kFALSE;
       for (uint ilabel = 0; ilabel < labelsTOF.size(); ilabel++) {
-        if ((abs(labelsTPC.getTrackID()) == labelsTOF[ilabel].getTrackID() && labelsTPC.getEventID() == labelsTOF[ilabel].getEventID() && labelsTPC.getSourceID() == labelsTOF[ilabel].getSourceID()) || (labelsITS.getTrackID() == labelsTOF[ilabel].getTrackID() && labelsITS.getEventID() == labelsTOF[ilabel].getEventID() && labelsITS.getSourceID() == labelsTOF[ilabel].getSourceID())) {
+        if ((std::abs(labelsTPC.getTrackID()) == labelsTOF[ilabel].getTrackID() && labelsTPC.getEventID() == labelsTOF[ilabel].getEventID() && labelsTPC.getSourceID() == labelsTOF[ilabel].getSourceID()) || (labelsITS.getTrackID() == labelsTOF[ilabel].getTrackID() && labelsITS.getEventID() == labelsTOF[ilabel].getEventID() && labelsITS.getSourceID() == labelsTOF[ilabel].getSourceID())) {
           nGoodMatches++;
           bMatched = kTRUE;
           break;
@@ -325,7 +325,7 @@ void checkTOFMatching(bool batchMode = true)
         }
       }
 
-      if (TMath::Abs(trackITSTPC.getEta()) < 0.9) {
+      if (std::abs(trackITSTPC.getEta()) < 0.9) {
         htof->Fill(trackITSTPC.getPt());
         if (bMatched)
           htofGood->Fill(trackITSTPC.getPt());
@@ -350,7 +350,7 @@ void checkTOFMatching(bool batchMode = true)
         const auto idxTPCcheck = trackITSTPC.getRefTPC();
         const auto idxITScheck = trackITSTPC.getRefITS();
         const auto& labelsTPCcheck = (*mcTPC)[idxTPCcheck.getIndex()];
-        if (abs(labelsTPCcheck.getTrackID()) == trackIdTOF && labelsTPCcheck.getEventID() == eventIdTOF && labelsTPCcheck.getSourceID() == sourceIdTOF) {
+        if (std::abs(labelsTPCcheck.getTrackID()) == trackIdTOF && labelsTPCcheck.getEventID() == eventIdTOF && labelsTPCcheck.getSourceID() == sourceIdTOF) {
 #ifdef DEBUG
           LOGF(info, "The TPC track that should have been matched to TOF is number %d", i);
 #endif
