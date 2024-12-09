@@ -932,33 +932,33 @@ void MatchTOF::doMatching(int sec)
       }
       //Printf("nStepsInsideSameStrip[nStripsCrossedInPropagation-1] = %d", nStepsInsideSameStrip[nStripsCrossedInPropagation - 1]);
       if (nStepsInsideSameStrip[nStripsCrossedInPropagation - 1] == 0) {
-	// fine propagation inside the strip -> 1 mm step
-	if(MCTruthON){ // for the moment to be applied only for MC -> condition to be removed for new 2025 data
-	  // temporary variables since propagation can fail
-	  int detIdTemp2[5] = {0, 0, 0, 0, 0};
-	  float deltaPosTemp2[3] = {deltaPosTemp[0], deltaPosTemp[1], deltaPosTemp[2]};
-	  while(deltaPosTemp2[1] < -0.1 && detIdTemp2[2] != -1){ // continuing propagation if dy is negative and we are still inside the strip volume
-	    propagateToRefX(trefTrk, reachedPoint, 0.1, intLT);
-	    reachedPoint = 0.1;
-	    trefTrk.getXYZGlo(pos);
-	    for (int ii = 0; ii < 3; ii++) { // we need to change the type...
-	      posFloat[ii] = pos[ii];
-	    }
-	    
-	    Geo::getPadDxDyDz(posFloat, detIdTemp2, deltaPosTemp2, sec);
-	    if (detIdTemp2[2] != -1) { // if propation was succesful -> update params
-	      detIdTemp[0] = detIdTemp2[0];
-	      detIdTemp[1] = detIdTemp2[1];
-	      detIdTemp[2] = detIdTemp2[2];
-	      detIdTemp[3] = detIdTemp2[3];
-	      detIdTemp[4] = detIdTemp2[4];
-	      deltaPosTemp[0] = deltaPosTemp2[0];
-	      deltaPosTemp[1] = deltaPosTemp2[1];
-	      deltaPosTemp[2] = deltaPosTemp2[2];
-	    }
-	  }
-	}
-	
+        // fine propagation inside the strip -> 1 mm step
+        if (MCTruthON) { // for the moment to be applied only for MC -> condition to be removed for new 2025 data
+          // temporary variables since propagation can fail
+          int detIdTemp2[5] = {0, 0, 0, 0, 0};
+          float deltaPosTemp2[3] = {deltaPosTemp[0], deltaPosTemp[1], deltaPosTemp[2]};
+          while (deltaPosTemp2[1] < -0.1 && detIdTemp2[2] != -1) { // continuing propagation if dy is negative and we are still inside the strip volume
+            propagateToRefX(trefTrk, reachedPoint, 0.1, intLT);
+            reachedPoint = 0.1;
+            trefTrk.getXYZGlo(pos);
+            for (int ii = 0; ii < 3; ii++) { // we need to change the type...
+              posFloat[ii] = pos[ii];
+            }
+
+            Geo::getPadDxDyDz(posFloat, detIdTemp2, deltaPosTemp2, sec);
+            if (detIdTemp2[2] != -1) { // if propation was succesful -> update params
+              detIdTemp[0] = detIdTemp2[0];
+              detIdTemp[1] = detIdTemp2[1];
+              detIdTemp[2] = detIdTemp2[2];
+              detIdTemp[3] = detIdTemp2[3];
+              detIdTemp[4] = detIdTemp2[4];
+              deltaPosTemp[0] = deltaPosTemp2[0];
+              deltaPosTemp[1] = deltaPosTemp2[1];
+              deltaPosTemp[2] = deltaPosTemp2[2];
+            }
+          }
+        }
+
         detId[nStripsCrossedInPropagation - 1][0] = detIdTemp[0];
         detId[nStripsCrossedInPropagation - 1][1] = detIdTemp[1];
         detId[nStripsCrossedInPropagation - 1][2] = detIdTemp[2];
@@ -1317,33 +1317,33 @@ void MatchTOF::doMatchingForTPC(int sec)
 
         //Printf("nStepsInsideSameStrip[nStripsCrossedInPropagation-1] = %d", nStepsInsideSameStrip[nStripsCrossedInPropagation - 1]);
         if (nStepsInsideSameStrip[ibc][nStripsCrossedInPropagation[ibc] - 1] == 0) {
-	  	// fine propagation inside the strip -> 1 mm step
-	  if(MCTruthON){ // for the moment to be applied only for MC -> condition to be removed for new 2025 data
-	    // temporary variables since propagation can fail
-	    int detIdTemp2[5] = {0, 0, 0, 0, 0};
-	    float deltaPosTemp2[3] = {deltaPosTemp[0], deltaPosTemp[1], deltaPosTemp[2]};
-	    while(deltaPosTemp2[1] < -0.1 && detIdTemp2[2] != -1){ // continuing propagation if dy is negative and we are still inside the strip volume
-	      propagateToRefX(trefTrk, reachedPoint, 0.1, intLT);
-	      reachedPoint = 0.1;
-	      trefTrk.getXYZGlo(pos);
-	      for (int ii = 0; ii < 3; ii++) { // we need to change the type...
-		posFloat[ii] = pos[ii];
-	      }
-	      
-	      Geo::getPadDxDyDz(posFloat, detIdTemp2, deltaPosTemp2, sec);
-	      if (detIdTemp2[2] != -1) { // if propation was succesful -> update params
-		detIdTemp[0] = detIdTemp2[0];
-		detIdTemp[1] = detIdTemp2[1];
-		detIdTemp[2] = detIdTemp2[2];
-		detIdTemp[3] = detIdTemp2[3];
-		detIdTemp[4] = detIdTemp2[4];
-		deltaPosTemp[0] = deltaPosTemp2[0];
-		deltaPosTemp[1] = deltaPosTemp2[1];
-		deltaPosTemp[2] = deltaPosTemp2[2];
-	      }
-	    }
-	  }
-	  
+          // fine propagation inside the strip -> 1 mm step
+          if (MCTruthON) { // for the moment to be applied only for MC -> condition to be removed for new 2025 data
+            // temporary variables since propagation can fail
+            int detIdTemp2[5] = {0, 0, 0, 0, 0};
+            float deltaPosTemp2[3] = {deltaPosTemp[0], deltaPosTemp[1], deltaPosTemp[2]};
+            while (deltaPosTemp2[1] < -0.1 && detIdTemp2[2] != -1) { // continuing propagation if dy is negative and we are still inside the strip volume
+              propagateToRefX(trefTrk, reachedPoint, 0.1, intLT);
+              reachedPoint = 0.1;
+              trefTrk.getXYZGlo(pos);
+              for (int ii = 0; ii < 3; ii++) { // we need to change the type...
+                posFloat[ii] = pos[ii];
+              }
+
+              Geo::getPadDxDyDz(posFloat, detIdTemp2, deltaPosTemp2, sec);
+              if (detIdTemp2[2] != -1) { // if propation was succesful -> update params
+                detIdTemp[0] = detIdTemp2[0];
+                detIdTemp[1] = detIdTemp2[1];
+                detIdTemp[2] = detIdTemp2[2];
+                detIdTemp[3] = detIdTemp2[3];
+                detIdTemp[4] = detIdTemp2[4];
+                deltaPosTemp[0] = deltaPosTemp2[0];
+                deltaPosTemp[1] = deltaPosTemp2[1];
+                deltaPosTemp[2] = deltaPosTemp2[2];
+              }
+            }
+          }
+
           detId[ibc][nStripsCrossedInPropagation[ibc] - 1][0] = detIdTemp[0];
           detId[ibc][nStripsCrossedInPropagation[ibc] - 1][1] = detIdTemp[1];
           detId[ibc][nStripsCrossedInPropagation[ibc] - 1][2] = detIdTemp[2];
