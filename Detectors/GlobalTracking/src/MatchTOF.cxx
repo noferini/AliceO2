@@ -1671,6 +1671,10 @@ void MatchTOF::BestMatches(std::vector<o2::dataformats::MatchInfoTOFReco>& match
           if (std::abs(timeNew - timeOld) < 200) {
             // update time information averaging the two (the second one corrected for the difference in the track length)
             prevMatching.setSignal((timeNew + timeOld) * 0.5);
+            float geanttime = (TOFClusWork[matchingPair.getTOFClIndex()].getTgeant() + TOFClusWork[prevMatching.getTOFClIndex()].getTgeant() - deltaT * 1E-3) * 0.5;
+            double t0 = (TOFClusWork[matchingPair.getTOFClIndex()].getT0true() + TOFClusWork[prevMatching.getTOFClIndex()].getT0true()) * 0.5;
+            prevMatching.setTgeant(geanttime);
+            prevMatching.setT0true(t0);
             prevMatching.setChi2(0);                                                                // flag such cases with chi2 equal to zero
             matchedClustersIndex[matchingPair.getTOFClIndex()] = matchedTracksIndex[trkType][itrk]; // flag also the second cluster as already used
           }
@@ -1681,6 +1685,9 @@ void MatchTOF::BestMatches(std::vector<o2::dataformats::MatchInfoTOFReco>& match
     }
     matchedTracksIndex[trkType][itrk] = matchedTracks[trkTypeSplitted].size();              // index of the MatchInfoTOF correspoding to this track
     matchedClustersIndex[matchingPair.getTOFClIndex()] = matchedTracksIndex[trkType][itrk]; // index of the track that was matched to this cluster
+
+    matchingPair.setTgeant(TOFClusWork[matchingPair.getTOFClIndex()].getTgeant());
+    matchingPair.setT0true(TOFClusWork[matchingPair.getTOFClIndex()].getT0true());
 
     // let's check if cluster has multiple-hits (noferini)
     if (TOFClusWork[matchingPair.getTOFClIndex()].getNumOfContributingChannels() > 1) {
