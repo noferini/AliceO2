@@ -28,7 +28,7 @@ class MatchInfoTOF
   using GTrackID = o2::dataformats::GlobalTrackID;
 
  public:
-  MatchInfoTOF(int idLocal, int idxTOFCl, double time, float chi2, o2::track::TrackLTIntegral trkIntLT, GTrackID idxTrack, float dt = 0, float z = 0, float dx = 0, float dz = 0, float dy = 0, float geanttime = 0.0, double t0 = 0.0) : mIdLocal(idLocal), mIdxTOFCl(idxTOFCl), mSignal(time), mChi2(chi2), mIntLT(trkIntLT), mIdxTrack(idxTrack), mDeltaT(dt), mZatTOF(z), mDXatTOF(dx), mDZatTOF(dz), mDYatTOF(dy), mTgeant(geanttime), mT0true(t0) {};
+  MatchInfoTOF(int idLocal, int idxTOFCl, double time, float chi2, o2::track::TrackLTIntegral trkIntLT, GTrackID idxTrack, float dt = 0, float z = 0, float dx = 0, float dz = 0, float dy = 0, float geanttime = 0.0, double t0 = 0.0) : mIdLocal(idLocal), mIdxTOFCl(idxTOFCl), mSignal(time), mChi2(chi2), mIntLT(trkIntLT), mIdxTrack(idxTrack), mDeltaT(dt), mZatTOF(z), mDXatTOF(dx), mDZatTOF(dz), mDYatTOF(dy), mTgeant(geanttime), mT0true(t0){};
   MatchInfoTOF() = default;
   void setIdxTOFCl(int index) { mIdxTOFCl = index; }
   void setIdxTrack(GTrackID index) { mIdxTrack = index; }
