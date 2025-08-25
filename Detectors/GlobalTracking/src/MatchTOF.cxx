@@ -1722,7 +1722,7 @@ void MatchTOF::BestMatches(std::vector<o2::dataformats::MatchInfoTOFReco>& match
 
     // estimate collision time using FT0 info if available
     ULong64_t bclongtofCal = (matchingPair.getSignal() - 10000) * o2::tof::Geo::BC_TIME_INPS_INV;
-    double t0Best = bclongtofCal *  o2::tof::Geo::BC_TIME_INPS; // here just BC
+    double t0Best = bclongtofCal * o2::tof::Geo::BC_TIME_INPS; // here just BC
     float t0BestRes = 200;
     if (FITRecPoints.size() > 0) {
       int index = findFITIndex(bclongtofCal, FITRecPoints, mFirstTForbit);
