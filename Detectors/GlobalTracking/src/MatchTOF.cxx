@@ -1601,7 +1601,7 @@ int MatchTOF::findFITIndex(int bc, const gsl::span<const o2::ft0::RecPoints>& FI
 
   for (unsigned int i = 0; i < FITRecPoints.size(); i++) {
     const auto& ft = FITRecPoints[i];
-    if(!FT0Params.isSelected(ft)) {
+    if (!FT0Params.isSelected(ft)) {
       continue;
     }
     const o2::InteractionRecord ir = FITRecPoints[i].getInteractionRecord();
