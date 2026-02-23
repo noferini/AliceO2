@@ -11,10 +11,39 @@
 
 #include "TOFBase/CalibTOFapi.h"
 #include <fairlogger/Logger.h> // for LOG
+#include <TH2F.h>
 
 using namespace o2::tof;
 
 ClassImp(o2::tof::CalibTOFapi);
+
+o2::tof::Diagnostic CalibTOFapi::doDRMerrCalibFromQCHisto(const TH2F* histo, const char* file_output_name)
+{
+  // this is a method which translate the QC output in qc/TOF/MO/TaskRaw/DRMCounter (TH2F) into a Diagnotic object for DRM (patter(crate, error), frequency)
+  // note that, differently from TRM errors, DRM ones are not stored in CTF by design (since very rare, as expected). Such an info is available only at the level of raw sync QC
+  o2::tof::Diagnostic drmDia;
+
+  for (int j = 1; j <= 72; j++) {
+    drmDia.fillDRM(j - 1, histo->GetBinContent(1, j));
+    for (int i = 2; i <= histo->GetXaxis()->GetNbins(); i++) {
+      if (histo->GetBinContent(1, j)) {
+        if (histo->GetBinContent(i, j) > 0) {
+          drmDia.fillDRMerror(j - 1, i - 1, histo->GetBinContent(i, j));
+        }
+      }
+    }
+  }
+
+  TFile* fo = new TFile(file_output_name, "RECREATE");
+  fo->WriteObjectAny(&drmDia, drmDia.Class_Name(), "ccdb_object");
+  fo->Close();
+  LOG(info) << "DRM error ccdb object created in " << file_output_name << " with this content";
+  drmDia.print(true);
+
+  return drmDia;
+}
+
+//______________________________________________________________________
 
 void CalibTOFapi::resetDia()
 {
