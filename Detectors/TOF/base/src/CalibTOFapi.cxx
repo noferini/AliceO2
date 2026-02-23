@@ -23,18 +23,18 @@ o2::tof::Diagnostic CalibTOFapi::doDRMerrCalibFromQCHisto(const TH2F* histo, con
   // note that, differently from TRM errors, DRM ones are not stored in CTF by design (since very rare, as expected). Such an info is available only at the level of raw sync QC
   o2::tof::Diagnostic drmDia;
 
-  for(int j=1; j<=72;j++){
-    drmDia.fillDRM(j-1, histo->GetBinContent(1,j));
-    for(int i=2; i <= histo->GetXaxis()->GetNbins();i++){
-      if(histo->GetBinContent(1,j)){
-         if(histo->GetBinContent(i,j) > 0){
-           drmDia.fillDRMerror(j-1, i-1, histo->GetBinContent(i,j));
-         }
+  for (int j = 1; j <= 72; j++) {
+    drmDia.fillDRM(j - 1, histo->GetBinContent(1, j));
+    for (int i = 2; i <= histo->GetXaxis()->GetNbins(); i++) {
+      if (histo->GetBinContent(1, j)) {
+        if (histo->GetBinContent(i, j) > 0) {
+          drmDia.fillDRMerror(j - 1, i - 1, histo->GetBinContent(i, j));
+        }
       }
     }
   }
 
-  TFile *fo = new TFile(file_output_name, "RECREATE");
+  TFile* fo = new TFile(file_output_name, "RECREATE");
   fo->WriteObjectAny(&drmDia, drmDia.Class_Name(), "ccdb_object");
   fo->Close();
   LOG(info) << "DRM error ccdb object created in " << file_output_name << " with this content";
