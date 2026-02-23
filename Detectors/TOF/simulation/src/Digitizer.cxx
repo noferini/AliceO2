@@ -95,7 +95,7 @@ int Digitizer::process(const std::vector<HitType>* hits, std::vector<Digit>* dig
   const double max_hit_time = TOFSimParams::Instance().max_hit_time;
 
   // hits array of TOF hits for a given simulated event
-  // digits passed from external to be filled, in continuous readout mode we will push it on mDigitsPerTimeFrame vector of vectors of digits
+  // digits passed from external to be filled, in continuous readout mode we will push it on mDigitsPerTimeFrame, final vector of digits
 
   //  printf("process event time = %f with %ld hits\n",mEventTime.getTimeNS(),hits->size());
 
@@ -891,6 +891,7 @@ void Digitizer::fillOutputContainer(std::vector<Digit>& digits)
 
     // fill diagnostics
     mCalibApi->resetTRMErrors();
+    mCalibApi->resetDRMErrors();
     float p = gRandom->Rndm();
     if (mCalibApi->getEmptyTOFProb() > p) { // check empty TOF
       for (int i = 0; i < Geo::kNCrate; i++) {
@@ -906,6 +907,15 @@ void Digitizer::fillOutputContainer(std::vector<Digit>& digits)
           info.setEmptyCrate(i);
           isEmptyCrate[i] = true;
         } else { // check if filling diagnostic (noisy will be masked in clusterization, then skip here)
+          // Fill DRM RDH errors
+          // ciao
+          for (int ie = 0; ie < mCalibApi->N_DRM_ERRORS; ie++) {
+            p = gRandom->Rndm();
+            if (mCalibApi->getDRMprobError(i, ie) > p) {
+              mCalibApi->processErrorDRM(i, ie);
+            }
+          }
+
           isEmptyCrate[i] = false;
           int slotreached = -1;
           const std::vector<std::pair<int, float>>& trmProg = mCalibApi->getTRMerrorProb();
@@ -968,6 +978,19 @@ void Digitizer::fillOutputContainer(std::vector<Digit>& digits)
       }
     }
     info.setNEntries(digits.size());
+
+    // flag errors in digits
+    // for TRM: mCalibApi->isChannelError(ch)
+    // for DRM:
+    for (auto& d : digits) {
+      int ch = d.getChannel();
+      if (mCalibApi->isChannelError(ch)) { // TRM error affecting this channel
+        d.addTRMError();
+      }
+      if (mCalibApi->isChannelDRMError(ch)) { // DRM error affecting this channel
+        d.addDRMError();
+      }
+    }
 
     if (digits.size()) {
       mDigitsPerTimeFrame.insert(mDigitsPerTimeFrame.end(), digits.begin(), digits.end());

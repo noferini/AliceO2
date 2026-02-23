@@ -98,24 +98,32 @@ class Digit
   double getT0true() const { return mT0true; }
   void setT0true(double val) { mT0true = val; }
 
+  int8_t getErrorCode() const { return mErrorCode; }
+  void setErrorCode(int8_t err) { mErrorCode = err; }
+  void addDRMError() { mErrorCode |= 2; }
+  bool hasDRMError() const { return mErrorCode & 2; }
+  void addTRMError() { mErrorCode |= 1; }
+  bool hasTRMError() const { return mErrorCode & 1; }
+
  private:
   friend class boost::serialization::access;
 
-  Int_t mChannel;          ///< TOF channel index
-  uint16_t mTDC;           ///< TDC bin number
-  uint16_t mTOT;           ///< TOT bin number
-  InteractionRecord mIR{0, 0}; ///< InteractionRecord (orbit and bc) when digit occurs
-  Int_t mLabel;            ///< Index of the corresponding entry in the MC label array
-  Double_t mCalibratedTime; //!< time of the digits after calibration (not persistent; it will be filled during clusterization)
-  Int_t mElectronIndex;    //!/< index in electronic format
+  Int_t mChannel;                ///< TOF channel index
+  uint16_t mTDC;                 ///< TDC bin number
+  uint16_t mTOT;                 ///< TOT bin number
+  InteractionRecord mIR{0, 0};   ///< InteractionRecord (orbit and bc) when digit occurs
+  Int_t mLabel;                  ///< Index of the corresponding entry in the MC label array
+  Double_t mCalibratedTime;      //!< time of the digits after calibration (not persistent; it will be filled during clusterization)
+  Int_t mElectronIndex;          //!/< index in electronic format
   uint32_t mTriggerOrbit = 0;    //!< orbit id of trigger event // RS: orbit must be 32bits long
   uint16_t mTriggerBunch = 0;    //!< bunch id of trigger event
   Bool_t mIsUsedInCluster;       //!/< flag to declare that the digit was used to build a cluster
   Bool_t mIsProblematic = false; //!< flag to tell whether the channel of the digit was problemati; not persistent; default = ok
   float mTgeant = 0.0;           ///< geant time in MC
   double mT0true = 0.0;          ///< t0true
+  int8_t mErrorCode = 0;         ///< if TRM o DRM error
 
-  ClassDefNV(Digit, 5);
+  ClassDefNV(Digit, 6);
 };
 
 std::ostream& operator<<(std::ostream& stream, const Digit& dig);
