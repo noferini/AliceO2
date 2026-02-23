@@ -17,7 +17,7 @@
 
 void makeDRMobj_tof(const char* inputfile = "TObject_1764607157510.root", bool dummy = false)
 {
-  if(dummy) {
+  if (dummy) {
     o2::tof::Diagnostic drmDia;
     for (int j = 1; j <= 72; j++) {
       drmDia.fill(o2::tof::Diagnostic::getDRMKey(j - 1));
