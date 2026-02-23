@@ -24,6 +24,8 @@
 #include "DataFormatsTOF/Diagnostic.h"
 #include "DataFormatsTOF/TOFFEElightInfo.h"
 
+class TH2F;
+
 namespace o2
 {
 namespace tof
@@ -38,6 +40,8 @@ class CalibTOFapi
   using CcdbApi = o2::ccdb::CcdbApi;
 
  public:
+  static o2::tof::Diagnostic doDRMerrCalibFromQCHisto(const TH2F* histo, const char* file_output_name);
+
   void resetDia();
   CalibTOFapi() = default;
   CalibTOFapi(const std::string url);
