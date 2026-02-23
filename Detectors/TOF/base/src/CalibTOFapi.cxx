@@ -11,10 +11,39 @@
 
 #include "TOFBase/CalibTOFapi.h"
 #include <fairlogger/Logger.h> // for LOG
+#include <TH2F.h>
 
 using namespace o2::tof;
 
 ClassImp(o2::tof::CalibTOFapi);
+
+o2::tof::Diagnostic CalibTOFapi::doDRMerrCalibFromQCHisto(const TH2F* histo, const char* file_output_name)
+{
+  // this is a method which translate the QC output in qc/TOF/MO/TaskRaw/DRMCounter (TH2F) into a Diagnotic object for DRM (patter(crate, error), frequency)
+  // note that, differently from TRM errors, DRM ones are not stored in CTF by design (since very rare, as expected). Such an info is available only at the level of raw sync QC
+  o2::tof::Diagnostic drmDia;
+
+  for (int j = 1; j <= 72; j++) {
+    drmDia.fillDRM(j - 1, histo->GetBinContent(1, j));
+    for (int i = 2; i <= histo->GetXaxis()->GetNbins(); i++) {
+      if (histo->GetBinContent(1, j)) {
+        if (histo->GetBinContent(i, j) > 0) {
+          drmDia.fillDRMerror(j - 1, i - 1, histo->GetBinContent(i, j));
+        }
+      }
+    }
+  }
+
+  TFile* fo = new TFile(file_output_name, "RECREATE");
+  fo->WriteObjectAny(&drmDia, drmDia.Class_Name(), "ccdb_object");
+  fo->Close();
+  LOG(info) << "DRM error ccdb object created in " << file_output_name << " with this content";
+  drmDia.print(true);
+
+  return drmDia;
+}
+
+//______________________________________________________________________
 
 void CalibTOFapi::resetDia()
 {
@@ -116,10 +145,22 @@ void CalibTOFapi::readDiagnosticFrequencies()
 {
   auto& mgr = CcdbManager::instance();
   long timems = long(mTimeStamp) * 1000;
-  LOG(info) << "TOF get Diagnostics with timestamp (ms) = " << timems;
+  LOG(info) << "TOF get TRM Diagnostics with timestamp (ms) = " << timems;
   mDiaFreq = mgr.getForTimeStamp<Diagnostic>("TOF/Calib/Diagnostic", timems);
 
   loadDiagnosticFrequencies();
+}
+
+//______________________________________________________________________
+
+void CalibTOFapi::readDiagnosticDRMFrequencies()
+{
+  auto& mgr = CcdbManager::instance();
+  long timems = long(mTimeStamp) * 1000;
+  LOG(info) << "TOF get DRM Diagnostics with timestamp (ms) = " << timems;
+  mDiaFreq = mgr.getForTimeStamp<Diagnostic>("TOF/Calib/TRMerrors", timems);
+
+  loadDiagnosticDRMFrequencies();
 }
 //______________________________________________________________________
 
@@ -205,6 +246,36 @@ void CalibTOFapi::loadDiagnosticFrequencies()
   }
   if (ich != -1 && prob > 0.5) {
     mIsNoisy[ich] = true;
+  }
+}
+
+//______________________________________________________________________
+
+void CalibTOFapi::loadDiagnosticDRMFrequencies()
+{
+  mDiaDRMFreq->print();
+
+  for (int ic = 0; ic < 72; ic++) { // loop over crates
+    float DRMcounters = mDiaDRMFreq->getFrequencyDRM(ic);
+
+    if (DRMcounters < 1) {
+      mErrorInDRM[ic] = 0.;
+      continue;
+    }
+
+    float probGood = 1;
+
+    for (int ie = 0; ie < 28; ie++) { // loop over error types
+      uint32_t bitError = 1 << ie;
+      if (bitError & mDRMCriticalErrorMask) {                                               // if error has to be masked
+        float frequency = mDiaDRMFreq->getFrequencyDRMerror(ic, ie) * 1. / mErrorInDRM[ic]; // error frequency
+        if (frequency > 1) {
+          frequency = 1.;
+        }
+        probGood *= (1 - frequency); //  frequency of no error assuming all types are independent
+      }
+    }
+    mErrorInDRM[ic] = 1 - probGood; // probability of at least one error to be masked
   }
 }
 

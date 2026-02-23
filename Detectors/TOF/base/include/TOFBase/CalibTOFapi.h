@@ -24,6 +24,8 @@
 #include "DataFormatsTOF/Diagnostic.h"
 #include "DataFormatsTOF/TOFFEElightInfo.h"
 
+class TH2F;
+
 namespace o2
 {
 namespace tof
@@ -38,10 +40,12 @@ class CalibTOFapi
   using CcdbApi = o2::ccdb::CcdbApi;
 
  public:
+  static o2::tof::Diagnostic doDRMerrCalibFromQCHisto(const TH2F* histo, const char* file_output_name);
+
   void resetDia();
   CalibTOFapi() = default;
   CalibTOFapi(const std::string url);
-  CalibTOFapi(long timestamp, o2::dataformats::CalibLHCphaseTOF* phase, o2::dataformats::CalibTimeSlewingParamTOF* slew, Diagnostic* dia = nullptr) : mTimeStamp(timestamp), mLHCphase(phase), mSlewParam(slew), mDiaFreq(dia) {}
+  CalibTOFapi(long timestamp, o2::dataformats::CalibLHCphaseTOF* phase, o2::dataformats::CalibTimeSlewingParamTOF* slew, Diagnostic* dia = nullptr, Diagnostic* diaDRM = nullptr) : mTimeStamp(timestamp), mLHCphase(phase), mSlewParam(slew), mDiaFreq(dia), mDiaDRMFreq(diaDRM) {}
   ~CalibTOFapi()
   {
     if (mLHCphase) {
@@ -52,6 +56,9 @@ class CalibTOFapi
     }
     if (mDiaFreq) {
       //      delete mDiaFreq;
+    }
+    if (mDiaDRMFreq) {
+      //      delete mDiaDRMFreq;
     }
   }
 
@@ -69,6 +76,8 @@ class CalibTOFapi
   void readTimeSlewingParamFromFile(const char* filename);
   void readDiagnosticFrequencies();
   void loadDiagnosticFrequencies();
+  void readDiagnosticDRMFrequencies();
+  void loadDiagnosticDRMFrequencies();
   void readActiveMap();
   void loadActiveMap(TOFFEElightInfo* fee);
   void writeLHCphase(LhcPhase* phase, std::map<std::string, std::string> metadataLHCphase, uint64_t minTimeSTamp, uint64_t maxTimeStamp);
@@ -89,6 +98,8 @@ class CalibTOFapi
   void setLhcPhase(LhcPhase* obj) { mLHCphase = obj; }
   Diagnostic* getDiagnostic() { return mDiaFreq; }
   void setDiagnostic(Diagnostic* obj) { mDiaFreq = obj; }
+  Diagnostic* getDiagnosticDRM() { return mDiaDRMFreq; }
+  void setDiagnosticDRM(Diagnostic* obj) { mDiaDRMFreq = obj; }
 
   int getNoisyThreshold() const { return mNoisyThreshold; }
   void setNoisyThreshold(int val) { mNoisyThreshold = val; }
@@ -103,11 +114,15 @@ class CalibTOFapi
   bool isChannelError(int channel) const;
   bool checkTRMPolicy(int mask) const;
 
+  void setDRMCriticalErrorMask(uint32_t val) { mDRMCriticalErrorMask = val; }
+  uint32_t getDRMCriticalErrorMask() const { return mDRMCriticalErrorMask; }
+
  private:
-  long mTimeStamp;                 ///< timeStamp for queries
-  LhcPhase* mLHCphase = nullptr;   ///< object for LHC phase
-  SlewParam* mSlewParam = nullptr; ///< object for timeslewing (containing info also for offset and problematic)
-  Diagnostic* mDiaFreq = nullptr;  ///< object for Diagnostic Frequency
+  long mTimeStamp;                   ///< timeStamp for queries
+  LhcPhase* mLHCphase = nullptr;     ///< object for LHC phase
+  SlewParam* mSlewParam = nullptr;   ///< object for timeslewing (containing info also for offset and problematic)
+  Diagnostic* mDiaFreq = nullptr;    ///< object for Diagnostic Frequency
+  Diagnostic* mDiaDRMFreq = nullptr; ///< object for Diagnostic Frequency
 
   // info from diagnostic
   int mNoisyThreshold = 1;                          ///< threshold to be noisy
@@ -116,13 +131,15 @@ class CalibTOFapi
   std::vector<std::pair<int, float>> mNoisy;        ///< probTRMerror
   std::vector<std::pair<int, float>> mTRMerrorProb; ///< probTRMerror
   std::vector<int> mTRMmask;                        ///< mask error for TRM
+  float mErrorInDRM[72] = {};                       ///< probability of DRM error
+  uint32_t mDRMCriticalErrorMask = 0;               ///< bit mask for critical DRM errors (e.g. Orbit Mismatch -> 1 << 7, see DataFormats/Detectors/TOF/include/DataFormatsTOF/CompressedDataFormat.h)
 
   bool mIsErrorCh[Geo::NCHANNELS] = {}; ///< channels in error (TRM)
   std::vector<int> mFillErrChannel;     ///< last error channels filled
   bool mIsOffCh[Geo::NCHANNELS] = {};   ///< channels in error (TRM)
   bool mIsNoisy[Geo::NCHANNELS] = {};   ///< noisy channels
 
-  ClassDefNV(CalibTOFapi, 1);
+  ClassDefNV(CalibTOFapi, 2);
 };
 } // namespace tof
 } // namespace o2
