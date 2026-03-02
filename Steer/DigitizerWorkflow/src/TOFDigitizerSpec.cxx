@@ -48,7 +48,7 @@ namespace tof
 class TOFDPLDigitizerTask : public o2::base::BaseDPLDigitizer
 {
  public:
-  TOFDPLDigitizerTask(bool useCCDB, std::string ccdb_url, int timestamp, uint32_t mask) : mUseCCDB{useCCDB}, mCCDBurl(ccdb_url), mTimestamp(timestamp), o2::base::BaseDPLDigitizer(o2::base::InitServices::FIELD | o2::base::InitServices::GEOM), mPass(o2::conf::DigiParams::Instance().passName), mMaskDRM(mask) {};
+  TOFDPLDigitizerTask(bool useCCDB, std::string ccdb_url, int timestamp, uint32_t mask) : mUseCCDB{useCCDB}, mCCDBurl(ccdb_url), mTimestamp(timestamp), o2::base::BaseDPLDigitizer(o2::base::InitServices::FIELD | o2::base::InitServices::GEOM), mPass(o2::conf::DigiParams::Instance().passName), mMaskDRM(mask){};
 
   void initDigitizerTask(framework::InitContext& ic) override
   {
