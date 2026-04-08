@@ -194,7 +194,7 @@ void WindowFiller::fillOutputContainer(std::vector<Digit>& digits)
     int npatterns = 0;
 
     // check if patterns are in the current row
-    unsigned long initrow = ((unsigned long) mFirstIR.orbit) * Geo::NWINDOW_IN_ORBIT;
+    unsigned long initrow = ((unsigned long)mFirstIR.orbit) * Geo::NWINDOW_IN_ORBIT;
     for (std::vector<PatternData>::reverse_iterator it = mCratePatterns.rbegin(); it != mCratePatterns.rend(); ++it) {
       unsigned long irow = it->row;
       // printf("pattern row=%ld (%u - %u) current=%ld\n",irow - initrow,irow,initrow,mReadoutWindowCurrent);
